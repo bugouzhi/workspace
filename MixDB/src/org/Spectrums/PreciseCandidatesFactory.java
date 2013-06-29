@@ -1,0 +1,43 @@
+package org.Spectrums;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class PreciseCandidatesFactory {
+	private PrecursorMassChecker checker;
+	private CandidateSpectrumLibFactory factory;
+	private double windowWidth = 2;  //expected width of mz window for MS/MS selection
+	private int minMatchedPeaks = 3; //minimum number of peaks that has to matched in survey scans
+	public PreciseCandidatesFactory(CandidateSpectrumLibFactory factory, String mzxmlFile){
+		this.checker = new PrecursorMassChecker(mzxmlFile);
+		this.factory = factory;
+	}
+	
+	public PreciseCandidatesFactory(CandidateSpectrumLibFactory factory, PrecursorMassChecker checker){
+		this.checker = checker;
+		this.factory = factory;
+	}
+	
+	public List<Peptide> getCandidateByMass(Spectrum s, double ppmTolerance){
+		List<Peptide> candidates2  = factory.getCandidatePeptideByMass(s, this.windowWidth, false);
+		System.out.println("Spetrum: " + s.spectrumName + " has candiates: " + candidates2.size());
+		List<Peptide> preciseCandidates = new ArrayList<Peptide>();
+		for(int i = 0; i < candidates2.size(); i++){
+			Peptide p  = candidates2.get(i);
+			if(checker.matchPrecursorProfile(s.scanNumber, p, ppmTolerance) 
+					>= this.minMatchedPeaks){// || Math.abs(p.getParentmass() - s.parentMass) > 0.1){
+				preciseCandidates.add(p);
+			}
+		}
+		System.out.println("Spetrum: " + s.spectrumName + " has precise candiates: " + preciseCandidates.size());
+
+		return preciseCandidates;
+	}
+	
+	public List<Peptide> getCandidateByMassCrude(Spectrum s, double massTolerance){
+		List<Peptide> candidates2  = factory.getCandidatePeptideByMass(s, massTolerance, false);
+		System.out.println("Spetrum: " + s.spectrumName + " has candidates: " + candidates2.size());
+		return candidates2;
+	}
+	
+}

@@ -1,0 +1,80 @@
+package org.Spectrums;
+/**
+ * A wrapper class that score linked peptides base on 
+ * single-peptide models
+ * @author jian wang
+ *
+ */
+public class LPeakScoreLearner implements PeakComparator {
+	private PeakScoreLearner core;
+	public LPeakScoreLearner(SpectrumLib lib){
+		//this.core = new PeakScoreLearner(lib);
+		this.core.getIonsCount();
+	} 
+	
+//	public LPeakScoreLearner(SpectrumLib lib, String[] ionsType, 
+//			int minCharge, int maxCharge){
+//		super(lib, ionsType, minCharge, maxCharge);
+//		getIonsCount();
+//	}
+	
+	//override
+	public int[] getLinkedIndex(LabelledPeak lp){
+		int peptideCharge, peakCharge;
+		Peptide pep = lp.getPep();
+		if(lp.getPep().getCharge() < 5){
+			peptideCharge = 2;
+		}else{
+			peptideCharge = 3;
+		}
+		
+		if(TheoreticalSpectrum.isLinkedPeak(pep, lp)){
+			if(pep.getCharge() <= 2){
+				peakCharge = lp.getCharge();
+			}else if(pep.getCharge() == 3){
+				peakCharge = lp.getCharge() - 1;
+			}else if(pep.getCharge() == 4){
+				peakCharge = lp.getCharge() - 2;
+			}else if(pep.getCharge() == 5){
+				peakCharge = lp.getCharge() - 2;
+			}else{
+				if(lp.getCharge() > 5){
+					peakCharge = 3;
+				}else{
+					peakCharge = lp.getCharge() - 2;
+				}
+			}
+		}else{
+			peakCharge = lp.getCharge();
+		}
+		int ionIndex = this.core.getIonIndex(lp);
+		if(peakCharge <= 0){
+			return new int[]{-1,-1,-1};
+		}
+		return new int[]{peptideCharge-1, peakCharge-1, ionIndex};
+	}
+	@Override
+	public double compare(Peak p1, Peak p2) {
+		if(p1 == null){
+			return 0.0;
+		}else{ 
+			int[] index = getLinkedIndex((LabelledPeak)p1);
+			if(index[0] < 0){
+				return 0;
+			}
+			double score = this.core.getValue(index);
+			if(Double.isNaN(score)){
+				score = 0;
+				//System.out.println("how come we get Nan: " + index[0] + ", " + index[1] + ", " + index[2] + "\t" + p1 + "\t" + ((LabelledPeak)p1).getPep().getCharge());
+			}
+			if(score < 0.05){
+				return 0;
+			}
+			if(p2 == null){
+				return Math.log((1-score)/(1-0.05));
+			}else{
+				return Math.log(score / 0.05);
+			}
+		}
+	}
+}

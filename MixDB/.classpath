@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="msgap/NewMSGappedDictionary.java|msgap/results/DeprecatedSpectrumMatches.java|scripts/RunMSGDBatch.java|suffixtree/test/deprecated/|org/Spectrums/CopyOfMixturePeakScoreLearner.java|org/Spectrums/CopyOfSpectrum.java|org/Spectrums/CopyOfTheoreticalSpectrum.java|org/Spectrums/ProteinDigester.java|org/Spectrums/Copy_2_of_MixturePeakScoreLearner.java" kind="src" path="src"/>
+	<classpathentry kind="lib" path="/MS_Java/msgfdb/extlib/jrap_StAX_v5.2.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Graph"/>
+	<classpathentry kind="lib" path="/MS_Java/trunk/extlib/ujmp-complete-0.2.4.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/Users/Jian/workspace/external_lib/commons-collections-3.2.1.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
