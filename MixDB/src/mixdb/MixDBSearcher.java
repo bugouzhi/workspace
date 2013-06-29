@@ -257,8 +257,8 @@ public class MixDBSearcher extends SimpleDBSearcher{
 		//args[4] = "../mixture_linked/ACG_14348_hardklorPrecursorsList.txt";
 		//args[5] ="../mixture_linked/ACG_14348_mixdbmultiprecurs.txt";
 		if(args.length != 5 && args.length != 6){
-			System.out.println("usage: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <outfile>");
-			System.out.println("   or: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <precursor list> <outfile>");
+			System.out.println("usage: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <modification file> <outfile>");
+			System.out.println("   or: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <precursor list> <modification file> <outfile>");
 			return;
 		}
 		
