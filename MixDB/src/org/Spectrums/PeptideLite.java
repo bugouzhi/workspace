@@ -18,6 +18,14 @@ public class PeptideLite implements Serializable{
 	private int endInd;
 	private int charge;
 	private String protein;
+	public String getProtein() {
+		return protein;
+	}
+
+	public void setProtein(String protein) {
+		this.protein = protein;
+	}
+
 	private FastaSequence fastaseq;
 	
 	public PeptideLite(int beginInd, int endInd, String proteins, int charge){
@@ -30,6 +38,16 @@ public class PeptideLite implements Serializable{
 	public PeptideLite(int beginInd, int endInd, FastaSequence seq){
 		this(beginInd, endInd, EMPTYSTR, 1);
 		this.fastaseq = seq;
+	}
+	
+	//created a modify peptides from this peptide
+	public PeptideLiteMod insertMod(int pos, double mass) {
+		PeptideLiteMod modPep = new PeptideLiteMod(this.getBeginInd(), this.getEndInd());
+		modPep.setFastaseq(this.fastaseq);
+		modPep.setProtein(this.protein);
+		modPep.setPtmPos(new int[]{pos});
+		modPep.setPtmMasses(new double[]{mass});
+		return modPep;
 	}
 	
 	public static String getEMPTYSTR() {
@@ -77,6 +95,18 @@ public class PeptideLite implements Serializable{
 	}
 	
 	public String getPep(){
-		return this.protein.substring((int)beginInd, (int)endInd);
+		//if(this.protein.length() > 0){
+			//System.out.println("protein is: " + this.protein);
+		//	return this.protein.substring((int)beginInd, (int)endInd);
+			//return "";
+		//}else{
+			return this.fastaseq.getSubsequence(beginInd, endInd+1);
+		//}
+	}
+	
+
+	
+	public String toString(){
+		return this.getPep();
 	}
 }

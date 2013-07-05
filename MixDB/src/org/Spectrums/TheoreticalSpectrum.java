@@ -123,6 +123,7 @@ public class TheoreticalSpectrum extends Spectrum{
 		super();
 		Peptide p1 = new Peptide(peptide1);
 		Peptide p2 = new Peptide(peptide2);
+		//System.out.println(p1 + "\t" + p2);
 		//this.peptide = p1.getPeptide() + " & " + p2.getPeptide();
 		this.peptide = p1.toString() + " & " + p2.toString();
 		if(p1.getCharge()== 4){
@@ -136,11 +137,11 @@ public class TheoreticalSpectrum extends Spectrum{
 		double[] ptmmass2 = new double[] {0};
 		//ptmmass1[0] = 0;
 		//ptmmass2[0] = 0;
-
+		//System.out.println(Arrays.toString(p1.getPos()) + "\t" + Arrays.toString(p1.getPtmmasses()));
 		Vector<Peak> theoPeaks = this.generatePeaks(p1.getPeptide(), prefixIons, suffixIons,
-				p1.getPos(), ptmmass1, p1.getCharge());
+				p1.getPos(), p1.getPtmmasses(), p1.getCharge());
 		Vector<Peak> theoPeaks2 = this.generatePeaks(p2.getPeptide(), prefixIons, suffixIons,
-				p2.getPos(), ptmmass2, p2.getCharge());
+				p2.getPos(), p2.getPtmmasses(), p2.getCharge());
 		Vector<Peak> mixturePeaks = new Vector<Peak>();
 		setPeptide(theoPeaks, p1);
 		setPeptide(theoPeaks2, p2);
@@ -1401,7 +1402,9 @@ public class TheoreticalSpectrum extends Spectrum{
 			p = (LabelledPeak)peaks[0].get(i);
 			p2 = (Peak)peaks[1].get(i);
 			//System.out.println("matching " +p.getPep().getPeptide() + " to " + firstPeptide);
-			if(p.getPep().getPeptide().equals(firstPeptide)){
+			//if(p.getPep().getPeptide().equals(firstPeptide)){
+			//System.out.println("first pep " + firstPeptide);
+			if(p.getPep().toString().equals(firstPeptide)){
 				l1[0].add(p);
 				l1[1].add(p2);
 			}else{
@@ -1548,8 +1551,8 @@ public class TheoreticalSpectrum extends Spectrum{
 	}
 	public double[] analyzeMixtureAnnotation(Spectrum s, String p1, String p2, double tolerance, boolean detail){
 		String[] peptides = this.peptide.split(" & ");
-		peptides[0] = peptides[0].replaceAll("[0-9\\.\\+\\-]", "");
-		peptides[1] = peptides[1].replaceAll("[0-9\\.\\+\\-]", "");
+		//peptides[0] = peptides[0].replaceAll("[0-9\\.\\+\\-]", "");
+		//peptides[1] = peptides[1].replaceAll("[0-9\\.\\+\\-]", "");
 		if(detail)
 			System.out.println("peptides are: " + peptides[0] + " and " + peptides[1]);		
 		if(peptides.length != 2){
@@ -1562,7 +1565,8 @@ public class TheoreticalSpectrum extends Spectrum{
 		
 		double totalFraction = this.explainedPeaks2(matching, s, tolerance, detail);
 		//System.out.println("peptides " + p1);
-		this.splitPeaks(matching, l1, l2, peptides[0].split("\\.")[0], peptides[1].split("\\.")[0]);
+		//this.splitPeaks(matching, l1, l2, peptides[0].split("\\.")[0], peptides[1].split("\\.")[0]);
+		this.splitPeaks(matching, l1, l2, p1, p2);
 		//this.splitPeaks(matching, l1, l2);
 //		System.out.println("combine size: " + matching[0].size() + "\t" + matching[1].size());
 //		System.out.println("1size: " + l1[0].size()+ "\t" + l1[1].size());

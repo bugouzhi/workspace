@@ -434,7 +434,7 @@ public class SpectrumLibSearcher {
 				}
 			}
 		}
-	//	System.out.println("best has size: " + bestList.size());
+		//System.out.println("best has size: " + bestList.size());
 		printTopCandidatesInfo(mixturequery, bestList);
 		//System.out.println("total number of pairs considered: " + count);
 		return null;
@@ -476,7 +476,7 @@ public class SpectrumLibSearcher {
 			String p1 = best.get(0).peptide.split("\\.")[0];
 			String p2 = best.get(1).peptide.split("\\.")[0];
 			if(p1.equals(p2)){ //we do not allow same peptides 
-				continue;
+				//continue;
 			}
 			double[] stat = th.analyzeMixtureAnnotation(query, best.get(0).peptide, best.get(1).peptide, 0.3);
 			String bestpeptide = best.get(0).peptide + "\t" + best.get(1).peptide;
@@ -487,6 +487,10 @@ public class SpectrumLibSearcher {
 				FastaSequence seq = arry1.getPeplite().getFastaseq();
 				String annot1 = seq.getAnnotation(arry1.getPeplite().getBeginInd()).split("\\s+")[0];
 				String annot2 = seq.getAnnotation(arry2.getPeplite().getBeginInd()).split("\\s+")[0];
+				th = new TheoreticalSpectrum(arry1.getPeplite().toString() +"." + arry1.charge, 
+						arry2.getPeplite().toString()+"."+arry2.charge);
+				stat = th.analyzeMixtureAnnotation(query, arry1.getPeplite().toString(), arry2.getPeplite().toString(), 0.3);
+				bestpeptide = arry1.getPeplite().toString() + "\t" + arry2.getPeplite().toString();
 				String pep ="";
 				if(!query.peptide.contains("Dummy")){
 					pep = "\t"+query.peptide;
@@ -612,7 +616,7 @@ public class SpectrumLibSearcher {
 		for(Iterator<SpectrumScorePair> it = spectrumScorePairs.iterator(); it.hasNext();){
 			SpectrumScorePair curr = it.next();
 			curr.score = this.filter.compare(curr.s, query);
-			//System.out.println(curr.s.peptide +  "\t" + curr.s.parentMass + "\t score is: " + curr.score);
+			//System.out.println(((ArrayTheoreticalSpectrum)curr.s).getPeplite() +  "\t" + curr.s.parentMass + "\t score is: " + curr.score);
 		}
 		Collections.sort(this.spectrumScorePairs);
 	}

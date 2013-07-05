@@ -1,6 +1,7 @@
 package mixdb;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import org.Spectrums.Peak;
 import org.Spectrums.PeakMassComparator;
 import org.Spectrums.Peptide;
 import org.Spectrums.PeptideLite;
+import org.Spectrums.PeptideLiteMod;
 import org.Spectrums.Spectrum;
 import org.Spectrums.TheoreticalSpectrum;
 import sequences.FastaSequence;
@@ -213,16 +215,34 @@ public class TheoreticalSpectrumFactory {
 	
 	public static Spectrum getTheoSpectrumX(PeptideLite peplite, FastaSequence seq, int charge, Map<String, IonType> typeMap, IonTypeMapper ionMap){
 		String pep=seq.getSubsequence(peplite.getBeginInd(), peplite.getEndInd()+1);
-		ArrayTheoreticalSpectrum theo = (ArrayTheoreticalSpectrum)getTheoSpectrumX(pep, charge, typeMap, ionMap);
-		peplite.setFastaseq(seq);
-		theo.setPeplite(peplite);
+		ArrayTheoreticalSpectrum theo = null;
+		if(peplite instanceof PeptideLiteMod){
+			theo = (ArrayTheoreticalSpectrum)getTheoSpectrumX(pep, charge, typeMap, ionMap, 
+					((PeptideLiteMod)peplite).getPtmPos(),
+					((PeptideLiteMod)peplite).getPtmMasses());
+			//System.out.println("generating theoretical: " + peplite);
+			peplite.setFastaseq(seq);
+			theo.setPeplite(peplite);
+		}else if(peplite instanceof PeptideLite){
+			theo = (ArrayTheoreticalSpectrum)getTheoSpectrumX(pep, charge, typeMap, ionMap);
+			peplite.setFastaseq(seq);
+			theo.setPeplite(peplite);
+		}
 		return theo;
+	}
+
+	
+	public static Spectrum getTheoSpectrumX(String peptide, int charge, Map<String, IonType> typeMap, IonTypeMapper ionMap){
+		return getTheoSpectrumX(peptide, charge, typeMap, ionMap, new int[]{}, new double[]{});
 	}
 	
 	//a fast array-base implementation
-	public static Spectrum getTheoSpectrumX(String peptide, int charge, Map<String, IonType> typeMap, IonTypeMapper ionMap){
+	public static Spectrum getTheoSpectrumX(String peptide, int charge, 
+			Map<String, IonType> typeMap, IonTypeMapper ionMap, int[] ptmPos, double[] ptmMass){
 		ArrayTheoreticalSpectrum arry = new ArrayTheoreticalSpectrum();
-		double[][] baseMasses = computeBaseMass(peptide, new int[]{}, new double[]{}); 
+		//System.out.println("generting theoretical: " + peptide + "\t" + Arrays.toString(ptmPos) + "\t" + Arrays.toString(ptmMass));
+		double[][] baseMasses = computeBaseMass(peptide, ptmPos, ptmMass);
+		//double[][] baseMasses = computeBaseMass(peptide, new int[]{1}, new double[]{100});
 		String[] leng = new String[]{"short", "long"};
 		Collection<IonType> types = peptideMap.get(""+charge+"@"+leng[getPeptideLength(peptide, charge)]);
 		double[][] massIntList = new double[2][baseMasses[0].length*types.size()];
@@ -257,6 +277,12 @@ public class TheoreticalSpectrumFactory {
 //		}
 //		System.out.println();
 		Peptide p = new Peptide(peptide+"."+charge);
+		//System.out.println("unmod pep " + p.toString());
+		for(int i = 0; i < ptmPos.length; i++){
+			//System.out.println("mod size: " + ptmPos.length);
+			p.insertPTM(ptmPos[i]+1, ptmMass[i]);
+		}
+		//System.out.println("moded pep " + p.toString());
 		arry.setMassIntensityList(massIntList);
 		arry.peptide = peptide+"."+charge;
 		arry.parentMass = p.getParentmass();
@@ -316,6 +342,7 @@ public class TheoreticalSpectrumFactory {
 		int j = 0;
 		for(int i = 0; i < peptide.length(); i++){
 			if(pos != null && j < pos.length && pos[j]== i+1){
+				//System.out.println("adding ptm " + peptide + " at " + pos[j]);
 				sum += ptmmass[j];
 				j++;
 			}
@@ -332,6 +359,8 @@ public class TheoreticalSpectrumFactory {
 		prefixMasses[peptide.length()-1] = 0; //do not provide information for IDs
 		return new double[][]{prefixMasses, suffixMasses};		
 	}
+	
+	
 	/**Testing Code from here one===================================================================================================================================================**/
 	public static void testGenerateTheoSpectrum(){
 		String peptide = "ENEMLAQDK";

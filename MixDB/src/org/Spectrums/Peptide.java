@@ -61,7 +61,6 @@ public class Peptide implements Serializable{
 		if(peptide.startsWith("X_") ){
 			peptide = peptide.substring(2);
 		}
-
 		this.peptide = parsePeptide2(peptide);
 	}
 	
@@ -376,12 +375,14 @@ public class Peptide implements Serializable{
 	
 	public String toString(){
 		StringBuffer buff = new StringBuffer(this.peptide);
+		//System.out.println("pep: " + buff.toString());
 		if(this.isDecoy){
 			//buff.insert(0, 'r');
 		}
 		int offset=0;
 		for(int i = 0; i < this.pos.length; i++){
 			String ptm;
+			//System.out.println("position: " + pos[i]);
 			if(ptmmasses[i]>0){
 				ptm = String.format("+%.3f", this.ptmmasses[i]);
 			}else{

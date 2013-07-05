@@ -118,6 +118,10 @@ public class DatabaseIndexer {
 				cands.addAll(cand);
 			}
 		}
+		for(int i = 0; i < cands.size(); i++){
+			PeptideLite pep = cands.get(i);
+			pep.setFastaseq(this.getSeq());
+		}
 		return cands;
 			
 	}
