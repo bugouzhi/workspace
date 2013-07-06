@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/MS/!svn/ver/222/MS/src/MSPLIT/SpectrumIO
+END
+SpectrumParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/MS/!svn/ver/220/MS/src/MSPLIT/SpectrumIO/SpectrumParser.java
+END
+SpectrumReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/MS/!svn/ver/221/MS/src/MSPLIT/SpectrumIO/SpectrumReader.java
+END
+MGFParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/MS/!svn/ver/217/MS/src/MSPLIT/SpectrumIO/MGFParser.java
+END
+SplibParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/MS/!svn/ver/222/MS/src/MSPLIT/SpectrumIO/SplibParser.java
+END
+MSPParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/MS/!svn/ver/219/MS/src/MSPLIT/SpectrumIO/MSPParser.java
+END
+MS2Parser.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/MS/!svn/ver/218/MS/src/MSPLIT/SpectrumIO/MS2Parser.java
+END

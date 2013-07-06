@@ -1,0 +1,113 @@
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/MS/!svn/ver/251/MS/src/MSPLIT
+END
+AnnotatedSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/MS/!svn/ver/205/MS/src/MSPLIT/AnnotatedSpectrum.java
+END
+SpectrumUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/MS/!svn/ver/251/MS/src/MSPLIT/SpectrumUtil.java
+END
+Spectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/MS/!svn/ver/213/MS/src/MSPLIT/Spectrum.java
+END
+SpectrumLibSearcher.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/MS/!svn/ver/250/MS/src/MSPLIT/SpectrumLibSearcher.java
+END
+SpectrumFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/MS/!svn/ver/6/MS/src/MSPLIT/SpectrumFilter.java
+END
+SimpleAnnotatedSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/MS/!svn/ver/211/MS/src/MSPLIT/SimpleAnnotatedSpectrum.java
+END
+SimpleSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/MS/!svn/ver/212/MS/src/MSPLIT/SimpleSpectrum.java
+END
+AnnotatedMixtureSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/MS/!svn/ver/204/MS/src/MSPLIT/AnnotatedMixtureSpectrum.java
+END
+MixtureSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/MS/!svn/ver/207/MS/src/MSPLIT/MixtureSpectrum.java
+END
+Peak.java
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/MS/!svn/ver/6/MS/src/MSPLIT/Peak.java
+END
+SpectrumTransfromer.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/MS/!svn/ver/215/MS/src/MSPLIT/SpectrumTransfromer.java
+END
+SpectrumReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/MS/!svn/ver/6/MS/src/MSPLIT/SpectrumReader.java
+END
+MixtureSpectrumGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/MS/!svn/ver/208/MS/src/MSPLIT/MixtureSpectrumGenerator.java
+END
+SimplePeak.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/MS/!svn/ver/249/MS/src/MSPLIT/SimplePeak.java
+END
+Peptide.java
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/MS/!svn/ver/210/MS/src/MSPLIT/Peptide.java
+END
+SpectrumComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/MS/!svn/ver/216/MS/src/MSPLIT/SpectrumComparator.java
+END
+CosineSpectrumComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/MS/!svn/ver/206/MS/src/MSPLIT/CosineSpectrumComparator.java
+END
+MSPLITSearch.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/MS/!svn/ver/209/MS/src/MSPLIT/MSPLITSearch.java
+END

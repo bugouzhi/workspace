@@ -1,0 +1,27 @@
+package org.Spectrums;
+/**
+ * A object represent a specific PTM on a peptide
+ * @author jian wang
+ *
+ */
+public class PTM {
+	private int position;
+	private double mass;
+	public PTM(int position, double mass){
+		this.position = position;
+		this.mass = mass;
+	}
+	public int getPosition() {
+		return position;
+	}
+	public void setPosition(int position) {
+		this.position = position;
+	}
+	public double getMass() {
+		return mass;
+	}
+	public void setMass(double mass) {
+		this.mass = mass;
+	}
+	
+}

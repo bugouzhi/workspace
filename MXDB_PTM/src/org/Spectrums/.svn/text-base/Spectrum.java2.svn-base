@@ -1,0 +1,489 @@
+//contain various informations about a spectrum 
+import java.io.*;
+import java.util.Vector;
+import java.util.Arrays;
+
+public class Spectrum {
+	//default value for vector representation
+	private static double BINWIDTH = 0.5;
+	private static double MINMASS = 50;
+	private static double MAXMASS = 2000;
+	//the peaks in this spectrum, we should always keep this list sorted
+	//according to the mass
+	private Vector <Peak> peaks; 
+	String peptide;
+	double parentMass;
+	int charge;
+	double modMass; //mass of any modification
+	int modPos; //the position of modification
+	
+	public Spectrum(){ //create dummy spectrum
+			this.peaks =new Vector();
+			this.peptide = "DUMMYSEQ";
+		    this.modMass = 0;
+			this.modPos = 0;
+			this.charge = 1;
+			this.parentMass = 10000; //very large mass, so the dummy
+			                         //is different than real spectra
+	}	
+	//note in the peptide we also include the charge as well, since
+	//we are using the peptide as key to group spectrum, thus spectrum
+	//with same peptide AND same charge should be grouped together
+	public Spectrum(Vector peaks, String peptide, double pm, int charge,
+		double modMass, int modPos){
+		this.peaks = peaks;
+		this.peptide = peptide;
+		this.parentMass = pm;
+		this.charge = charge;
+		this.modMass = modMass;
+	}
+	
+	public Spectrum(String spectrumFile, String format){
+		if(format.equals("MGF")){
+			readSpectrumFromMGF(spectrumFile);
+		}
+	}
+	
+	public Spectrum readSpectrumFromNIST(String fileName){
+		return new Spectrum();
+	}
+	
+	//create a new spectrum by combining two spectrum together
+	//note this is a simulated spectrum, so some of the field might
+	//not make sense 
+	public Spectrum(Spectrum s1, Spectrum s2, double scale1, double scale2){
+		s1 = s1.toNormVector(1, 0.5, 2000);
+		s2 = s2.toNormVector(1, 0.5, 2000);
+		this.peptide = s1.peptide + " & " +  s2.peptide;
+		this.modMass = 0;
+		this.modPos = 0;
+		this.charge = 0;
+		this.peaks = new Vector();
+		Peak p1, p2;
+		double mz1, mz2; 
+		int i = 0, j = 0;
+		while(i < s1.peaks.size() && j < s2.peaks.size()){
+			p1 = s1.peaks.get(i);
+			p2 = s2.peaks.get(j);
+			mz1 = p1.getMass();
+			mz2 = p2.getMass();
+			if(mz1 < mz2){
+				this.peaks.add(new Peak(mz1, p1.getIntensity()*scale1));
+				i++;
+			}else if(mz1 == mz2){
+				this.peaks.add(new Peak(mz1, p1.getIntensity()*scale1 + p2.getIntensity()*scale2));
+				i++;
+				j++;
+			}else {
+				this.peaks.add(new Peak(mz2, p2.getIntensity()*scale2));
+				j++;
+			}
+		}
+		//appending any remaining peaks 
+		while(i < s1.peaks.size()){
+			p1 = s1.peaks.get(i);
+			this.peaks.add(new Peak(p1.getMass(), p1.getIntensity()*scale1));
+			i++;
+		}
+		while(j < s2.peaks.size()){
+			p2 = s2.peaks.get(j);
+			this.peaks.add(new Peak(p2.getMass(), p2.getIntensity()*scale2));
+			j++;
+		}
+	}
+	
+	//same as above except this time we are not scaling the intensity
+	public Spectrum(Spectrum s1, Spectrum s2){
+		this(s1,s2,1,1);
+	}
+	
+	public void setPeaks(Vector<Peak> peaks){
+		this.peaks = peaks;
+	}
+	
+	public Vector<Peak> getPeak(){
+		return this.peaks;
+	}
+	
+	//read a spectrum from a MGF file
+	public void readSpectrumFromMGF(String fileName){
+		try{
+			BufferedReader bf = new BufferedReader(new FileReader(fileName));
+			readSpectrumFromMGF(bf);
+		 }catch(IOException ioe){
+				System.out.println("Cannot Open MGF file");
+				System.out.println(ioe.getMessage());			
+		 }
+	}
+	
+	public void readSpectrumFromMSP(String fileName){
+		try{
+			BufferedReader bf = new BufferedReader(new FileReader(fileName));
+			readSpectrumFromMSP(bf);
+		 }catch(IOException ioe){
+				System.out.println("Cannot Open MSP file");
+				System.out.println(ioe.getMessage());			
+		 }
+	}
+	
+	public boolean readSpectrumFromMSP(BufferedReader bf) {
+
+		try {
+		
+			String temp ;
+    		int size ;
+			String line;
+			int mod ;
+	
+			boolean isPeaks = false; 
+			String[] tokens;
+		   	line = bf.readLine() ;
+		   
+   			while (line != null && line.length() != 0) {
+	   			
+	   			if(line.startsWith("Name:")){
+	   				this.charge = Integer.valueOf((line.split("[ ,/]"))[2]);
+					this.peptide = (line.split("[ ,/]"))[1];
+					this.peptide = this.peptide + "." + this.charge;
+				
+				}else if(line.startsWith("Comment:")){
+					temp = line.substring(line.indexOf("Parent")) ;
+	    			this.parentMass = Double.parseDouble((temp.split("[=, ]"))[1] ) ;
+	
+					temp = line.substring(line.indexOf("Mods")) ;
+			    	tokens = temp.split("[,,=, ,/]") ;
+			
+					mod = Integer.parseInt(tokens[1]) ;
+	    	
+			    	if (mod == 0) {
+			 
+			    		this.modPos = -1 ;
+			    		this.modMass = 0 ;
+			    			    	
+			    	}
+			   
+			    	else {
+			    		
+			    		this.modPos = Integer.parseInt(tokens[2]) ;
+			    		this.modMass = 100.00 ;
+			    			 
+			    	}
+			
+				}else if(line.startsWith("Num peaks:")){
+					isPeaks = true ;
+				
+				}
+				
+				else if(isPeaks) {
+					tokens = line.split("\t");
+					this.peaks.add(new Peak(Double.valueOf(tokens[0]),
+							Double.valueOf(tokens[1])));
+				}
+				line = bf.readLine();
+			}
+			
+			if(line == null){
+				return false;
+			}
+   		  			
+   		}catch(IOException ioe){
+			System.out.println("Cannot Open MST file");
+			System.out.println(ioe.getMessage());
+			return false;
+		}
+		return true;
+		
+		
+	}
+	
+	
+	//read a spectrum from a buffer reader, this way
+	//when we try to create multiple spectrums from MGF
+	//we can pass the reader to it directly
+	//note that means after calling this function we
+	//read one subsequent spectra from the file
+	public boolean readSpectrumFromMGF(BufferedReader bf){
+		try{
+			String line;
+			do{
+				line = bf.readLine();
+				//System.out.println(line);
+			}while(line != null && !line.equals("BEGIN IONS"));
+			// a flag tell us whether we are in peak sections
+            //in the spectrum file
+			boolean isPeaks = false; 
+			String[] token;
+			line = bf.readLine();
+			while(line != null && !line.equals("END IONS")){
+				//System.out.println("line is " + line);
+				if(line.startsWith("PEPMASS")){
+					this.parentMass = Double.valueOf(((line.split("="))[1]));
+					
+				}else if(line.startsWith("CHARGE")){
+					this.charge = Integer.valueOf((line.split("="))[1]);
+					
+				}else if(line.startsWith("PEPSEQ")){
+					this.peptide = (line.split("="))[1];
+					this.peptide = this.peptide + "." + this.charge;
+					
+				}else if(line.startsWith("PEPMOD")){
+					//just put some arbitary mod for now
+					//mainly use this as a flag to tell spectra with mod
+					//from those without any mod
+					this.modMass = 50;
+					this.modPos = 3;
+					
+				}else if(line.startsWith("GPMp")){
+					isPeaks = true;
+					
+				}else if(isPeaks){
+					token = line.split(" ");
+					this.peaks.add(new Peak(Double.valueOf(token[0]),
+							Double.valueOf(token[1])));
+				}
+				line = bf.readLine();
+			}
+			if(line == null){
+				return false;
+			}
+		}catch(IOException ioe){
+			System.out.println("Cannot Open MGF file");
+			System.out.println(ioe.getMessage());
+			return false;
+		}
+		return true;
+	}
+
+	//return a vector representation of the spectrum
+	//where we bin the spectrums and sum up all the 
+	//operationally this is just another spectrum with
+	//whose x-coordinate of peaks are in the unit of bin-width
+	//rather than in dalton, so it each peak will have 
+	//an integer as their x-coordinate, e.g (1, 100.2) that means
+	//we have a sum of peaks with total intensity 100.2 at bin 1 etc..
+	public Spectrum toNormVector(double binWidth, double minMass, double maxMass){
+		Spectrum newSpectrum = toVector(binWidth, minMass, maxMass);
+		newSpectrum.normalize();
+		return newSpectrum;
+	}
+	
+	public Spectrum toNormVector(){
+		
+		return this.toNormVector(BINWIDTH, MINMASS, MAXMASS);
+	}
+	
+	private Spectrum toVector(double binWidth, double minMass, double maxMass){
+		int bins = (int)((maxMass-minMass)/binWidth) + 1;
+		Vector <Peak>  newPeaks = new Vector();
+		double rightBoundary = minMass + binWidth;
+		double currentValue;
+		double moz;
+		int j = 0;
+		int i = 0;
+		//System.out.println("bins: " + bins);
+  		for(i = 0; i < bins; i++){
+			rightBoundary = minMass + i*binWidth;
+			currentValue = 0;
+			while(j < this.peaks.size()){
+				moz = ((Peak)peaks.get(j)).getMass();
+				//System.out.println("moz " + moz);
+				//System.out.println("r-edge: " + rightBoundary);
+				if(moz > rightBoundary){
+					break;
+				}else{
+					currentValue += peaks.get(j).getIntensity(); 
+					j++;
+				}	
+			}
+			if(currentValue > 0){
+				//System.out.println("creating new peaks");
+				newPeaks.add(new Peak(i, currentValue));
+			}
+		}
+		return new Spectrum(newPeaks, this.peptide, this.parentMass, this.charge,
+				this.modMass, this.modPos);
+		
+	}
+	
+	//we normalize the intensity of the spectrum
+	//so it is has norm one
+	private void normalize(){
+		double total = magnitude();
+		this.scaleSpectrum(1/total);
+	}
+	
+	//return the magnitue of this spectrum
+	//now we are thinking a spectrum as a vector
+	private double magnitude(){
+		double total = 0;
+		for(int i = 0; i < peaks.size(); i++){
+			total += (peaks.get(i)).getIntensity() * (peaks.get(i)).getIntensity();
+		}
+		total = Math.pow(total, 0.5);
+		return total;
+	}
+	
+	//we scale all the peaks in this spectrum by some factor
+	public void scaleSpectrum(double factor){
+		for(int i = 0; i < peaks.size(); i++){
+			peaks.get(i).scaleIntensity(factor);
+		}
+	}
+	
+	//compare two spectrum by calculating their normalized dot product 
+	//i.e. cosine of vector representation of spectrum
+	public double cosineSim(Spectrum s1){
+		double product = 0;
+		double magnitude = this.magnitude(); 
+		magnitude *= s1.magnitude();
+		//System.out.println("mixture magnitue " + s1.magnitude());
+		double mz1, mz2; 
+		int i = 0, j = 0;
+		while(i < this.peaks.size() && j < s1.peaks.size()){
+			mz1 = this.peaks.get(i).getMass();
+			mz2 = s1.peaks.get(j).getMass();
+			if(mz1 < mz2){
+				i++;
+			}else if(mz1 == mz2){
+				product += this.peaks.get(i).getIntensity()
+					* s1.peaks.get(j).getIntensity();
+				i++;
+				j++;
+			}else{
+				j++;
+			}
+		}
+		
+		return product/magnitude;
+		
+		
+		
+	}
+	
+	//similar to calculating cosine of two vector
+	//but here we consider only those bins
+	//that are non-zero in this vector
+	public double projectedCosine(Spectrum s1){
+		double product = 0;
+		double magnitude = this.magnitude();
+		//we do the dotproduct as above, but just calculate
+		//the norm for s1 vector differently, we only consider
+	 	//those values that are non-zero in this vector
+		double projectedNorm = 0.00000001; //very small number avoid div-by-zero error  
+		double mz1, mz2; 
+		int i = 0, j = 0;
+		while(i < this.peaks.size() && j < s1.peaks.size()){
+			mz1 = this.peaks.get(i).getMass();
+			mz2 = s1.peaks.get(j).getMass();
+			if(mz1 < mz2){
+				i++;
+			}else if(mz1 == mz2){
+				//System.out.println("matched " + mz1);
+				product += this.peaks.get(i).getIntensity()
+					* s1.peaks.get(j).getIntensity();
+				projectedNorm += s1.peaks.get(j).getIntensity() * s1.peaks.get(j).getIntensity();
+				i++;
+				j++;
+			}else{
+				j++;
+			}
+		}
+		//System.out.println("this norm: " + this.magnitude());
+		//System.out.println("mixture projected norm: " + Math.pow(projectedNorm, 0.5));
+		magnitude = magnitude * Math.pow(projectedNorm, 0.5);
+		return product/magnitude;
+	}
+	
+	
+	//mix/combine two spectrum together
+	public static Spectrum combine(Spectrum s1, Spectrum s2){
+		return new Spectrum();
+	}	
+	
+	public String getPeptide(){
+		
+		return this.peptide ;
+	}
+	
+	//printout the spectrum for us to see
+	public String toString(){
+		StringBuffer sb = new StringBuffer(); 
+		sb.append("peptide: " + peptide + "\n");
+		sb.append("parentMass: " + parentMass + "\n");
+		sb.append("charge: " + charge + "\n");
+		sb.append("modMass: " + modMass + "\n");
+		sb.append("modPos: " + modPos + "\n");
+		sb.append("spectrum peaks: " + "\n");
+		for(int i = 0; i < peaks.size(); i++){
+			sb.append(peaks.get(i));
+		}
+		return sb.toString();
+	}
+	
+	public static void main(String[] args){
+		testReadMGF();
+		testtoVector();
+		testVectorRep();
+		testMixSpect();
+		
+	}
+	//the following are simple test cases for various functions
+	public static void testReadMGF(){
+		String filename = "testspectrum.mgf";
+		Spectrum msms = new Spectrum();
+		msms.readSpectrumFromMGF(filename);
+		System.out.print(msms);
+	}
+	
+	public static void testtoVector(){
+		System.out.println("generating vectored spectrum");
+		String filename = "testspectrum.mgf";
+		Spectrum msms = new Spectrum();
+		msms.readSpectrumFromMGF(filename);
+		Spectrum s = msms.toVector(50, 100, 500);
+		System.out.println(s);
+	}
+	
+	public static void testVectorRep(){
+		String filename = "testspectrum.mgf";
+		Spectrum msms = new Spectrum();
+		msms.readSpectrumFromMGF(filename);
+		Spectrum msms2 = new Spectrum();
+		msms2.readSpectrumFromMGF(filename);
+		System.out.println("Comparing self to self: "
+				+ msms2.cosineSim(msms));
+	
+		msms = msms.toNormVector(0.5, 100, 500);
+		msms2 = msms2.toNormVector(0.5, 100, 500);
+		System.out.println("Comparing self to self: "
+				+ msms2.cosineSim(msms));
+		System.out.println();
+	
+	
+	}
+	
+	public static void testMixSpect(){
+		System.out.println("generating mix spectrum");
+		String filename = "testspectrum.mgf";
+		Spectrum s1 = new Spectrum();
+		s1.readSpectrumFromMGF("testspectrum.mgf");
+		Spectrum s2 = new Spectrum();
+		s2.readSpectrumFromMGF("testspectrum2.mgf");
+		s1.normalize();
+		s2.normalize();
+		Spectrum msms12 = new Spectrum(s1, s2);
+		System.out.println(s1);
+		System.out.println(s2);
+		System.out.println(msms12);
+		System.out.println("cosine: " + s2.cosineSim(msms12));
+		System.out.println("projected: " + s2.projectedCosine(msms12));
+		System.out.println("cosine: " + s1.cosineSim(msms12));
+		System.out.println("projected: " + s1.projectedCosine(msms12));
+		System.out.println("distinct: " + s1.cosineSim(s2));
+		System.out.println("distinct projected: " + s1.cosineSim(s2));
+	}
+	  
+}
+
+
+ 

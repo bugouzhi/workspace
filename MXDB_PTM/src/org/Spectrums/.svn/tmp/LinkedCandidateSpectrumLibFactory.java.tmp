@@ -1,0 +1,309 @@
+package org.Spectrums;
+
+import java.util.ArrayList;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class LinkedCandidateSpectrumLibFactory extends CandidateSpectrumLibFactory{
+	private CrossLinker linker;
+	public LinkedCandidateSpectrumLibFactory(String peptidesFile, CrossLinker linker){
+		super();
+		this.minCharge = 1;
+		this.maxCharge = 1;  
+		this.setPeptideFile(peptidesFile);
+		this.linker = linker;
+	}
+	
+//	public LinkedCandidateSpectrumLibFactory(List<Peptide> pepList, CrossLinker linker){
+//		this.linker = linker;
+//		this.indexPeptideByParentMass(pepList, 0.5);
+//	}
+	
+	public LinkedCandidateSpectrumLibFactory(List<String> pepList, CrossLinker linker){
+		this.linker = linker;
+		this.peptides = pepList;
+		this.minCharge = 1;
+		this.maxCharge = 1;
+		this.indexPeptideByParentMass(0.5);
+	}
+	
+	public SpectrumLib createCandidateSpectrumLibX(Spectrum s, double pmTolerance, boolean isDecoy){
+		if(this.peptides.size() < 1){
+			this.loadPeptidesFromFile(this.peptideFile);
+		}
+		System.out.println("numbers of peptides: " + this.peptides.size());
+
+		if(this.peptideTable == null){
+			this.indexPeptideByParentMass(pmTolerance);
+		}
+		
+		System.out.println("numbers of bins created: " + this.peptideTable.values().size());
+		List<Peptide> candidates = this.getLinkedCandidateByMass(s.parentMass, pmTolerance, s.charge);
+
+		if(isDecoy){
+			return createDecoyFromPeptides(candidates, this.prefix, this.suffix, s.charge);
+		}else{ 
+			return createLibFromPeptides(candidates, this.prefix, this.suffix, s.charge);
+		}
+	}
+	
+	public void indexPeptideByParentMass(List<Peptide> peptides, double massBinWidth){
+		Peptide p;
+		Long massIndex;
+		List<Peptide> pepList;
+		this.peptideTable = new HashMap<Long, List<Peptide>>();
+		this.massBinWidth = massBinWidth;
+		for(int i = 0, size = peptides.size(); i < size; i++){
+				p = peptides.get(i);
+				long index = Math.round((float)p.getParentmass()/massBinWidth);
+				massIndex = new Long(index);
+				//System.out.println("key is " + mass);
+				if(this.peptideTable.containsKey(massIndex)){
+					pepList = this.peptideTable.get(massIndex);
+				}else{
+					pepList = new ArrayList<Peptide>();
+					this.peptideTable.put(massIndex, pepList);
+				}
+				pepList.add(p);
+		}
+		//System.out.println("indexed " + this.peptideTable.values().size() + " peptides");
+	}
+	
+	public List<Peptide> getLinkedCandidateByMass(double parentmass, double pmTolerance, int charge){
+		System.out.println("generating linked peptides");
+		List<Peptide> candidates = new ArrayList();
+		Iterator<Long> indexIterator = this.peptideTable.keySet().iterator();
+		Set<Peptide> uniquePeptides = new HashSet();
+		while(indexIterator.hasNext()){
+			Long massIndex = indexIterator.next();
+			Double mass =massIndex*this.massBinWidth;
+			List<Peptide> candidates1 = this.getCandidateByMass(mass, pmTolerance);
+			List<Peptide> candidates2 = this.getCandidateByMass(linkedPeptideOffset(mass, 1, parentmass, charge), pmTolerance);
+//			if(candidates1.size() > 0 && candidates2.size() > 0){
+//				System.out.println("linked mass is: " + parentmass);
+//				System.out.println("mass is: " + mass);
+//				System.out.println("offset mass is: " + linkedPeptideOffset(mass, 1, parentmass, charge));
+//				System.out.println("candidates 1 has " + candidates1.size());
+//				System.out.println("canddiates 2 has " + candidates2.size());
+//			}
+			for(int i = 0; i < candidates1.size(); i++){
+				Peptide p = candidates1.get(i);
+				for(int j = 0; j < candidates2.size(); j++){
+					Peptide p2 = candidates2.get(j);
+					if(isValidLinkedPair(p, p2, parentmass, charge, pmTolerance)){
+						//System.out.println("found valid pairs " + p.getPeptide() + "\t" + p2.getPeptide());
+						if(!uniquePeptides.contains(p)){
+							uniquePeptides.add(p);
+							generateLinkedPeptide(p, parentmass, charge, candidates);
+							//System.out.println("adding peptide: " + p.getPeptide());
+						}
+						if(!uniquePeptides.contains(p2)){
+							uniquePeptides.add(p2);
+							generateLinkedPeptide(p2, parentmass, charge, candidates);
+							//System.out.println("adding peptide: " + p2.getPeptide());	
+						}
+						//System.out.println("petpides added: " + candidates.size());
+					}
+				}
+			}
+		}
+		System.out.println("after parent mass filter candidate library has size: " + candidates.size());
+		//candidates.addAll(uniquePeptides);
+		return candidates;
+	}
+	
+	private double linkedPeptideOffset(double peptideMass, int peptideCharge, double linkedMass, int linkedCharge){
+		return linkedMass*linkedCharge - 
+			(peptideMass*peptideCharge + this.linker.getLinkerMassOffSet()
+				+ (linkedCharge-peptideCharge-1)*Mass.PROTON_MASS);
+	}
+	
+	/**
+	 * This function generate linked peptide for each possible position of linkage
+	 * The linked peptide is represented as a single peptide with a modification at the position
+	 * of cross-linking
+	 */
+	private void generateLinkedPeptide(Peptide p, double linkedMass, int linkedCharge, List<Peptide> candidates){
+		String pep = p.getPeptide();
+		double offsetmass = linkedMass*linkedCharge - 
+			(p.getParentmass() * p.getCharge() +
+			 (linkedCharge-p.getCharge())*Mass.PROTON_MASS);
+		for(int i = 0; i < pep.length(); i++){
+			if(this.linker.isLinkedPosition(pep.charAt(i))){
+				Peptide copy = new Peptide(p);
+				copy.setPos(new int[]{i});
+				copy.setPtmmasses(new double[]{offsetmass});
+				copy.setCharge((short)linkedCharge);  //we assume for now common peaks has charge 2
+				candidates.add(copy);
+			}
+			
+		}
+//		candidates.add(p);
+//		System.out.println("addinging candidates, so-far: " + candidates.size());
+	}
+	
+	private  boolean isValidLinkedPair(Peptide p, Peptide p2, double parentmass, int charge, double tolerance){
+		double massDiff = parentmass*charge - 
+			(p.getParentmass() + p2.getParentmass() + this.linker.getLinkerMassOffSet()
+				+ (charge - p.getCharge() - p2.getCharge())*Mass.PROTON_MASS);
+		//int chargeSum = p.getCharge() + p2.getCharge();
+	//	System.out.println("mass1 is: " + p.getParentmass() + " : " + p.getPeptide());
+	//	System.out.println("mass2 is: " + p2.getParentmass() + " : " + p.getPeptide());
+		//System.out.println("targeted mass is: " + parentmass*charge);
+		int chargeSum = charge; //use no charge information for now
+//		if(massDiff < tolerance){
+//			System.out.println("mass diff: " + massDiff);
+//		}
+		return Math.abs(massDiff) < tolerance && chargeSum == charge;
+		//System.out.println("mass difference is: " + Math.abs(massDiff));
+		//return true;
+	}
+	
+	public static boolean isValideLinkedPair(Peptide p, Peptide p2, double parentmass, int charge, double tolerance){
+		double massDiff = parentmass*charge - 
+		(p.getParentmass() + p2.getParentmass() + Mass.DSPLINKER_MASS
+			+ (charge - p.getCharge() - p2.getCharge())*Mass.PROTON_MASS);
+		int chargeSum = charge; //use no charge information for now
+		return Math.abs(massDiff) < tolerance && chargeSum == charge;
+	}
+	
+	public SpectrumLib createLibFromPeptides(List<Peptide> pList, String[] prefixIons, String[] suffixIons, int linkedCharge){
+		Map<String,List<Spectrum>> table = new HashMap<String,List<Spectrum>>();
+		Iterator<Peptide> it = pList.iterator();
+		Peptide current;
+		List<Spectrum> l, l2;
+		TheoreticalSpectrum t, t2;
+		while(it.hasNext()){
+			current = it.next();
+			int linkedcharge = current.getCharge();
+			//System.out.println("current linked charge is " + linkedCharge);
+			current.setCharge((short)2);  //we assume peptide either has charge 2 or 3
+			t = new LazyEvaluateLinkedSpectrum(current, linkedCharge);
+			Peptide copy = new Peptide(current);
+			copy.setCharge((short)3);  //we assume peptide either has charge 2 or 3
+			t2 = new LazyEvaluateLinkedSpectrum(copy, linkedCharge);
+			if(table.containsKey(t.peptide)){
+				l = table.get(t.peptide);
+			}else{
+				l = new ArrayList<Spectrum>();
+			}
+			if(table.containsKey(t2.peptide)){
+				l2 = table.get(t2.peptide);
+			}else{
+				l2 = new ArrayList<Spectrum>();
+			}
+			l.add(t);
+			l2.add(t2);
+			table.put(t.peptide, l);
+			table.put(t2.peptide, l2);
+		}
+		return new SpectrumLib(table);
+	}
+
+	public SpectrumLib createDecoyFromPeptides(List<Peptide> pList, String[] prefixIons, String[] suffixIons, int linkedCharge){
+		Map<String,List<Spectrum>> table = new HashMap<String,List<Spectrum>>();
+		Iterator<Peptide> it = pList.iterator();
+		Peptide current;
+		List<Spectrum> l;
+		TheoreticalSpectrum t;
+		while(it.hasNext()){
+			current = it.next();
+			current = current.reverse();
+			t = new LazyEvaluateLinkedSpectrum(current, linkedCharge);
+			l = new ArrayList<Spectrum>();
+			l.add(t);
+			table.put(t.peptide, l);
+		}
+		return new SpectrumLib(table);
+	}
+	
+	public static void testLinkedSpectrumFactory(){
+		String file = "..\\mixture_linked\\Ecoli_allpeptides.txt";
+		//String file = "..\\mixture_linked\\TrypDigested_filteredPeptides.txt";
+		CrossLinker linker = new CrossLinker(Mass.DSPLINKER_MASS, new char[]{'K'});
+		LinkedCandidateSpectrumLibFactory f = 
+			new LinkedCandidateSpectrumLibFactory(file, linker);
+		f.loadPeptidesFromFile(file);
+		f.indexPeptideByParentMass(0.01);
+		Spectrum s = new Spectrum();
+		s.charge = 5;
+		s.parentMass = 789.9761;
+		s.peptide = "KVIITAPAK.1";
+		long start = (new GregorianCalendar()).getTimeInMillis();
+		start = (new GregorianCalendar()).getTimeInMillis();
+		SpectrumLib lib2 = f.createCandidateSpectrumLibX(s, 0.01, false);
+		System.out.println("Got " + lib2.getSpectrumList().size() + " candidates total");
+		System.out.println("Running for: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+	}
+	
+	public static int checkPassFilter(String peptide1, String peptide2, List<Spectrum> filtered){
+		int match1 = 0, match2 = 0;
+		for(int i = 0; i < filtered.size(); i++){
+			String curr = filtered.get(i).getPeptide().split("\\.")[0];
+			if(curr.equals(peptide1)){
+				match1=1;
+			}
+			if(curr.equals(peptide2)){
+				match2=2;
+			}
+		}
+		return match1 + match2 ;
+	}
+	
+	public static void testLinkedSpectrumFilter(){
+		String probFile = ".\\data\\IonsScore.txt";
+		String noiseModel = ".\\data\\NoiseModel.txt";
+		SimplePeakComparator peakscorer = new SimplePeakComparator(probFile, noiseModel);
+		SimpleProbabilisticScorer filter = new SimpleProbabilisticScorer(peakscorer);
+		filter.setIncludeNoise(false); //do no inlcude noise in filter
+		SimpleProbabilisticScorer scorer = new SimpleProbabilisticScorer(peakscorer);
+		//String mixtureFile = "..\\mixture_linked\\tk090204_WKarzai_Tryp.mgf";
+		String mixtureFile = "..\\mixture_linked\\spectrums_raw.mgf";
+		//String file = "..\\mixture_linked\\Ecoli_allpeptides.txt";
+		String file = "..\\mixture_linked\\xlinked_allpeptides.txt";
+
+		//String file = "..\\mixture_linked\\TrypDigested_filteredPeptides.txt";
+		SpectrumLib lib = new SpectrumLib(mixtureFile, "MGF");
+		System.out.println("read in " + lib.getSpectrumList().size() + " spectra");
+		Iterator<Spectrum> spectIterator = lib.getAllSpectrums().iterator();
+		CrossLinker linker = new CrossLinker(Mass.DSPLINKER_MASS, new char[]{'K'});
+		LinkedCandidateSpectrumLibFactory f = 
+			new LinkedCandidateSpectrumLibFactory(file, linker);
+		f.loadPeptidesFromFile(file);
+		f.indexPeptideByParentMass(0.5);	
+		while(spectIterator.hasNext()){
+			Spectrum s = spectIterator.next();
+			//lib = null;
+			long start = (new GregorianCalendar()).getTimeInMillis();
+			start = (new GregorianCalendar()).getTimeInMillis();
+			//s.windowFilterPeaks(10, 26);
+			s.computePeakRank();
+			SpectrumLib lib2 = f.createCandidateSpectrumLibX(s, 0.5, false);
+			LookUpSpectrumLib filtered = new LookUpSpectrumLib(lib2.getSpectrumList());
+			List<Peak> queryPeaks = s.getTopPeaks(20);
+			List<Spectrum> filteredCands = filtered.getSpectrumByPeaks(queryPeaks, 2);
+//			SpectrumLibSearcher searcher = new SpectrumLibSearcher(lib2.getSpectrumList(), filter, scorer);
+//			System.out.println(s.getPeptide());
+//			int[] ranks = searcher.linkedRanks(s);
+//			System.out.println(s.getPeptide() + " ranks are  " + ranks[0] + "\t" + ranks[1]);
+//			//searcher.bestLinkedPair(s);
+//			//searcher.bestPair(s);
+			String[] peptides = s.peptide.split(" & ");
+			System.out.println( "Query " + s.peptide + " Got " + lib2.getSpectrumList().size() + " candidates total");
+			System.out.print("Got " + filteredCands.size() + " candidates, target pass filter: ");
+			System.out.println(checkPassFilter(peptides[0], peptides[1].substring(0, peptides[1].length()-2), filteredCands));
+			System.out.println("Running for: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+			//break;
+		}
+	}
+	
+	public static void main(String[] args){
+		//testLinkedSpectrumFactory();
+		testLinkedSpectrumFilter();
+	}
+}

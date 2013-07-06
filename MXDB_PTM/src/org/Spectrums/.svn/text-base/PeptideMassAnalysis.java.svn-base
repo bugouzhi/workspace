@@ -1,0 +1,159 @@
+package org.Spectrums;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.biojava.bio.proteomics.MassCalc;
+import org.biojava.bio.symbol.*;
+import org.biojava.bio.seq.ProteinTools;
+
+import Utils.FileIOUtils;
+
+/**
+ * This class provide general methods for analyze peptides
+ * @author jian wang
+ *
+ */
+
+public class PeptideMassAnalysis {
+	private static MassCalc mcalc = initialize();
+	/**
+	 * Compute molecular weights for a peptide
+	 * @param peptide
+	 * @return mass of the peptide
+	 */
+	
+	public static MassCalc initialize(){
+		mcalc = new MassCalc(SymbolPropertyTable.MONO_MASS, false);
+		try{
+			mcalc.setSymbolModification('C', 160.030648200); //modified mass
+		}catch(IllegalSymbolException e){
+			System.out.println("Symbol not valid");
+			System.out.println(e.getMessage());
+		}
+		return mcalc;
+	}
+	
+	public static double computeMolecularMass(String pep){
+		double mass = 0.0;
+		try{
+			mass = mcalc.getMass(ProteinTools.createProtein(pep));
+			//mass = mcalc.getMolecularWeight(ProteinTools.createProtein(pep));
+		}catch(IllegalSymbolException e){
+			System.out.println("Peptide not valid: " + pep);
+			System.out.println(e.getMessage());
+		}
+		return mass;
+	}
+	
+	public static double computeMbyZ(String pep, int charge){
+		String[] tokens = pep.split("\\.");
+		//System.out.println("peptide original is: " + pep);
+		String fixed = tokens[0].replaceAll("\\d|\\+", "");
+		//System.out.println("peptide fixed is: " + fixed);
+		double mass = computeMolecularMass(fixed);
+		return (mass + charge*1.007282675)/charge;
+	}
+	
+	public static double computeMbyZ(Peptide pep, int charge){
+		double mass = computeMolecularMass(pep.getPeptide());
+		if(pep.hasPTMs()){
+			for(int i = 0; i < pep.getPtmmasses().length; i++){
+				mass+= pep.getPtmmasses()[i];
+			}
+		}
+		return (mass + charge*1.007282675)/charge;
+	}
+	
+	//given a mass spectrum library and its annotation
+	//compute the error between theoretical values and
+	//the actual observed values
+	public static void parentMassError(String spectrumFile, String annotationFile){
+		SpectrumLib lib1 = new SpectrumLib(spectrumFile, "MGF");
+		System.out.println("finish loading");
+		lib1.annoateSpectrumFromInspectFile(annotationFile);
+		System.out.println("finish annotating");
+		Iterator<Spectrum> it = lib1.iterator();
+		Spectrum s;
+		Peptide p;
+		while(it.hasNext()){
+			s = it.next();
+			if(Peptide.isValidPeptide(s.peptide) && s.peptide.contains("+")){
+				p = new Peptide(s.peptide);
+				System.out.println(s.spectrumName + " with mass error " +
+						(s.parentMass-computeMbyZ(p, p.getCharge())));
+			}
+		}
+		
+	}
+	
+	public static void testMassComputation(){
+		String pep = "SLASKVAASKQKKK";
+		int c = 3;
+		System.out.println("peptide is: " + pep + " weights: " + computeMolecularMass(pep) + " Dalton");
+		System.out.println("peptide is: " + pep + " with charge:  " + c + " weights " + computeMbyZ(pep, c) + " Dalton");
+
+	}
+	
+	public static void testparentMassError(){
+		String spectrumFile = ".\\mixture_linked\\tk090204_WKarzai_DTT_Tryp.mgf";
+		String annotation =".\\mixture_linked\\trps\\result.txt";
+		parentMassError(spectrumFile, annotation);
+	}
+	
+	public static void computePrecursorMZError(String annotationFile){
+		List<String> spectrumMass = 
+			FileIOUtils.createListFromFile(annotationFile);
+		//System.out.println("read in " + spectrumMass.size() + " lines");
+		for(Iterator<String> idIter = spectrumMass.iterator(); idIter.hasNext();){
+			String line = idIter.next();
+			if(line.contains("#SpectrumFile")){
+				line = idIter.next(); //skipping header
+			}
+			String[] tokens = line.split("\\s+");
+			//String[] tokens = line.split("\t");
+			//double actualMass = Double.parseDouble(tokens[20]);
+			double actualMass = Double.parseDouble(tokens[8]);
+
+			//System.out.println("actual mass is: " + actualMass);
+			if(tokens[4].equals("0")){
+				tokens[4] = "2";        //have no idea why inspect output charge 0, we replace with 2
+			}
+			//String pep = tokens[2].split("\\.")[1]+"."+tokens[4];
+			String pep = tokens[5];
+			//System.out.println("pep is: " + pep);
+			
+			Peptide p = new Peptide(pep);
+			double[] profile = new double[]{p.getParentmass(), p.getParentmass()+(1/(double)p.getCharge()),
+					p.getParentmass()+(2/(double)p.getCharge())};
+			//double massError = actualMass - p.getParentmass();//computeMinDiff(actualMass, profile, 1);
+			//double ppm = massError*1000000/actualMass;//computeMinDiff(actualMass, profile, 2);
+			double massError = computeMinDiff(actualMass, profile, 1);
+			double ppm = massError*1000000/actualMass;//computeMinDiff(actualMass, profile, 2);
+
+			System.out.println(line + "\tprecursor-error:\t" + massError + "\t" + ppm);
+		}
+		
+	}
+	
+	private static double computeMinDiff(double actual, double[] profile, int mode){
+		double min = 100000;
+		for(int i = 0; i < profile.length; i++){
+			double diff = actual - profile[i];
+			min = Math.abs(diff) < Math.abs(min) ? diff : min;
+		}
+		if(mode == 1){
+			return min;
+		}else{
+			return min*1000000/actual;
+		}
+	}
+	
+	public static void main(String[] args){
+			//testMassComputation();
+			//testparentMassError();
+			computePrecursorMZError("..\\mixture_linked\\t");
+	}
+
+}

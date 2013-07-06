@@ -1,0 +1,266 @@
+package org.Spectrums;
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * Represent a peptide 
+ * @author jian wang
+ *
+ */
+public class Peptide {
+	private static int[] EMPTY_POS = new int[0];
+	private static double[] EMPTY_PTMS = new double[0];
+	private String peptide;
+	private int[] pos = EMPTY_POS;
+	private double[] ptmmasses = EMPTY_PTMS;
+	private short charge;
+	private double parentmass;
+	private boolean isDecoy = false;	
+	public boolean isDecoy() {
+		return isDecoy;
+	}
+
+	public void setDecoy(boolean isDecoy) {
+		this.isDecoy = isDecoy;
+	}
+
+	public double getParentmass() {
+		if(this.parentmass == 0){
+			this.parentmass = PeptideMassAnalysis.computeMbyZ(this, this.charge);
+		}
+		return this.parentmass;
+	}
+	
+	public void setParentmass(double parentmass) {
+		this.parentmass = parentmass;
+	}
+	
+	public Peptide(){
+		
+	}
+	
+	public Peptide(String peptide){
+		if(peptide.startsWith("r") ){
+			peptide = peptide.substring(1);
+		}
+		if(peptide.startsWith("X_") ){
+			peptide = peptide.substring(2);
+		}
+
+		this.peptide = parsePeptide(peptide);
+	}
+	
+//	public Peptide(String pep, int charge){
+//		this.peptide = pep;
+//		this.charge = (short)charge;
+//	}
+	
+	public Peptide(String pep, int charge){
+		//System.out.println("creating peptide: " + pep);
+		this.peptide = pep;
+		this.charge = (short)charge;
+		StringBuffer raw = new StringBuffer(), ptm = new StringBuffer();
+		for(int i = 0; i < pep.length(); i++){
+			if(pep.charAt(i) == '+' || pep.charAt(i) == '-'
+				|| Character.isDigit(pep.charAt(i))
+				|| pep.charAt(i) == '.'){
+				ptm.append(pep.charAt(i));
+			}else{
+				raw.append(pep.charAt(i));
+			}
+		}
+		this.peptide = raw.toString();
+		if(ptm.length() > 2){
+			ptmmasses = new double[]{Double.parseDouble(ptm.toString())};
+			pos = new int[]{pep.indexOf('+')};
+			//System.out.println("ptm: " + " +"+ ptmmasses[0] + "@"+pos[0]);
+			//getAccuratePTMmass();
+		}
+	}
+	
+	//copy constructor
+	public Peptide(Peptide p){
+		this();
+		this.peptide = p.getPeptide();
+		this.charge = p.getCharge();
+		this.parentmass = p.parentmass;
+		this.pos = new int[p.pos.length];
+		this.ptmmasses =  new double[p.ptmmasses.length];
+		for(int i = 0; i < p.pos.length; i++){
+			this.pos[i] = p.pos[i];
+		}
+		for(int i = 0; i < p.ptmmasses.length; i++){
+			this.ptmmasses[i] = p.ptmmasses[i];
+		}
+	}
+	
+	//@TODO needed to update masses when modify the peptide
+	public Peptide reverse(){
+		Peptide p = new Peptide(this);
+		p.peptide = new StringBuffer(this.peptide).reverse().toString();
+		return p;
+	}
+	
+	public static boolean isValidPeptide(String pep){
+		return !pep.contains("Scan");             //cheap way of checking peptide, will need to extends later
+	}
+	
+	private String parsePeptide(String pep){
+		//System.out.println("peptide is: " + pep);
+		if(pep.contains("r")){
+			parsePeptide(pep.substring(1));
+		}
+		if(pep.contains("&")){
+			parseMultiplePeptide(pep);
+		}
+		String[] tokens = pep.split("\\."); 
+		pep = tokens[0];
+		this.charge = Short.parseShort(tokens[1]);
+		StringBuffer raw = new StringBuffer(), ptm = new StringBuffer();
+		for(int i = 0; i < pep.length(); i++){
+			if(pep.charAt(i) == '+' || pep.charAt(i) == '-'
+				|| Character.isDigit(pep.charAt(i))){
+				ptm.append(pep.charAt(i));
+			}else{
+				raw.append(pep.charAt(i));
+			}
+		}
+		if(ptm.length() > 2){
+			ptmmasses = new double[]{Double.parseDouble(ptm.toString())};
+			pos = new int[]{pep.indexOf('+')-1};
+			System.out.println("ptm: " + " +"+ ptmmasses[0] + "@"+pos[0]);
+			//getAccuratePTMmass();
+		}
+		return raw.toString();
+	}
+	
+	
+	private String parseMultiplePeptide(String pep){
+		return "";
+	}
+	
+	/**\
+	 * Obtain more accurate ptmmasses from table
+	 * @param ptmmasses
+	 */
+	//for now just for DSP linkers
+	private void getAccuratePTMmass(){
+		if(this.ptmmasses[0] == 145){
+			this.ptmmasses[0] = Mass.DSPDANGLE_MASS;
+		}
+	}
+	
+	public boolean hasPTMs(){
+		return this.pos != null;
+	}
+
+	public String getPeptide() {
+		return this.peptide;
+	}
+
+	public void setPeptide(String peptide) {
+		this.peptide = peptide;
+		if(!peptide.contains("--")){
+			this.parentmass = PeptideMassAnalysis.computeMbyZ(this, this.getCharge());			
+		}
+	}
+
+	public int[] getPos() {
+		return pos;
+	}
+
+	public void setPos(int[] pos) {
+		this.pos = pos;
+	}
+
+	public double[] getPtmmasses() {
+		return ptmmasses;
+	}
+
+	public void setPtmmasses(double[] ptmmasses) {
+		this.ptmmasses = ptmmasses;
+		this.parentmass = PeptideMassAnalysis.computeMbyZ(this, this.getCharge());
+	}
+
+	public short getCharge() {
+		return charge;
+	}
+
+	public void setCharge(short charge) {
+		this.charge = charge;
+	}
+	
+	public void insertPTM(int pos, double mass){
+		//System.out.println("before we have: " + this.pos.length + "\t" + this.ptmmasses.length);
+		if(this.pos == null){
+			this.pos = new int[]{pos};
+			this.ptmmasses = new double[]{mass};
+		}else{
+			int[] newpos = new int[this.pos.length+1];
+			double[] newmasses = new double[this.ptmmasses.length+1];
+			int j = 0;
+			boolean hasInsert = false;
+			for(int i = 0; i < newpos.length; i++){
+				if(j < this.pos.length && this.pos[j] < pos){
+					newpos[i]=this.pos[j];
+					newmasses[i] = this.ptmmasses[j++];
+				}else if(!hasInsert){
+					newpos[i] = pos;
+					newmasses[i] = mass;
+					hasInsert = true;
+				}else{
+					newpos[i]=this.pos[j];
+					newmasses[i]=this.ptmmasses[j++];
+				}
+			}
+			this.pos = newpos;
+			this.ptmmasses = newmasses;
+		}
+		this.parentmass =  PeptideMassAnalysis.computeMbyZ(this, this.charge);
+		if(this.pos.length != this.ptmmasses.length){
+			System.out.println("warining ptm is not created consistently");
+		}
+	}
+
+	public void createDSPLinkerPTM(){
+		createDSPLinkerPTM(new int[] {this.peptide.indexOf('K')});
+	}
+	
+	public void createDSPLinkerPTM(int[] pos){
+		//System.out.println("setting DSP at position: " + pos[0]);
+		this.pos = pos;
+		this.ptmmasses = new double[]{145}; 
+	}
+	
+	//check whether the peptide sequence is the same
+	//this comparison ignore charge state as well as
+	//ohter information such as ptm etc...
+	public boolean isSamePeptideSeq(Peptide p){
+		return this.peptide.equals(p.getPeptide());
+	}
+	
+	public List<Integer> getLysPositions(){
+		List<Integer> positions = new ArrayList();
+		int i = this.peptide.indexOf('K');
+		while(i >= 0){
+			positions.add(new Integer(i));
+			i = this.peptide.indexOf('K', i+1);
+		}
+		return positions;
+	}
+	
+	public String toString(){
+		StringBuffer buff = new StringBuffer(this.peptide);
+		if(this.isDecoy){
+			buff.insert(0, 'r');
+		}else{
+			int offset=0;
+			for(int i = 0; i < this.pos.length; i++){
+				String ptm = String.format("+%.3f", this.ptmmasses[i]);
+				buff.insert(this.pos[i]+offset, ptm);
+				offset+=ptm.length();
+			}
+		}
+		return buff.toString();
+	}
+}

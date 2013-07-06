@@ -1,0 +1,35 @@
+package org.Spectrums;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MemoryUsageTester {
+	public static void testLoadPeptides(){
+		String file = "..\\mixture_linked\\Yeast_allPeptides_plusDecoy.txt";
+		getMemoryUsage();
+		//List<String> l = Utils.FileIOUtils.createListFromFile(file);
+		getMemoryUsage();
+		List list = new ArrayList();
+		for(int i = 0; i < 1500000; i++){
+			//list.add(new Peptide(l.get(i),1));
+			list.add(new Peptide("",2));
+			list.add(new Peptide("",3));
+		}
+		getMemoryUsage();
+		Runtime.getRuntime().gc();
+		getMemoryUsage();
+		System.out.println(list.size());
+		//System.out.println(longStr.length());
+	}
+	
+	public static void getMemoryUsage(){
+		Runtime r = Runtime.getRuntime();
+		System.out.println("Current memory usage: " 
+				+ (r.totalMemory()
+						- r.freeMemory()));
+	}
+	
+	public static void main(String[] args){
+		testLoadPeptides();
+	}
+}
