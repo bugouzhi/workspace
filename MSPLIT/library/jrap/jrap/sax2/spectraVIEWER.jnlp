@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Id$ -->
+<jnlp
+  spec="1.0+"
+  codebase="http://www.jordens.org/spectraVIEWER"
+  href="spectraVIEWER.jnlp">
+  <information>
+    <title>MzXml spectraVIEWER</title>
+    <vendor>The Sashimi Team</vendor>
+    <homepage href="http://sashimi.sf.net"/>
+    <offline-allowed/>
+  </information>
+  <security>
+      <all-permissions/>
+  </security>
+  <resources>
+    <j2se version="1.4+"/>
+    <jar href="mzxmlviewer.jar"/>
+    <jar href="lib/gnujaxp.jar"/>
+    <jar href="lib/jcommon-0.9.6.jar"/>
+    <jar href="lib/jfreechart-0.9.21.jar"/>
+    <jar href="lib/junit.jar"/>
+    <jar href="lib/pngencoder.jar"/>
+    <jar href="lib/resolver.jar"/>
+    <jar href="lib/servlet.jar"/>
+    <jar href="lib/xercesImpl.jar"/>
+    <jar href="lib/xercesSamples.jar"/>
+    <jar href="lib/xml-apis.jar"/>
+    <jar href="lib/xmlParserAPIs.jar"/>
+  </resources>
+  <application-desc main-class="org.systemsbiology.mzxmlviewer.MzXMLViewer"/>
+</jnlp>

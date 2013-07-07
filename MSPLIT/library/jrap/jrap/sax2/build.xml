@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jrap" default="usage" basedir=".">
+    <property file="build.properties" />
+  	<property file="project.properties"/>
+
+    <property name="path.source.client" value="src/" />
+
+    <path id="path.source">
+        <pathelement location="${path.source.client}" />
+    </path>
+
+    <path id="path.class">
+        <fileset dir="lib/">
+          <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="${build.dir}" />
+    </path>
+
+  	<target name="usage">
+  		<echo message=""/>
+	  	<echo message="jrap Build Process"/>
+		  <echo message="------------------------------------------------------"/>
+  		<echo message=""/>
+	  	<echo message="Available targets are:"/>
+		  <echo message=""/>
+  		<echo message="clean    --> Clean output dirs"/>
+		  <echo message="javadoc  --> Create API documentation"/>
+	  	<echo message="build    --> Compile main Java sources and copy libraries"/>
+      <echo message="all      --> All of the above"/>
+	  	<echo message=""/>
+  	</target>
+
+    <target name="all" depends="clean, javadoc, build" description="Build All"/>
+
+    <target name="clean" depends="" description="Removes classes, javadoc and jar files">
+        <delete dir="${build.dir}" />
+    </target>
+
+    <target name="init">
+        <tstamp />
+        <mkdir dir="${build.dir}" />
+    </target>
+
+    <target name="compile" depends="init" description="Compiles sources">
+      <javac classpathref="path.class" debug="true" destdir="${build.dir}" srcdir="${src.dir}" includes="**"/>
+    </target>
+
+    <target name="build" depends="init, compile" description="Compiles sources">
+    		<mkdir dir="${dist.dir}"/>
+    		<mkdir dir="${dist.dir}/lib"/>
+
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/xerces/resolver.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/xerces/xercesImpl.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/xerces/xercesSamples.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/xerces/xml-apis.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/xerces/xmlParserAPIs.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/jfreechart/jfreechart-0.9.21.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/jfreechart/gnujaxp.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/jfreechart/jcommon-0.9.6.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/jfreechart/junit.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/jfreechart/servlet.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/pngencoder/pngencoder.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/jgoodies/animation-1.1.3.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/jgoodies/binding-1.0rc3.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/jgoodies/forms-1.0.5.jar"/>
+        <copy todir="${dist.dir}/lib" file="${lib.dir}/jgoodies/looks-1.3b1.jar"/>
+
+
+    		<jar jarfile="${dist.dir}/mzxmlviewer.jar">
+    			<fileset dir="${build.dir}">
+    				<include name="**/*"/>
+    			</fileset>
+    			<manifest>
+    				<attribute name="Main-Class" value="org.systemsbiology.mzxmlviewer.Viewer"/>
+		    		<attribute name="Class-Path" value="lib/animation-1.1.3.jar lib/binding-1.0rc3.jar lib/forms-1.0.5.jar lib/looks-1.3b1.jar lib/resolver.jar lib/xercesImpl.jar lib/xercesSamples.jar lib/xml-apis.jar lib/xmlParserAPIs.jar lib/jfreechart-0.9.21.jar lib/gnujaxp.jar lib/jcommon-0.9.6.jar  lib/junit.jar lib/servlet.jar lib/pngencoder.jar"/>
+    			</manifest>
+    		</jar>
+
+    		<jar jarfile="jrap-dist.jar">
+    			<fileset dir="${dist.dir}">
+    				<include name="**/*"/>
+    			</fileset>
+    		</jar>
+
+    		<delete dir="${tmp.dir}"/>
+        <mkdir dir="${tmp.dir}"/>
+    		<unjar src="${dist.dir}/lib/gnujaxp.jar" dest="${tmp.dir}"/>
+    		<jar update="false" jarfile="${dist.dir}/lib/gnujaxp.jar">
+		    	<fileset dir="${tmp.dir}">
+    				<include name="**/*"/>
+		    		<exclude name="META-INF/*"/>
+    			</fileset>
+		    </jar>
+
+		    <signjar lazy="true" alias="${signature.alias}" storepass="${signature.storepass}" keystore="${signature.keystore}">
+    			<fileset dir="${dist.dir}">
+		    		<include name="**/**.jar"/>
+    			</fileset>
+		    </signjar>
+
+    </target>
+
+
+    <target name="run"
+        description="Start MZXmlViewer"  depends="compile">
+        <java classname="org.systemsbiology.mzxmlviewer.Viewer" fork="yes" classpathref="path.class">
+        </java>
+    </target>
+
+
+    <target name="javadoc" description="Generate Javadocs.">
+		  <mkdir dir="${javadocs.dir}"/>
+
+  		<javadoc sourcepath="src" destdir="${javadocs.dir}" windowtitle="JRAP"
+	        defaultexcludes="yes"	author="true" version="true" use="true">
+
+		  	<doctitle><![CDATA[<h1>JRAP</h1>]]></doctitle>
+			  <bottom><![CDATA[<A HREF="http://sashimi.sf.net">SASHIMI Project]]></bottom>
+  			<classpath refid="path.class"/>
+	  		<packageset dir="${src.dir}">
+		  		<include name="**"/>
+			  </packageset>
+
+  		</javadoc>
+    </target>
+</project>
+

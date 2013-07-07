@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 31
+/svn/MS/!svn/ver/292/MSPLIT/src
+END
+PeakIntensityComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/MS/!svn/ver/292/MSPLIT/src/PeakIntensityComparator.java
+END
+Peak.java
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/MS/!svn/ver/295/MSPLIT/src/Peak.java
+END
+SpectrumUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/MS/!svn/ver/292/MSPLIT/src/SpectrumUtil.java
+END
+Spectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/MS/!svn/ver/324/MSPLIT/src/Spectrum.java
+END
+Mass.java
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/MS/!svn/ver/292/MSPLIT/src/Mass.java
+END
+MemoryUsageTester.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/MS/!svn/ver/292/MSPLIT/src/MemoryUsageTester.java
+END
+PeakComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/MS/!svn/ver/292/MSPLIT/src/PeakComparator.java
+END
+SpectrumLib.java
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/MS/!svn/ver/323/MSPLIT/src/SpectrumLib.java
+END
+MZXMLReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/MS/!svn/ver/296/MSPLIT/src/MZXMLReader.java
+END
+PeakMassComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/MS/!svn/ver/292/MSPLIT/src/PeakMassComparator.java
+END
+LargeSpectrumLibIterator.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/MS/!svn/ver/292/MSPLIT/src/LargeSpectrumLibIterator.java
+END
