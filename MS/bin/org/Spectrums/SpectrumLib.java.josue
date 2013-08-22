@@ -1,0 +1,1354 @@
+//a spectrum library that represents a collection of spectrum
+//index by their corresponding peptides
+//thus each peptide is a key that map to a list of
+//spectrums that corresponds to the peptide
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Hashtable;
+import java.util.Enumeration;
+import java.util.Vector;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Collections;
+import java.util.TreeMap;
+import java.io.Serializable;
+import java.util.Random;
+
+public class SpectrumLib implements Iterable, Serializable{
+	public static final long serialVersionUID = 1L; //for serializable interface, see doc
+	private static boolean DETAIL = true;
+	private static boolean NODETAIL = false;
+	private Hashtable<String, Vector<Spectrum>> spectrumLibrary; 
+	private Vector<Spectrum> spectrumList;
+	
+	public SpectrumLib(){
+		this.spectrumLibrary = new Hashtable();
+		this.spectrumList = new Vector<Spectrum>();
+	}
+	
+	public SpectrumLib(Hashtable<String, Vector<Spectrum>> lib){
+		this.spectrumLibrary = lib;
+		this.spectrumList = this.getAllSpectrums();
+	}
+	
+	public SpectrumLib(String file, String format){
+		this();
+		if(format.equals("MGF")){
+			this.readSpectrumsFromMGF(file);
+			this.spectrumList = this.getAllSpectrums();
+		}else if(format.equals("MSP")){
+			this.readSpectrumsFromMSP(file);
+			this.spectrumList = this.getAllSpectrums();
+		}
+		
+	}
+	
+	//read a list of spectrums from MGF file format
+	public SpectrumLib readSpectrumsFromMGF(String fileName){
+		try{
+			BufferedReader bf = new BufferedReader(new FileReader(fileName));
+			Spectrum s = new Spectrum();;
+			boolean success = s.readSpectrumFromMGF(bf);
+			Vector v;
+			while(success){
+				if(spectrumLibrary.containsKey(s.peptide)){
+					v = (Vector)spectrumLibrary.get(s.peptide);
+				}else{
+					v = new Vector();
+				}
+				v.add(s);
+				spectrumLibrary.put(s.peptide, v);
+				s = new Spectrum();
+				success = s.readSpectrumFromMGF(bf);
+			}		 
+			
+		}catch(IOException ioe){
+			System.out.println("Cannot Open MGF file");
+			System.out.println(ioe.getMessage());
+		}
+		return this;
+	}
+	
+	public SpectrumLib readSpectrumsFromMSP(String fileName){
+		try{
+			BufferedReader bf = new BufferedReader(new FileReader(fileName));
+			Spectrum s = new Spectrum();;
+			boolean success = s.readSpectrumFromMSP(bf);
+			Vector v;
+			while(success){
+				//System.out.println(s) ;
+				if(spectrumLibrary.containsKey(s.peptide)){
+					v = (Vector)spectrumLibrary.get(s.peptide);
+				}else{
+					v = new Vector();
+				}
+				v.add(s);
+				spectrumLibrary.put(s.peptide, v);
+				s = new Spectrum();
+				success = s.readSpectrumFromMSP(bf);
+			}		 
+			
+		}catch(IOException ioe){
+			System.out.println("Cannot Open MSP file");
+			System.out.println(ioe.getMessage());
+		}
+		return this;
+	}
+
+	//return all the spectrums in this spectrum library
+	//in a vector form, so it is easier for us to iterate
+	//through the spectrums and do something
+	public Vector getAllSpectrums() {
+		
+		//being a little careless here, no strong typing
+		Vector  spects = new Vector<Spectrum>();
+		Iterator it = this.spectrumLibrary.values().iterator();
+		while(it.hasNext()){
+			spects.addAll((Vector<Spectrum>)it.next());
+		}
+	
+		return spects;
+
+	}
+	
+	public Iterator<Spectrum> iterator(){
+		return this.spectrumList.iterator();
+	}
+	
+	//the following few methods basically just apply some method to every
+	//spectrum in the library, to be more elegant we should have implement
+	//this as some higher order function, but for simplicity we will just 
+	//implement this one by one
+	
+	//transform every spectrum in this libary to a vectorized one
+	public void toNormVector(double binWidth, double minMass, double maxMass){
+		Iterator<Spectrum> it = this.iterator();
+		Spectrum s, v;
+		while(it.hasNext()){
+			s = (Spectrum)it.next();
+			
+			v = s.toNormVector(binWidth, minMass, maxMass);
+			s.setPeaks(v.getPeak());
+		}
+		
+	}
+	//normalize the intensity by taking its square root
+	public void normIntensity(){
+		Iterator<Spectrum> it = this.iterator();
+		while(it.hasNext()){
+			it.next().sqrtSpectrum();
+		}
+	}
+	
+	public void squareIntensity(){
+		Iterator<Spectrum> it = this.iterator();
+		while(it.hasNext()){
+			it.next().squareSpectrum();
+		}
+	}
+	
+	public String toString(){
+		StringBuffer sb = new StringBuffer();	 
+		Iterator it = this.iterator();
+		Spectrum spect;
+		while(it.hasNext()){
+			spect = (Spectrum)it.next();
+			sb.append(spect.toString());
+			sb.append("\n");
+		}
+		return sb.toString();	
+	}
+	
+	//print out the number of spectrum for each peptide in this
+	//library, and various other statistics 
+	//so we can get some idea of what does it looks like
+	public void printStat(boolean detail){
+		StringBuffer sb = new StringBuffer();	 
+		Enumeration e = this.spectrumLibrary.keys();
+		Vector <Spectrum> spects;
+		String pep;
+		int singleCount = 0;
+		int multipleCount = 0;
+		//counting spectrums for each peptide, number
+		//of peptide with single and multiple spectrums
+		while(e.hasMoreElements()){
+			pep = (String)e.nextElement();
+			spects = spectrumLibrary.get(pep);
+			sb.append("peptide: " + pep 
+					+ " # spectrums:\t" +  spects.size() 
+					+ "\n");
+			if(spects.size() > 1){
+				multipleCount++;
+			}else{
+				singleCount++;
+			}		
+		}
+		
+		if(detail){
+			System.out.println(sb.toString());
+		}
+		System.out.println("Total Number of Peptide: " + (singleCount + multipleCount));
+		System.out.println("Peptide with single spectrum : " + singleCount);
+		System.out.println("Peptide with multiple spctra : " + multipleCount);
+	}
+	
+	//we may only want those spectra correspond to unmodified peptide
+	//let's remvoe all spectra with modifcations
+	public void removeModSpectra(){
+		Collection <Vector <Spectrum>> values = this.spectrumLibrary.values();
+		Iterator <Vector <Spectrum>> it = values.iterator();
+		Vector <Spectrum>  v;
+		int index = 0;
+		//iterate over each values, which is a list of spectrums
+		while(it.hasNext()){
+			v = it.next();
+			for(index = 0; index < v.size(); index++){
+				if(v.get(index).modMass > 0){
+					v.remove(index);
+					index--; //since we just remove one element, backtrack one pointer
+				}
+								
+			}
+			//if this peptide has no more peptide remove it as well
+			if(v.size() == 0){
+				it.remove();
+			}
+		}
+		//the "naive" way to update the vector
+		this.spectrumList = this.getAllSpectrums();
+		
+	}
+	
+	//remove all the peptides with only one spectrum, we can't use them
+	//to generate our dataset
+	public void removeSingle(){
+		Collection <Vector <Spectrum>> values = this.spectrumLibrary.values();
+		Iterator <Vector <Spectrum>> it = values.iterator();
+		//iterate over each values, which is a list of spectrums
+		Vector <Spectrum> v;
+		int index = 0;
+		while(it.hasNext()){
+			v = it.next();
+			if(v.size() == 1){
+				it.remove();
+			}
+		}
+		//the "naive" way to update the vector
+		this.spectrumList = this.getAllSpectrums();
+	}
+	
+	//we divide the dataset into two 
+	//one to simulate mix spectrum, the other
+	//to perform the search, note this method modify the
+	//original spectLib so those spectra that are separted
+	//into one set is removed from this Spectrumlib
+	public SpectrumLib Divide(){
+		Hashtable <String, Vector <Spectrum>> newTable = new Hashtable();
+		Collection <Vector <Spectrum>> values = this.spectrumLibrary.values();
+		Iterator <Vector <Spectrum>> it = values.iterator();
+		//iterate over each values, which is a list of spectrums
+		Vector <Spectrum> v, vNew;
+		while(it.hasNext()){
+			v = it.next();
+			//if the peptide has more than one peptide, we take the first one out
+			//to create a different spectrum library, otherwise we don't use it
+			//cause there is no way we can identitfy mix spectrum that consist of that peptide
+			if(v.size() > 1){
+				vNew = new Vector <Spectrum>();
+				vNew.add(v.get(0));
+				newTable.put(v.get(0).peptide, vNew);
+				v.remove(0);
+			}
+		}
+		this.spectrumList = this.getAllSpectrums();
+		return new SpectrumLib(newTable);
+	}
+	
+	//creating a new spectrum library where we mix a pair
+	//of spectrum in this library to simulated a mixture spectrum
+	public SpectrumLib createMix(int size){
+		return createMix(size, 1, 1);
+	}
+	
+	//edited: for now, if we see spectrum where there is one very high peak
+	//and all very low peaks we ignore it for now to see performance of cosineSim function
+	public SpectrumLib createMix(int size, double scale, double scale2){
+		Hashtable <String, Vector <Spectrum>> newTable = new Hashtable();
+		Vector <Vector <Spectrum>> v = new Vector(this.spectrumLibrary.values());
+		Vector <Spectrum> vNew; 
+		Spectrum mixture;
+		for(int i = 0; i < size; i++){
+			for(int j = i+1; j < size; j++){
+				   	mixture = new Spectrum(v.get(i).get(0), v.get(j).get(0), scale, scale2);
+					vNew = (new Vector());
+					vNew.add(mixture);
+					newTable.put(mixture.peptide, vNew);
+				
+			}
+		}
+		return new SpectrumLib(newTable);
+	}
+	
+	//create mix with cosineSim filter
+	public SpectrumLib createMix(int size, double scale, double scale2, double minSim, double maxSim){
+		Hashtable <String, Vector <Spectrum>> newTable = new Hashtable();
+		Vector <Vector <Spectrum>> v = new Vector(this.spectrumLibrary.values());
+		Vector <Spectrum> vNew; 
+		Spectrum mixture, s1, s2;
+		int counts = 0;
+		for(int i = 0; i < this.spectrumLibrary.keySet().size(); i++){
+			for(int j = i+1; j < this.spectrumLibrary.keySet().size(); j++){
+				s1 = v.get(i).get(0);
+				s2 = v.get(j).get(0);
+				if((s1.cosineSim(s2) >= minSim) && (s1.cosineSim(s2) < maxSim)){
+				   	mixture = new Spectrum(v.get(i).get(0), v.get(j).get(0), scale, scale2);
+				   	mixture.score = s1.cosineSim(s2);
+					vNew = (new Vector());
+					vNew.add(mixture);
+					newTable.put(mixture.peptide, vNew);
+					counts++;
+				}
+				if(counts > size){
+					return new SpectrumLib(newTable);
+				}
+				
+			}
+		}
+		return new SpectrumLib(newTable);
+	}
+	
+	//with mass difference filters
+	public SpectrumLib createMix(int size, double scale, double scale2, double minSim, double maxSim, double massDiff){
+		Hashtable <String, Vector <Spectrum>> newTable = new Hashtable();
+		Vector <Vector <Spectrum>> v = new Vector(this.spectrumLibrary.values());
+		Vector <Spectrum> vNew; 
+		Spectrum mixture, s1, s2;
+		int counts = 0;
+		for(int i = 0; i < this.spectrumLibrary.keySet().size(); i++){
+			for(int j = i+1; j < this.spectrumLibrary.keySet().size(); j++){
+				s1 = v.get(i).get(0);
+				s2 = v.get(j).get(0);
+				if((s1.cosineSim(s2) >= minSim) && (s1.cosineSim(s2) < maxSim)  //also require same charge for now
+						&& (Math.abs((s1.parentMass - s2.parentMass))  < massDiff)){
+				   	mixture = new Spectrum(v.get(i).get(0), v.get(j).get(0), scale, scale2);
+				   	mixture.score = s1.cosineSim(s2);
+					vNew = (new Vector());
+					vNew.add(mixture);
+					newTable.put(mixture.peptide, vNew);
+					counts++;
+				}
+				if(counts > size){
+					return new SpectrumLib(newTable);
+				}
+				
+			}
+		}
+		return new SpectrumLib(newTable);
+	}
+	
+	//when lib itself is very large,  iterating through each spectra to create mix is not a good way to 
+	//sample the space of all possible mix so we choose to use a randomize scheme, doing it this way may lead
+	//to duplicate mix spectra, but the chance is small if lib is big, so it is okay, since we are hashing using peptide as the key
+	public SpectrumLib createRandomMix(int size, double scale, double scale2, double minSim, double maxSim, double massDiff){
+		Hashtable <String, Vector <Spectrum>> newTable = new Hashtable();
+		Vector <Vector <Spectrum>> v = new Vector(this.spectrumLibrary.values());
+		Vector <Spectrum> vNew; 
+		Spectrum mixture, s1, s2;
+		int counts = 0, i = 0, j = 0;
+		while(counts < size){
+				i = (int) (Math.random()*this.spectrumLibrary.keySet().size());
+				j =  (int)(Math.random()*this.spectrumLibrary.keySet().size());
+				s1 = v.get(i).get(0);
+				s2 = v.get(j).get(0);
+				if((s1.cosineSim(s2) >= minSim) && (s1.cosineSim(s2) < maxSim)  //also require same charge for now
+						&& (Math.abs((s1.parentMass - s2.parentMass))  < massDiff)
+						&&  i != j){  //we do not mix two same spectrum
+				   	mixture = new Spectrum(v.get(i).get(0), v.get(j).get(0), scale, scale2);
+				   	mixture.score = s1.cosineSim(s2);
+				   	//System.out.println(mixture.peptide + "\t" + mixture.score);
+					vNew = (new Vector());
+					vNew.add(mixture);
+					newTable.put(mixture.peptide, vNew);
+					counts++;
+				}		
+		}	
+		return new SpectrumLib(newTable);
+	}
+	
+	//create mixture from specified peptide pair in a file
+	public SpectrumLib createMix(String file, int size, double scale, double scale2, double minSim, double maxSim, double massDiff){
+		Spectrum s1, s2, mixture;
+		SpectrumLib lib = null;
+		Hashtable <String, Vector <Spectrum>> newTable = new Hashtable();
+		int counts = 0;
+		Vector <Spectrum> vNew; 
+		try{
+			BufferedReader bf = new BufferedReader(new FileReader(file));
+			String[] peps = null;
+			String line = bf.readLine();
+			while(line != null){
+				peps = line.split(" & ");
+				s1 = this.spectrumLibrary.get(peps[0]).get(0);
+				s2 = this.spectrumLibrary.get(peps[1]).get(0);
+				mixture = new Spectrum(s1, s2, scale, scale2);
+				mixture.score = s1.cosineSim(s2);
+				if((mixture.score >= minSim) && (mixture.score < maxSim)  //also require same charge for now
+						&& (Math.abs((s1.parentMass - s2.parentMass))  < massDiff)){  
+					vNew = new Vector<Spectrum>();
+					vNew.add(mixture);
+					newTable.put(mixture.peptide, vNew);
+					//System.out.println("" + counts);
+					//System.out.println(mixture.peptide + "\t" + mixture.score);
+					counts++;
+					if(counts > size){
+						return new SpectrumLib(newTable);
+					}
+				}
+				line = bf.readLine();
+			}
+			return new SpectrumLib(newTable);
+		}catch(IOException ioe){
+			System.out.println(ioe.getMessage());
+		}catch(NullPointerException e){
+			System.out.println("specified peptide is not found in the library");
+			System.out.println(e.getMessage());
+			System.out.println(e.getStackTrace());
+		}
+		return lib;
+	}
+	
+	
+	public Vector<Spectrum> getSpectra(String peptide){
+		return this.spectrumLibrary.get(peptide);
+	}
+	
+	//since multiple spectrum can correspond to same
+	//peptide, this method try to see how similar are
+	//the spectrum corresponds to same peptide
+	public void getSpectrumSimilarity(){
+		Iterator<Vector<Spectrum>> it = this.spectrumLibrary.values().iterator();
+		Spectrum first, next;
+		Vector<Spectrum> spects;
+		double maxSim = 0;
+		int i = 0, j = 0;
+		while(it.hasNext()){
+			spects = it.next();
+			//only can calcuate similarity if there is more than one peptide
+			if(spects.size() > 1){
+				maxSim = 0;
+				for(i = 0; i < spects.size(); i++){
+					for(j = i+1; j < spects.size(); j++){
+						first = spects.get(i).toNormVector(1, 0.5, 2000);
+						next = spects.get(j).toNormVector(1, 0.5, 2000);
+						if(maxSim < next.cosineSim(first)){
+							maxSim = next.cosineSim(first);
+						}
+						//System.out.println(first);
+						//System.out.println(next);
+						System.out.println("" + first.peptide + "\t" + next.cosineSim(first));
+						if(i == spects.size()-1){
+							//System.out.println("max: " + first.peptide + "\t" + maxSim);
+						}
+					
+					}
+				}
+				
+			}
+		}
+		
+	}
+	
+	//we compute the inter-group spectra similarity, it serves
+	//as a negative control for measuring similarity for those
+	//spectra that belong to the same peptide with same charge
+	public void getSpectrumDifference(int size){
+		int count = 0;
+		String[] peptides = this.spectrumLibrary.keySet().toArray(new String[10]);
+		//because all possible pair in the negative set
+		//is usually very large we, set a limit on the total
+		//number of scores to generate
+		Spectrum s1, s2;
+		//for each peptide we randomly select one spectrum to compare
+		for(int i = 0; i < peptides.length; i++){
+			for(int j = i+1; j < peptides.length; j++){
+				s1 = this.getRandomSpectrum(peptides[i]).toNormVector(1, 0.5, 2000);
+				s2 = this.getRandomSpectrum(peptides[j]).toNormVector(1, 0.5, 2000);
+				System.out.println("" + peptides[i] + " | " + peptides[j] + "\t" + s1.cosineSim(s2));
+				if(count == size){
+					return;
+				}
+				count++;
+			}
+		}
+		
+	}
+	
+	//given a candidate spectrum, score it against all other
+	//spectrum in this library and return the rank of similarity
+	//of the target peptide
+	public int psimilarityRank(Spectrum m, String targetPeptide){
+		int rank1 = 1, rank2 = 1;
+		int prank1 = 1, prank2 = 1; //peptide rank
+		int rank = 1, prank = 1; //the rank after we remove some peaks
+		int count1 = 0, count2 = 0, count = 0;
+		int i = 0;
+		int topN = 5;  //consider the top N element as from the "better" component of the mix
+		Iterator<Vector<Spectrum>> it = this.spectrumLibrary.values().iterator();
+		Iterator<Spectrum> curr;
+		Spectrum bestSpect1, bestSpect2, currSpect, bestSpect;
+		double best, best2;
+		String[] peps = targetPeptide.split(" & ");
+		
+		//find the highest psimilarity (p for projectedCosine) of the answer
+		bestSpect1 = bestPSim(m, peps[0]);
+		best = bestSpect1.score;
+		bestSpect2 = bestPSim(m, peps[1]);
+		best2 = bestSpect2.score;
+		//System.out.println("best score: " + best + "\t" + best2);
+		//find the psimiliarity for everything else in the library
+		while(it.hasNext()){
+			curr = it.next().iterator();
+			count1=0;
+			count2=0;
+			count = 0;
+			while(curr.hasNext()){
+				currSpect = curr.next();
+				currSpect.score = currSpect.projectedCosine(m);
+				count1 = currSpect.score > best ?  count1+1 : count1;
+				count2 = currSpect.score > best2 ?  count2+1 : count2;
+				count++;
+			}
+			//System.out.println("total count: " + count);
+			//if(count1 > 1 || count2 > 1){
+			//	System.out.println("count: " + count1 + "\t" + count2);
+			//}
+			rank1 = rank1 + count1;
+			rank2 = rank2 + count2;
+			prank1 = count1 > 0 ? prank1+1 : prank1;
+			prank2 = count2 > 0 ? prank2+1 : prank2;
+			if(count1 > 1 || count2 > 1){
+				//System.out.println("r:  " + rank1 + "\t" + rank2);
+				//System.out.println("pr: " + prank1 + "\t" + prank2);
+			}
+		}
+		
+		Collections.sort(this.spectrumList); //we sort the spectrums by scores
+		//remove  the peaks and then rerank the 2nd peptide
+		for(i = 1; i <= 3; i++){
+			currSpect = this.spectrumList.get(spectrumList.size()-i);
+			//System.out.println("removing peaks on: "  + currSpect.peptide);
+			m.removeSharePeaks(currSpect);
+		}
+		if(best > best2){
+			bestSpect = bestPSim(m, peps[1]);			
+		}else{
+			bestSpect = bestPSim(m, peps[0]);
+		}
+		best = bestSpect.score;
+		//System.out.println("2nd round best:\t" + best);
+		it = this.spectrumLibrary.values().iterator();
+		while(it.hasNext()){
+			curr = it.next().iterator();
+			count = 0;
+			while(curr.hasNext()){
+				currSpect = curr.next();
+				currSpect.score = currSpect.projectedCosine(m);
+				count = currSpect.score > best ?  count+1 : count;
+			}
+			rank = rank + count;
+			prank = count > 0 ? prank+1 : prank;
+		}
+		
+		System.out.println("Psimilarity Rank: " + targetPeptide +  "\t" + m.score + "\t" + rank1 + "\t" +  rank2 + "\t" + rank
+						+ "\t" + prank1 + "\t" +  prank2 + "\t" + prank);
+		return Math.max(rank1, rank2);
+		
+	}
+	
+	//given a spectrum and a pepeitde, return the  spectrum
+	//that belong to the peptide that has best pconsine score
+	private Spectrum bestPSim(Spectrum m, String peptide){
+		Vector<Spectrum> targetSpects = this.getSpectra(peptide);
+		Spectrum curr, bestSpect = targetSpects.get(0);
+		double score, best = 0;
+		//find the psimilarity (p for projectedCosine) of the answer
+		for(int i = 0; i <  targetSpects.size(); i++){
+			curr = targetSpects.get(i);
+			score = curr.projectedCosine(m);
+			bestSpect = score > best ? curr : bestSpect;
+			best = score > best ? score : best;
+		}
+		bestSpect.score = best;
+		return bestSpect;
+	}
+	
+	//we score the mixspectrum against a combined spectrum of the
+	//two peptide given as argument, this way we try to evaluate
+	//how similar is a mixed spectrum and a combined spectrum in the library
+	public Spectrum mixSpectrumSimilarity(Spectrum mix, String peptide1, String peptide2){             //NEW CHANGE 
+		double score  = 0, bestScore = 0;
+		Vector<Spectrum> v1, v2;
+		int i = 0, j = 0;
+		Spectrum targetMix, best = new Spectrum();
+		v1 = this.getSpectra(peptide1);
+		v2 = this.getSpectra(peptide2);
+		for(i = 0; i < v1.size(); i++){
+			for(j = 0; j < v2.size(); j++){
+				targetMix = new Spectrum(v1.get(i), v2.get(j));
+				//System.out.println(mix);
+				//System.out.println(targetMix);
+				score = mix.cosineSim(targetMix);
+				if(score > bestScore){
+					bestScore = score;
+					best = targetMix;
+					best.score = score;
+				}
+				//System.out.println("" + v1.get(i));
+				//System.out.println("" + v2.get(j));
+				System.out.println("" + peptide1 + ": " + v1.get(i).projectedCosine(mix));
+				System.out.println("" + peptide2 + ": " + v2.get(j).projectedCosine(mix));
+				System.out.println("" + targetMix.peptide + "\t" + score); 
+			}
+		}
+		//System.out.println("" + mix.peptide + " bestscore: " + bestScore);
+		return best;                                                                            //NEW CHANGE END 
+	} 
+	
+	//given a mix spectrum directly search the database using a kind of branch and
+	//bound method to quickly eliminate the sets of candidates
+	public Spectrum searchAndBoundLib(Spectrum mix){
+		Iterator<Spectrum> it =  this.iterator();
+		Spectrum curr, best;
+		double bestscore=0, nextscore = 0, upperbound = 0;
+		int i=0, j=0, k=0, iLimit=0, jLimit=0;
+		int counts = 0; //we keep track of combo we need to create in order to track the efficacy of our bound
+		//scoring all 
+		while(it.hasNext()){
+			curr = it.next();
+			curr.score = curr.cosineSim(mix); //when spectrum are not expected to overlap much
+			                                  //direclty using cosine as criteria to filter is not that bad
+		}
+		Collections.sort(this.spectrumList);
+		i = spectrumList.size()-1;
+		j = i - 1;
+		k = (i + 1) / 2;
+		curr = new Spectrum(spectrumList.get(i), spectrumList.get(j)); //get the first score
+		bestscore = curr.cosineSim(mix);
+		best = curr;
+		//complicated shit, need to draw out the actual array to get a feel of how this bound works
+		
+		while((i >= iLimit && j >= jLimit) && i >= 0 && j >= 0 && i-k >= 1 && k >= 0){
+			if(mix.peptide.equals("PAYFNDSQR.2 & HLQLAIRNDEELNK.3") && counts == 28){
+				System.out.println();
+			}
+			curr = new Spectrum(spectrumList.get(i), spectrumList.get(k));
+			nextscore = curr.cosineSim(mix);
+			upperbound = (spectrumList.get(i).score + spectrumList.get(k).score)	/1.4142;  //root of two
+			System.out.println("" + i + "\t" + j + "\t" + k + "\t" + iLimit + "\t" + jLimit);
+			System.out.println("" + bestscore + "\t" + nextscore + "\t" 
+					+ spectrumList.get(i).peptide + "\t" + spectrumList.get(k).peptide);
+			/**if(nextscore > bestscore){//if we immediately see a better score use that to bound instead
+				bestscore = nextscore;
+				best = curr;
+				j--;
+			    curr = new Spectrum(spectrumList.get(i), spectrumList.get(j));
+			    nextscore = curr.cosineSim(mix);
+			    best = nextscore > bestscore ? curr : best;
+			    bestscore = nextscore > bestscore ? nextscore : bestscore;
+			    
+			}**/
+			if(bestscore > upperbound){ //now best score is better than upper bound, we do not need to consider spectrum with lower score than this
+				iLimit = k;
+				jLimit = k;
+				k = k + (j - k + 1)/2;  //reducing the search space by a factor
+				
+			}else{ //cannot bound the search space, try again
+				
+				k = k  - (k - iLimit + 1)/2;
+			}
+			
+			if(k == jLimit || k == j){      //reach searching limit, try another branch
+				j--;
+				k = j;
+				curr = new Spectrum(spectrumList.get(i), spectrumList.get(k));
+				nextscore = curr.cosineSim(mix);
+				best = nextscore > bestscore ? curr : best;
+			    bestscore = nextscore > bestscore ? nextscore : bestscore;
+			}	
+			
+			if(j == jLimit ){     //loop through all the j, advance i and try again
+				i--;
+				j = i - 1;
+				k = j;
+				curr = new Spectrum(spectrumList.get(i), spectrumList.get(j));
+				nextscore = curr.cosineSim(mix);
+				best = nextscore > bestscore ? curr : best;
+			    bestscore = nextscore > bestscore ? nextscore : bestscore;
+			}
+			counts++;
+		}		
+		System.out.println("bestscore: " + bestscore);
+		System.out.println("numbers of attempts: " + counts);
+		best.score = bestscore;
+		return best;
+	}
+	
+	//find where the answer lies in our sorted list
+	private Spectrum findAnswerInSortedSpectrumList(Spectrum mix, String mixedpeptides){
+		String[] peps = mixedpeptides.split(" & ");
+		Spectrum curr, s1= new Spectrum(), s2=s1;
+		int index = 0;
+		for(index = this.spectrumList.size()-1; index >=0; index--){
+			curr = this.spectrumList.get(index);
+			if(curr.peptide.equals(peps[0])){
+				s1 = curr;
+				System.out.println(peps[0] + " @ pos " + index + " score: " +  curr.score);
+			}
+			if(curr.peptide.equals(peps[1])){
+				s2 = curr;
+				System.out.println(peps[1] + " @ pos " + index + " score: " + curr.score);
+			}
+			
+		}
+		curr = this.mixSpectrumSimilarity(mix, peps[0], peps[1]);
+		System.out.println(curr);
+		System.out.println("the correct mixed: " + curr.score);
+		return curr;
+	}
+	
+	public void solution(Spectrum mix) {
+		
+		Vector <Spectrum> spectra = getAllSpectrums() ;
+		TreeMap <Double, Spectrum> sortedSpectra = new TreeMap() ;
+		Hashtable answer = new Hashtable() ;
+		Vector <Spectrum> v;
+		Spectrum temp;
+		SpectrumLib newLib, fin ;
+		String realPeptide[] = mix.peptide.split(" & ") ;
+		String sol = realPeptide[1] + " & " + realPeptide[0] ;
+		int i = 0;
+		long size, rank = 1;
+		boolean flag1, flag2 ;		
+		size = spectra.size();
+		double score ;		
+		flag1 = flag2 = false ;
+		
+		// Filtering
+		
+		// calculate the projected cosines and store it
+		// in a treemap (ordered)
+								
+		for(int j = 0; j < spectra.size(); j++) {
+			
+			temp = (spectra.elementAt(j)).toNormVector(1,0.5,2000) ; 
+			temp.sqrtSpectrum() ;
+			score = temp.cosineSim(mix) ;
+			temp.squareSpectrum() ;
+			
+			if (score > 0) {
+
+				sortedSpectra.put(new Double(score), temp) ;	
+		
+				if (temp.peptide.equals(realPeptide[0])){
+					flag1 = true ;
+					
+				}
+					
+				if (temp.peptide.equals(realPeptide[1])) {
+					flag2 = true;
+					
+				}
+			
+			}
+		}
+		/*
+		if (flag1 && flag2)
+			System.out.print("2\t") ;
+		else if (flag1 || flag2)
+			System.out.println("1\t0") ;
+		else
+			System.out.println("0\t-1") ;
+		
+		
+		*/
+		// Get best scores (above threshold)
+		
+		if (flag1 && flag2) {
+			
+			spectra = new Vector() ;	
+			
+			for (int k = 0 ; k < 100 && sortedSpectra.size() > 0; k++)
+					spectra.add(sortedSpectra.remove(sortedSpectra.lastKey())) ; 
+					
+			sortedSpectra = null ;
+		
+			Spectrum mixture = null ;
+			TreeMap solutions = new TreeMap() ;
+			
+			for (int k = 0; k < spectra.size();k++) {
+				for(int l = k + 1; l < spectra.size();l++){
+					
+					if ( !(((spectra.elementAt(k)).peptide).equals(((spectra.elementAt(l)).peptide))) ) {
+						
+						mixture = new Spectrum(spectra.get(k), spectra.get(l), 1, 1);
+						solutions.put(new Double(mixture.cosineSim(mix)), mixture.peptide) ;
+						mixture = null ;
+					}
+									
+				}
+			}
+
+			String pep ;
+			size = solutions.size() ;
+						
+			if (!solutions.isEmpty()) {
+				
+			//	System.out.print("Max Score:\t" + solutions.lastKey()+ "\t") ;
+					
+				pep = (String)solutions.remove(solutions.lastKey()) ;
+				
+				while (!mix.peptide.equals(pep) && !sol.equals(pep) && !solutions.isEmpty()) {
+							
+					pep = (String)solutions.remove( solutions.lastKey()  ) ;
+					rank++ ;
+			
+				}	
+					
+				if (mix.peptide.equals(pep) || sol.equals(pep)){
+				
+					System.out.println(rank) ;
+				}
+				else
+					System.out.println("0") ;
+			}
+				
+			
+		}
+		
+	} // end of function
+
+public void maxSolution(Spectrum mix) {
+		
+		Vector <Spectrum> spectra = getAllSpectrums() ;
+		TreeMap <Double, Spectrum> sortedSpectra = new TreeMap() ;
+		Hashtable answer = new Hashtable() ;
+		Vector <Spectrum> v;
+		Spectrum temp;
+		SpectrumLib newLib, fin ;
+		String realPeptide[] = mix.peptide.split(" & ") ;
+		String sol = realPeptide[1] + " & " + realPeptide[0] ;
+		int i = 0;
+		long size, rank = 1;
+		boolean flag1, flag2 ;		
+		size = spectra.size();
+				
+		flag1 = flag2 = false ;
+		
+		double score ;
+		
+		// Filtering
+		
+		// calculate the projected cosines and store it
+		// in a treemap (ordered)
+								
+		for(int j = 0; j < spectra.size(); j++) {
+						
+			temp = (spectra.elementAt(j)).toNormVector(1,0.5,2000) ; 
+			temp.sqrtSpectrum() ;
+			score = temp.cosineSim(mix) ;
+			//temp.squareSpectrum() ;
+			
+			if (score > 0) {
+				
+				sortedSpectra.put(new Double(score), temp) ;	
+		
+				if (temp.peptide.equals(realPeptide[0])){
+					flag1 = true ;
+					
+				}
+					
+				if (temp.peptide.equals(realPeptide[1])) {
+					flag2 = true;
+					
+				}
+			
+			}
+		}
+		/*
+		if (flag1 && flag2)
+			System.out.print("2\t") ;
+		else if (flag1 || flag2)
+			System.out.println("1\t0") ;
+		else
+			System.out.println("0\t-1") ;
+		
+		*/
+		// Get best scores (above threshold)
+		
+		if (flag1 && flag2) {
+			
+			spectra = new Vector() ;	
+			
+			for (int k = 0 ; k < 100 && sortedSpectra.size() > 0; k++)
+					spectra.add(sortedSpectra.remove(sortedSpectra.lastKey())) ; 
+					
+			sortedSpectra = null ;
+		
+			Spectrum A = null ;
+			Spectrum B = null ;
+			
+			TreeMap solutions = new TreeMap() ;
+			double alpha ;
+			
+			for (int k = 0; k < spectra.size();k++) {
+				A = spectra.get(k) ;
+				
+				for(int l = k + 1; l < spectra.size();l++){
+					
+					if ( !(((spectra.elementAt(k)).peptide).equals(((spectra.elementAt(l)).peptide))) ) {
+						
+						B = spectra.get(l) ;
+		
+						alpha = mix.alpha(A, B) ;
+						//System.out.println("alpha is: " + alpha);
+						score = mix.maxScore(A, B, alpha );
+						solutions.put(new Double(score), A.peptide + " & " +B.peptide) ;
+					}
+									
+				}
+			}
+
+			String pep ;
+			size = solutions.size() ;
+						
+			if (!solutions.isEmpty()) {
+				
+			//	System.out.print("Max Score:\t" + solutions.lastKey()+ "\t") ;
+				
+				pep = (String)solutions.remove(solutions.lastKey()) ;
+				
+				while (!mix.peptide.equals(pep) && !sol.equals(pep) && !solutions.isEmpty()) {
+							
+					pep = (String)solutions.remove( solutions.lastKey()  ) ;
+					rank++ ;
+			
+				}	
+					
+				if (mix.peptide.equals(pep) || sol.equals(pep)){
+				
+					System.out.println(rank) ;
+				}
+				else
+					System.out.println("0") ;
+			}
+				
+			
+		}
+		
+	} // end of function
+
+	//for a given peptide randomly selected one of the spectrum
+	//correspond to this peptide
+	private Spectrum getRandomSpectrum(String peptide){
+		Vector <Spectrum> v = this.spectrumLibrary.get(peptide);
+		return v.get((int)Math.random() * (v.size() - 1));
+	}
+	
+	public void printLib(){
+		Iterator it = this.iterator();
+		while(it.hasNext()){
+			System.out.println(it.next());
+			System.out.println();
+		}
+	}
+	
+	//try to write this spectrum lib to a file, so we can use it later
+	public static void writeLibToFile(String outfile, SpectrumLib s){
+		try{
+			BufferedOutputStream bo = new BufferedOutputStream(new FileOutputStream(outfile));
+			ObjectOutputStream oo = new ObjectOutputStream(bo);
+		    oo.writeObject(s);
+		    oo.flush();
+		    oo.close();
+		}catch(IOException ioe){
+			System.out.println(ioe.getMessage());
+			
+		}
+	}
+	//read the library back from file
+	public static SpectrumLib readLibFromFile(String infile){
+		SpectrumLib s = null;
+		try{
+			BufferedInputStream bi = new BufferedInputStream(new FileInputStream(infile));
+			ObjectInputStream oi = new ObjectInputStream(bi);
+			s = (SpectrumLib)oi.readObject();
+			oi.close();
+		}catch(Exception ioe){
+			System.out.println(ioe.getMessage());
+			System.out.println(ioe.getCause());
+		}
+		return s;
+	}
+	
+		public static void testMax() {
+		
+		String filename = "dradiodurans.msp" ;
+		SpectrumLib l = new SpectrumLib(filename, "MSP") ;
+		Spectrum mix ;
+    		
+		l.removeModSpectra() ;
+		l.removeSingle() ;
+	
+		l.toNormVector(1, 0.5, 2000);
+		
+		SpectrumLib l2 = l.Divide() ;
+		SpectrumLib lib1 = l2.createRandomMix(1000, 1, 0.7, 0, 1, 2000) ;
+	
+		//l2.normIntensity() ;
+		//lib1.normIntensity() ;
+		
+		Vector temp = lib1.getAllSpectrums() ;
+		String peptides[] ;
+		Spectrum a, b ;
+		
+		for (int j = 0; j < 1000; j++) {
+			mix = (Spectrum)temp.get(j) ;
+			peptides = mix.peptide.split(" & ") ;
+			a = l.getSpectra(peptides[0]).get(0) ;
+			b = l.getSpectra(peptides[1]).get(0) ;
+			System.out.println("Alpha: " + mix.alpha(a, b) + "\tMax Score Estimated: " + mix.maxScore(a, b, mix.alpha(a, b))
+								+ "\tMax Score Fixed: " + mix.maxScore(a, b, 0.7)) ;
+			
+		}		
+	}
+
+	public static void main(String[] args){
+	
+		String filename = ".\\MSPLib\\Lib\\dradiodurans.msp" ;
+		SpectrumLib l = new SpectrumLib(filename, "MSP") ;
+		Spectrum mix ;
+    		
+		l.removeModSpectra() ;
+		l.removeSingle() ;
+	
+		l.toNormVector(1, 0.5, 2000);
+		
+		SpectrumLib l2 = l.Divide() ;
+		SpectrumLib lib1 = l2.createRandomMix(1000, 1, 0.1, 0, 1, 2000) ;
+		//SpectrumLib lib1 = l2.createMix("bin2.name", 1000, 1, 0.1, 0, 1, 2000 ) ;
+			
+		lib1.normIntensity() ;
+		//l.normIntensity();
+		Vector temp = lib1.getAllSpectrums() ;
+		String peptides[];
+		Spectrum a, b ;
+		
+		for (int j = 0; j < 100; j++) {
+			mix = (Spectrum)temp.get(j) ;
+			//System.out.print("Solution:\t") ;
+			//l.solution(mix) ;
+			
+			System.out.print("Max Solution:\t") ;
+			l.maxSolution(mix) ;
+			
+			
+		}		
+
+	}
+	/*
+	public static void testReadMGF(){
+		String filename = "afumigatus_cmp_20.mgf";
+		SpectrumLib l = new SpectrumLib(filename, "MGF");
+		System.out.print(l);
+		l.printStat(DETAIL);
+		l.removeModSpectra();
+		l.printStat(NODETAIL);
+		System.out.println();
+		System.out.println("Dividing Spectrums library into two sets");
+		SpectrumLib lib1 = new SpectrumLib(filename, "MGF");
+		lib1.printStat(NODETAIL);
+		lib1.removeModSpectra();
+		lib1.printStat(NODETAIL);
+		SpectrumLib lib2 = lib1.Divide();
+		lib1.printStat(NODETAIL);
+		lib2.printStat(NODETAIL);
+		SpectrumLib mixlib = lib2.createMix(5);
+		mixlib.printStat(NODETAIL);
+		l.getSpectrumSimilarity();
+		l.getSpectrumDifference(10000);
+	}
+	
+	public static void testObjectIO(){
+		String filename = "afumigatus_cmp_20.mgf";
+		SpectrumLib l = new SpectrumLib(filename, "MGF");
+		l.printStat(NODETAIL);
+		l.removeModSpectra();
+		l.removeSingle();
+		System.out.println("Original Library");
+		l.printStat(NODETAIL);
+		System.out.println("now writing the library to file");
+		l.writeLibToFile("af_lib.obj", l);
+		System.out.println("reading back the library from file");
+		SpectrumLib l2 = SpectrumLib.readLibFromFile("af_lib.obj");
+		l2.printStat(NODETAIL);
+	}
+	
+	public static void testCreateMix(){
+		String filename = ".\\MSPLib\\Lib\\human.msp";
+		//SpectrumLib lib1 = new SpectrumLib(filename, "MGF");
+		SpectrumLib lib1 = new SpectrumLib(filename, "MSP");
+		Spectrum mix;
+		System.out.println("Original Library: ");
+		lib1.removeModSpectra();
+		lib1.printStat(NODETAIL);
+		lib1.normIntensity();
+		SpectrumLib lib2 = lib1.Divide();
+		lib2.printStat(NODETAIL);
+		//SpectrumLib mixlib = lib2.createMix("mixlibpeptide.dat", 100000, 0.3, 1, 2000); //trying to created the harder set to test various aspect of mix spectrum searching
+		//SpectrumLib mixlib = lib2.createMix(10000, 1, 1, 0.3, 1, 2000);
+		//SpectrumLib mixlib = lib2.createMix("name.txt", 10000, 0.3, 1, 2000);
+		System.out.println("The Mixture Library:");
+		mixlib.printStat(NODETAIL);
+		//SpectrumLib.writeLibToFile("mixtureLibrary.obj", mixlib);
+		//System.out.println(mixlib); //save it both way just to be sure
+		//mixlib.printLib();
+	}
+	
+	public static void testProjectCosine(){
+		if(SpectrumLib.DETAIL){
+			//return;
+		}
+		//String filename = "human_cmp_20.mgf";
+		//String filename = "afumigatus_cmp_20.mgf";
+		String filename = ".\\MSPLib\\Lib\\human.msp";
+		//SpectrumLib lib1 = new SpectrumLib(filename, "MGF");
+		SpectrumLib lib1 = new SpectrumLib(filename, "MSP");
+		System.out.println("Original Library: ");
+		lib1.printStat(NODETAIL);
+		System.out.println("Removing Spectra with modification");
+		lib1.removeModSpectra();
+		lib1.printStat(NODETAIL);
+		System.out.println("==========================================================================================");
+		System.out.println();
+		System.out.println("Calculating within group similarity:");
+		//lib1.getSpectrumSimilarity();
+		System.out.println("==========================================================================================");
+		System.out.println();
+		System.out.println("Calculating btw group similarity/difference:");
+		//lib1.getSpectrumDifference(50000);
+		System.out.println("==========================================================================================");
+		System.out.println();
+		System.out.println("Diving Spectrums library into two sets");
+		lib1.normIntensity();
+		SpectrumLib lib2 = lib1.Divide();
+		System.out.println("Dataset 1:");
+		lib1.printStat(NODETAIL);
+		System.out.println("Dataset 2:");
+		lib2.printStat(NODETAIL);
+		SpectrumLib mixlib = lib2.createMix(1000);
+		System.out.println("The Mixture Library:");
+		mixlib.printStat(NODETAIL);
+		System.out.println("Calculating projected similarity: ");
+		
+		Iterator<Vector<Spectrum>> it = mixlib.spectrumLibrary.values().iterator();
+		String[] peptides;
+		Spectrum mix, candidate;
+		Vector<Spectrum> spects;
+		int i = 0;
+		while(it.hasNext()){
+			mix = it.next().get(0);
+			//System.out.println(mix);
+			peptides = mix.peptide.split(" & ");
+			spects = lib1.getSpectra(peptides[0]);
+			for(i = 0; i < spects.size(); i++){
+				candidate = spects.get(i).toNormVector(1, 0.5, 2000);
+				//System.out.println(candidate);
+				//System.out.print("" + peptides[0]);
+				System.out.println("" + peptides[0]+ "\t" + candidate.projectedCosine(mix));
+			}
+			
+			spects = lib1.getSpectra(peptides[1]);
+			System.out.print("" + peptides[1]);
+			for(i = 0; i < spects.size(); i++){
+				candidate = spects.get(i).toNormVector(1, 0.5, 2000);
+				//System.out.println(candidate);
+				//System.out.print("" + peptides[1]);
+				System.out.println("" + peptides[1] + "\t" + candidate.projectedCosine(mix));
+			}
+			//if(peptides[0].equals("DAVTYTEHAK")){
+				//return;
+			//}
+		}
+		System.out.println("==========================================================================================");
+		System.out.println();
+		System.out.println("Calculating Similarity ranks: ");
+		int r1, r2;
+		lib1.toNormVector(1, 0.5, 2000);
+		Iterator mixspects = mixlib.iterator();
+		while(mixspects.hasNext()){
+			mix = (Spectrum)mixspects.next();
+			//System.out.println(mix);
+			r1 = lib1.psimilarityRank(mix, mix.peptide);
+			System.out.println("" + mix.peptide + ":\t" + r1);		
+		}
+		/**
+		System.out.println("==========================================================================================");
+		System.out.println();
+		mixlib = lib2.createMix(50, 0.8, 1);
+		System.out.println("The Mixture Library2:");
+		mixlib.printStat(NODETAIL);
+		System.out.println();
+		System.out.println("Calculating Similarity ranks: ");
+		//lib1.toNormVector(1, 50, 2000);
+		mixspects = mixlib.iterator();
+		while(mixspects.hasNext()){
+			mix = (Spectrum)mixspects.next();
+			//System.out.println(mix);
+			peptides = mix.peptide.split(" & ");
+			r1 = lib1.psimilarityRank(mix, peptides[0]);
+			r2 = lib1.psimilarityRank(mix, peptides[1]);
+			System.out.println("" + peptides[0] + ": " + r1);
+			System.out.println("" + peptides[1] + ": " + r2);
+			
+		}
+		
+		System.out.println("==========================================================================================");
+		System.out.println();
+		mixlib = lib2.createMix(50, 0.6, 1);
+		System.out.println("The Mixture Library2:");
+		mixlib.printStat(NODETAIL);
+		System.out.println();
+		System.out.println("Calculating Similarity ranks: ");
+		mixspects = mixlib.iterator();
+		while(mixspects.hasNext()){
+			mix = (Spectrum)mixspects.next();
+			//System.out.println(mix);
+			peptides = mix.peptide.split(" & ");
+			r1 = lib1.psimilarityRank(mix, peptides[0]);
+			r2 = lib1.psimilarityRank(mix, peptides[1]);
+			System.out.println("" + peptides[0] + ": " + r1);
+			System.out.println("" + peptides[1] + ": " + r2);
+			
+		}
+		
+		System.out.println("==========================================================================================");
+		System.out.println();
+		mixlib = lib2.createMix(50, 0.3, 1);
+		System.out.println("The Mixture Library2:");
+		mixlib.printStat(NODETAIL);
+		System.out.println();
+		System.out.println("Calculating Similarity ranks: ");
+		mixspects = mixlib.iterator();
+		while(mixspects.hasNext()){
+			mix = (Spectrum)mixspects.next();
+			//System.out.println(mix);
+			peptides = mix.peptide.split(" & ");
+			r1 = lib1.psimilarityRank(mix, peptides[0]);
+			r2 = lib1.psimilarityRank(mix, peptides[1]);
+			System.out.println("" + peptides[0] + ": " + r1);
+			System.out.println("" + peptides[1] + ": " + r2);
+			
+		}
+		
+		System.out.println("==========================================================================================");
+		System.out.println();
+		mixlib = lib2.createMix(50, 1, 1);
+		System.out.println("The Mixture Library3:");
+		mixlib.printStat(NODETAIL);
+		System.out.println();
+		System.out.println("calculating mix spectrum similarity: ");
+		mixspects = mixlib.iterator();
+		while(mixspects.hasNext()){
+			mix = (Spectrum)mixspects.next();
+			//System.out.println(mix);
+			peptides = mix.peptide.split(" & ");
+			lib1.mixSpectrumSimilarity(mix, peptides[0], peptides[1]);			
+		}
+	}
+	
+	public static void testPsimilarity(){
+		String filename = ".\\MSPLib\\Lib\\human.msp";
+		//String filename = "afumigatus_cmp_20.mgf";
+		//SpectrumLib lib1 = new SpectrumLib(filename, "MGF");
+		SpectrumLib lib1 = new SpectrumLib(filename, "MSP");
+		Spectrum mix;
+		System.out.println("Original Library: ");
+		lib1.removeModSpectra();
+		lib1.printStat(NODETAIL);
+		SpectrumLib lib2 = lib1.Divide();
+		lib1.printStat(NODETAIL);
+		lib2.printStat(NODETAIL);
+		//SpectrumLib mixlib = lib2.createRandomMix(100, 1, 1, 0, 1, 10000);
+		//SpectrumLib mixlib = lib2.createMix("mixlibpeptide.dat", 100, 0, 0, 2000);
+		lib1.normIntensity();
+		mixlib.normIntensity();
+		System.out.println("The Mixture Library:");
+		mixlib.printStat(NODETAIL);
+		Iterator mixspects = mixlib.iterator();
+		//SpectrumLib mixlib2 = lib2.createMix(50000,1,1,0.2,1);
+		//mixlib2.printStat(NODETAIL);
+		//Iterator mixspects = mixlib2.iterator();
+		System.out.println("Calculating Similarity ranks: ");
+		int r1;
+		lib1.toNormVector(1, 0.5, 2000);
+		
+		while(mixspects.hasNext()){
+			mix = (Spectrum)mixspects.next();
+			//System.out.println(mix);
+			r1 = lib1.psimilarityRank(mix, mix.peptide);
+			//System.out.println("" + mix.peptide + ":\t" + mix.score + "\t"+ r1);		
+		}
+	}
+	
+	public static void testSearchAndBoundAlg(){
+		//String filename = "afumigatus_cmp_20.mgf";
+		String filename = ".\\MSPLib\\Lib\\human.msp";
+        //SpectrumLib lib1 = new SpectrumLib(filename, "MGF");
+		SpectrumLib lib1 = new SpectrumLib(filename, "MSP");
+		lib1.removeModSpectra();
+		lib1.normIntensity();
+		SpectrumLib lib2 = lib1.Divide();
+		lib1.toNormVector(1, 0.5, 2000);
+		SpectrumLib mixlib = lib2.createRandomMix(1000, 1, 0.5, 0, 1, 10000);
+		Iterator<Spectrum> it = mixlib.iterator();
+		Spectrum mix, candidate, answer;
+		Vector<Spectrum> spects;
+		String[] peps, putativepeps;
+		double accuracy = 0, size = mixlib.getAllSpectrums().size();
+		int i = 0;
+		while(it.hasNext()){
+			mix = it.next();
+			candidate = lib1.searchAndBoundLib(mix);
+			answer = lib1.findAnswerInSortedSpectrumList(mix, mix.peptide);
+			peps = mix.peptide.split(" & ");
+			putativepeps = candidate.peptide.split(" & ");
+			if(peps[0].equals(putativepeps[0]) && peps[1].equals(putativepeps[1])){
+				accuracy += 1/(size);
+			}
+			if(peps[0].equals(putativepeps[1]) && peps[1].equals(putativepeps[0])){
+				accuracy += 1/(size);
+			}
+			if(answer.score > candidate.score){
+				System.out.println("Do not seems to find the optimal known answer in the DB %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+			}
+			System.out.println(mix);
+			System.out.println("putative	 answer: ");
+			System.out.println(candidate);
+			i++;
+			if(i == -1) {
+				return;
+			}
+			System.out.println("" + accuracy);
+		}
+	}
+*/	
+}

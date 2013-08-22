@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/!svn/ver/6259/MS_Java/msgfdb/src/suffixarray
+END
+MassArray.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/suffixarray/MassArray.java
+END
+SuffixArray.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/6259/MS_Java/msgfdb/src/suffixarray/SuffixArray.java
+END
+MatchSet.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/suffixarray/MatchSet.java
+END
+ByteSequence.java
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/suffixarray/ByteSequence.java
+END
+SuffixArraySequence.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/suffixarray/SuffixArraySequence.java
+END
+SuffixFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/6259/MS_Java/msgfdb/src/suffixarray/SuffixFactory.java
+END

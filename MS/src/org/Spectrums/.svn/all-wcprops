@@ -1,0 +1,563 @@
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/MS/!svn/ver/8/MS/src/org/Spectrums
+END
+SpectrumUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/MS/!svn/ver/266/MS/src/org/Spectrums/SpectrumUtil.java
+END
+MXGF_sumo.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/MS/!svn/ver/305/MS/src/org/Spectrums/MXGF_sumo.java
+END
+LinkedCandidateSpectrumLibFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/MS/!svn/ver/131/MS/src/org/Spectrums/LinkedCandidateSpectrumLibFactory.java
+END
+PeakComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/MS/!svn/ver/16/MS/src/org/Spectrums/PeakComparator.java
+END
+TheoreticalFragmentSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/MS/!svn/ver/244/MS/src/org/Spectrums/TheoreticalFragmentSpectrum.java
+END
+MSPLITHybrid.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/MS/!svn/ver/242/MS/src/org/Spectrums/MSPLITHybrid.java
+END
+LookUpSpectrumLibX.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/MS/!svn/ver/314/MS/src/org/Spectrums/LookUpSpectrumLibX.java
+END
+LinkedTheoreticalSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/MS/!svn/ver/246/MS/src/org/Spectrums/LinkedTheoreticalSpectrum.java
+END
+CandidateSpectrumLibFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/MS/!svn/ver/226/MS/src/org/Spectrums/CandidateSpectrumLibFactory.java
+END
+jianutil.java
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/MS/!svn/ver/7/MS/src/org/Spectrums/jianutil.java
+END
+Peak.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/MS/!svn/ver/167/MS/src/org/Spectrums/Peak.java
+END
+LazyEvaluateLinkedSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/MS/!svn/ver/320/MS/src/org/Spectrums/LazyEvaluateLinkedSpectrum.java
+END
+LinkedPeptide.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/MS/!svn/ver/321/MS/src/org/Spectrums/LinkedPeptide.java
+END
+CombinatoryPeptides.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/MS/!svn/ver/245/MS/src/org/Spectrums/CombinatoryPeptides.java
+END
+LinkedPeptideAnalysis.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/MS/!svn/ver/312/MS/src/org/Spectrums/LinkedPeptideAnalysis.java
+END
+PeakScoreLearner.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/MS/!svn/ver/65/MS/src/org/Spectrums/PeakScoreLearner.java
+END
+TheoreticalSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/MS/!svn/ver/276/MS/src/org/Spectrums/TheoreticalSpectrum.java
+END
+LinkedCandidateSpectrumLibX2.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/MS/!svn/ver/43/MS/src/org/Spectrums/LinkedCandidateSpectrumLibX2.java
+END
+FeatureXMLParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/MS/!svn/ver/317/MS/src/org/Spectrums/FeatureXMLParser.java
+END
+TestSpectrumLib.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/TestSpectrumLib.java
+END
+SpectrumComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/SpectrumComparator.java
+END
+Peptide.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/MS/!svn/ver/243/MS/src/org/Spectrums/Peptide.java
+END
+RankBaseScoreLearner.java
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/MS/!svn/ver/302/MS/src/org/Spectrums/RankBaseScoreLearner.java
+END
+PeakMassComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/MS/!svn/ver/86/MS/src/org/Spectrums/PeakMassComparator.java
+END
+LabelledPeakFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/MS/!svn/ver/168/MS/src/org/Spectrums/LabelledPeakFactory.java
+END
+MixturePeak.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/MS/!svn/ver/274/MS/src/org/Spectrums/MixturePeak.java
+END
+MXDBSumo.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/MS/!svn/ver/303/MS/src/org/Spectrums/MXDBSumo.java
+END
+ArrayUtils.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/MS/!svn/ver/78/MS/src/org/Spectrums/ArrayUtils.java
+END
+PTM.java
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/PTM.java
+END
+Spectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/MS/!svn/ver/260/MS/src/org/Spectrums/Spectrum.java
+END
+ArrayListFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/MS/!svn/ver/195/MS/src/org/Spectrums/ArrayListFactory.java
+END
+Mass.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/MS/!svn/ver/192/MS/src/org/Spectrums/Mass.java
+END
+MixturePeakScoreLearner.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/MS/!svn/ver/307/MS/src/org/Spectrums/MixturePeakScoreLearner.java
+END
+SpectrumIonsLearner.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/MS/!svn/ver/24/MS/src/org/Spectrums/SpectrumIonsLearner.java
+END
+RankBaseMixtureSpectrumScorer.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/MS/!svn/ver/177/MS/src/org/Spectrums/RankBaseMixtureSpectrumScorer.java
+END
+ProteinDigester.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/MS/!svn/ver/35/MS/src/org/Spectrums/ProteinDigester.java
+END
+MixtureSpectrumComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/MS/!svn/ver/309/MS/src/org/Spectrums/MixtureSpectrumComparator.java
+END
+PeptideLite.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/MS/!svn/ver/299/MS/src/org/Spectrums/PeptideLite.java
+END
+LookUpPeak.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/MS/!svn/ver/187/MS/src/org/Spectrums/LookUpPeak.java
+END
+MixtureSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/MixtureSpectrum.java
+END
+LPeakRankBaseScorer.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/MS/!svn/ver/253/MS/src/org/Spectrums/LPeakRankBaseScorer.java
+END
+LookUpTable.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/MS/!svn/ver/238/MS/src/org/Spectrums/LookUpTable.java
+END
+PeptideMassAnalysis.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/MS/!svn/ver/80/MS/src/org/Spectrums/PeptideMassAnalysis.java
+END
+LookUpSpectrumLib.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/MS/!svn/ver/231/MS/src/org/Spectrums/LookUpSpectrumLib.java
+END
+MemoryUsageTester.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/MS/!svn/ver/147/MS/src/org/Spectrums/MemoryUsageTester.java
+END
+Spectrum.java2
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/Spectrum.java2
+END
+IonType.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/IonType.java
+END
+MSFeature.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/MS/!svn/ver/172/MS/src/org/Spectrums/MSFeature.java
+END
+DecoySpectrumGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/MS/!svn/ver/316/MS/src/org/Spectrums/DecoySpectrumGenerator.java
+END
+LazyEvaluatedSpectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/MS/!svn/ver/319/MS/src/org/Spectrums/LazyEvaluatedSpectrum.java
+END
+PrecursorMassChecker.java
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/MS/!svn/ver/224/MS/src/org/Spectrums/PrecursorMassChecker.java
+END
+MixtureSpectrumScorer.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/MS/!svn/ver/310/MS/src/org/Spectrums/MixtureSpectrumScorer.java
+END
+MXGF.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/MS/!svn/ver/304/MS/src/org/Spectrums/MXGF.java
+END
+PreciseCandidatesFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/MS/!svn/ver/223/MS/src/org/Spectrums/PreciseCandidatesFactory.java
+END
+CandidateSpectrumLibFactoryX.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/MS/!svn/ver/40/MS/src/org/Spectrums/CandidateSpectrumLibFactoryX.java
+END
+TheoreticalCandidateSpectrumFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/MS/!svn/ver/306/MS/src/org/Spectrums/TheoreticalCandidateSpectrumFactory.java
+END
+MSP2Mgf.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/MS/!svn/ver/107/MS/src/org/Spectrums/MSP2Mgf.java
+END
+SpectrumLib.java2
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/SpectrumLib.java2
+END
+ToMgf.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/MS/!svn/ver/201/MS/src/org/Spectrums/ToMgf.java
+END
+TableElementOperator.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/MS/!svn/ver/69/MS/src/org/Spectrums/TableElementOperator.java
+END
+LargeSpectrumLibIterator.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/MS/!svn/ver/181/MS/src/org/Spectrums/LargeSpectrumLibIterator.java
+END
+PeakRankBaseComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/MS/!svn/ver/18/MS/src/org/Spectrums/PeakRankBaseComparator.java
+END
+PeakIntensityComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/MS/!svn/ver/87/MS/src/org/Spectrums/PeakIntensityComparator.java
+END
+SpectrumLib.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/MS/!svn/ver/277/MS/src/org/Spectrums/SpectrumLib.java
+END
+SpectrumIonRankLearner.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/MS/!svn/ver/23/MS/src/org/Spectrums/SpectrumIonRankLearner.java
+END
+CrossLinker.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/MS/!svn/ver/287/MS/src/org/Spectrums/CrossLinker.java
+END
+Spectrum.java_bksep08
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/Spectrum.java_bksep08
+END
+LPeakScoreLearner.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/MS/!svn/ver/285/MS/src/org/Spectrums/LPeakScoreLearner.java
+END
+LookUpTableUtils.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/MS/!svn/ver/105/MS/src/org/Spectrums/LookUpTableUtils.java
+END
+LookUpSpectrumLibXX.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/MS/!svn/ver/315/MS/src/org/Spectrums/LookUpSpectrumLibXX.java
+END
+LinkedCandidateSpectrumLibX.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/MS/!svn/ver/62/MS/src/org/Spectrums/LinkedCandidateSpectrumLibX.java
+END
+LabelledPeak.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/MS/!svn/ver/318/MS/src/org/Spectrums/LabelledPeak.java
+END
+SpectrumLibSearcher.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/MS/!svn/ver/298/MS/src/org/Spectrums/SpectrumLibSearcher.java
+END
+FreqOffsetGenerator.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/MS/!svn/ver/290/MS/src/org/Spectrums/FreqOffsetGenerator.java
+END
+MixturePeptideAnalysis.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/MS/!svn/ver/308/MS/src/org/Spectrums/MixturePeptideAnalysis.java
+END
+LinkedPeakScoreLearner.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/MS/!svn/ver/311/MS/src/org/Spectrums/LinkedPeakScoreLearner.java
+END
+SpectrumLib.java.josue
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/SpectrumLib.java.josue
+END
+SimpleProbabilisticScorer.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/MS/!svn/ver/301/MS/src/org/Spectrums/SimpleProbabilisticScorer.java
+END
+ExperimentalMixtureAnalysis.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/ExperimentalMixtureAnalysis.java
+END
+testSpectrumLibSearch.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/MS/!svn/ver/200/MS/src/org/Spectrums/testSpectrumLibSearch.java
+END
+LinkedPepAnalysis.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/MS/!svn/ver/32/MS/src/org/Spectrums/LinkedPepAnalysis.java
+END
+LMixturePeakScoreLearner.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/MS/!svn/ver/313/MS/src/org/Spectrums/LMixturePeakScoreLearner.java
+END
+SimpleMatchGraphFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/MS/!svn/ver/169/MS/src/org/Spectrums/SimpleMatchGraphFactory.java
+END
+MXDBSearch.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/MS/!svn/ver/300/MS/src/org/Spectrums/MXDBSearch.java
+END
+LinkedRankBaseScoreLearner.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/MS/!svn/ver/230/MS/src/org/Spectrums/LinkedRankBaseScoreLearner.java
+END
+SimplePeakComparator.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/MS/!svn/ver/98/MS/src/org/Spectrums/SimplePeakComparator.java
+END
+LinkedSpectrumIonRankLearner.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/MS/!svn/ver/35/MS/src/org/Spectrums/LinkedSpectrumIonRankLearner.java
+END
+PeakComparatorSet.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/MS/!svn/ver/17/MS/src/org/Spectrums/PeakComparatorSet.java
+END
+MGF2DTA.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/MS/!svn/ver/193/MS/src/org/Spectrums/MGF2DTA.java
+END
+Spectrum.java.josue
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/MS/!svn/ver/6/MS/src/org/Spectrums/Spectrum.java.josue
+END
+SimpleMatchingGraph.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/MS/!svn/ver/170/MS/src/org/Spectrums/SimpleMatchingGraph.java
+END
+MZXMLReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/MS/!svn/ver/228/MS/src/org/Spectrums/MZXMLReader.java
+END
+Pair.java
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/MS/!svn/ver/44/MS/src/org/Spectrums/Pair.java
+END

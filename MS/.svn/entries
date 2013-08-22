@@ -1,0 +1,111 @@
+10
+
+dir
+8
+https://localhost:8443/svn/MS/MS
+https://localhost:8443/svn/MS
+
+
+
+2009-04-17T21:28:16.781250Z
+8
+Jian Wang
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+f604f230-a25b-ef41-ba6c-62796842dd5c
+
+.classpath
+file
+
+
+
+
+2009-04-18T02:27:56.000000Z
+493e5b0bbac94fae593d842b88b5818a
+2009-04-15T23:40:41.562500Z
+7
+Jian Wang
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+968
+
+.project
+file
+
+
+
+
+2009-04-18T02:27:56.000000Z
+4055bb694a64098853ee8864c18c96fe
+2009-04-14T01:58:06.546875Z
+5
+Jian Wang
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+433
+
+lib
+dir
+
+MSPLib
+dir
+
+src
+dir
+
+external_lib
+dir
+
+data
+dir
+

@@ -1,0 +1,14 @@
+/**
+ * Classifies peptides matches from MSPLIT-DB
+ * @author Jian Wang
+ *
+ */
+import org.biojava.stats.svm.*;
+public class SVMSpectrumMatchesClassifier {
+	public static double classify1(double[] features){
+		RadialBaseKernel gauss = new RadialBaseKernel(SparseVector.kernel, 50);
+		SimpleSVMClassifierModel class1 = new SimpleSVMClassifierModel(gauss);
+		
+		return 0.0;
+	}
+}

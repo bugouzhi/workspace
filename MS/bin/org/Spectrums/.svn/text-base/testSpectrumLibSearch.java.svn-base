@@ -1,0 +1,320 @@
+package org.Spectrums;
+
+import java.util.GregorianCalendar; 
+import java.util.Iterator;
+import java.util.List;
+
+public class testSpectrumLibSearch {
+	public static void testRank(){
+		String spectrumFile = ".\\MSPLib\\Lib\\ecoli.msp";
+		SpectrumLib lib1 = new SpectrumLib(spectrumFile, "MSP");
+		String file = "..\\mixture_linked\\Ecoli_allpeptides.txt";
+		lib1.removeModSpectra();
+		String probFile = ".\\data\\IonsScore.txt";
+		String noiseModel = ".\\data\\NoiseModel.txt";
+		SimplePeakComparator peakscorer = new SimplePeakComparator(probFile, noiseModel);
+		SimpleProbabilisticScorer scorer = new SimpleProbabilisticScorer(peakscorer);
+		List<Spectrum>  specList = lib1.getSpectrumList();
+		CandidateSpectrumLibFactory factory = 
+			CandidateSpectrumLibFactory.createFactoryFromPeptide(file);
+		long start = (new GregorianCalendar()).getTimeInMillis();
+		for(int i = 0; i < 50; i++){
+			Spectrum s = specList.get(i);
+			SpectrumLib lib = factory.createCandidateSpectrumLibX(s, 5, false);
+			SpectrumLibSearcher searcher = new SpectrumLibSearcher(lib.getSpectrumList(), scorer);
+			System.out.println("Spectrum: " + s.peptide + " rank " + searcher.rank(s) + " in spectrumLib of size: " + lib.getSpectrumList().size());			
+		}
+		System.out.println("matching " + 500 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+
+	}
+	
+	public static void testLinkedRank(){
+		String spectrumFile = ".\\mixture_linked\\spectrums_raw.mgf";
+		SpectrumLib lib1 = new SpectrumLib(spectrumFile, "MGF");
+		String file = "..\\mixture_linked\\longrunInpsect_plus_allEcoli_peptides.txt";
+		lib1.removeModSpectra();
+		String probFile = ".\\data\\IonsScore.txt";
+		String noiseModel = ".\\data\\NoiseModel.txt";
+		SimplePeakComparator peakscorer = new SimplePeakComparator(probFile, noiseModel);
+		SimpleProbabilisticScorer scorer = new SimpleProbabilisticScorer(peakscorer);
+		List<Spectrum>  specList = lib1.getSpectrumList();
+		CandidateSpectrumLibFactory factory = 
+			CandidateSpectrumLibFactory.createFactoryFromPeptide(file);
+		long start = (new GregorianCalendar()).getTimeInMillis();
+		for(int i = 0; i < 30; i++){
+			Spectrum s = specList.get(i);
+			SpectrumLib lib = factory.createCandidateSpectrumLibX(s, 5, false);
+			SpectrumLibSearcher searcher = new SpectrumLibSearcher(lib.getSpectrumList(), scorer);
+			System.out.println("Spectrum: " + s.peptide + " rank " + searcher.rank(s) + " in spectrumLib of size: " + lib.getSpectrumList().size());			
+		}
+		System.out.println("matching " + 500 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+
+	}
+	
+	public static void testTopMatch(){
+		String spectrumFile = "..\\MSPLib\\Lib\\yeast.msp";
+		String spectrumFile2 = "..\\mixture_linked\\linked_peptide_spectra2.mgf";
+		SpectrumLib lib1 = new SpectrumLib(spectrumFile, "MSP");
+		String file = "..\\mixture_linked\\Ecoli_allpeptides_plusLinkedpeptides.txt";
+		SpectrumLib lib2 = new SpectrumLib(spectrumFile2, "MGF");
+		lib1.removeModSpectra();
+		lib1.computeRank();
+		String probFile = ".\\data\\IonsScore.txt";
+		String noiseModel = ".\\data\\NoiseModel.txt";
+		SimplePeakComparator peakscorer = new SimplePeakComparator(probFile, noiseModel);
+		SimpleProbabilisticScorer scorer = new SimpleProbabilisticScorer(peakscorer);
+		//List<Spectrum>  specList = SpectrumUtil.getRandomSpectrum(lib2, 100);
+		List<Spectrum>  specList = lib2.getAllSpectrums();
+		CandidateSpectrumLibFactory factory = 
+			CandidateSpectrumLibFactory.createFactoryFromPeptide(file);
+		factory.setMinCharge(1);
+		factory.setMaxCharge(3);
+		RankBaseScoreLearner peakscorer2 = new RankBaseScoreLearner(lib1);
+		peakscorer2.getIonsCount();
+		LabelledPeakFactory.clearFactory();
+		SimpleProbabilisticScorer scorer1 = new SimpleProbabilisticScorer(peakscorer2);
+		lib1 = null;
+		lib2 = null;
+		long start = (new GregorianCalendar()).getTimeInMillis();
+		for(int i = 0; i < specList.size(); i++){
+			Spectrum s = specList.get(i);
+			//s.windowFilterPeaks(30, 50);
+			s.windowFilterPeaks(8, 25);
+			System.out.println("observed spectrum has peaks: " + s.getPeak().size());
+			s.computePeakRank();
+			SpectrumLib lib = factory.createCandidateSpectrumLibX(s, 1, false);
+			SpectrumLibSearcher searcher = new SpectrumLibSearcher(lib.getSpectrumList(), scorer1);
+			TheoreticalSpectrum best = (TheoreticalSpectrum)searcher.topSpectrum(s);
+		}
+		System.out.println("matching " + 500 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+	}
+	
+	public static void testMixtureRank(){
+		String spectrumFile = ".\\MSPLib\\Lib\\yeast.msp";
+		SpectrumLib lib1 = new SpectrumLib(spectrumFile, "MSP");
+		String file = "..\\mixture_linked\\Yeast_allpeptides_plusSpecLib.txt";
+		lib1.removeModSpectra();
+		String probFile = ".\\data\\IonsScore.txt";
+		String noiseModel = ".\\data\\NoiseModel.txt";
+		//String mixturefile = "..\\mixture_linked\\yeast_mixture.name";
+		String mixturefile = "..\\mixture_linked\\exp_sim_mixtures.id";
+		String spectrumFile2 = "..\\mixture_linked\\yeast_annotated_spectra.mgf";
+		SpectrumLib lib2 = new SpectrumLib(spectrumFile2, "MGF");
+		SimplePeakComparator peakscorer = new SimplePeakComparator(probFile, noiseModel);
+		SimpleProbabilisticScorer filter = new SimpleProbabilisticScorer(peakscorer);
+//		RankBaseScoreLearner peakscorer2 = new RankBaseScoreLearner(lib1);
+//		peakscorer2.getIonsCount();
+		SimpleProbabilisticScorer scorer = new SimpleProbabilisticScorer(peakscorer);
+		filter.setIncludeNoise(false);
+		SpectrumLib mixlib = lib2.createMix(mixturefile, 1000, 1, 1.0, 0.000000001, 1.0, 2000, false);
+		//SpectrumLib mixlib = lib1.createRandomMix(1000, 1, 1, 0.0005, 1.0, 2, false);
+		//List<Spectrum>  specList = SpectrumUtil.getRandomSpectrum(lib1, 1000);
+		lib1 = null;
+		List<Spectrum>  specList = mixlib.getSpectrumList();
+		CandidateSpectrumLibFactory factory = 
+			CandidateSpectrumLibFactory.createFactoryFromPeptide(file);
+		long start = (new GregorianCalendar()).getTimeInMillis();
+		for(int i = 0; i < specList.size(); i++){
+			Spectrum s = specList.get(i);
+			s.windowFilterPeaks(8, 25);
+			s.computePeakRank();
+			//s.peptide = s.peptide + " & " + s.peptide;
+			SpectrumLib lib = factory.createCandidateSpectrumLibX(s, 3, false);
+			SpectrumLibSearcher searcher = new SpectrumLibSearcher(lib.getSpectrumList(), filter, filter);
+			int[] ranks = searcher.ranks(s);
+			System.out.println("Spectrum: " + s.peptide + " ranks " +  ranks[0] + " & " + ranks[1]+ " in spectrumLib of size: " + lib.getSpectrumList().size());
+			//searcher.bestPair(s);
+			//searcher.bestCandidates(s, 10);
+		}
+		System.out.println("matching " + 100 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+	}
+	
+	public static void testMixtureRankBaseScorer(){
+		String spectrumFile = ".\\MSPLib\\Lib\\ecoli.msp";
+		String mixFile = "..\\mixture_linked\\linked_peptide_spectra2.mgf";
+		SpectrumLib lib1 = new SpectrumLib(spectrumFile, "MSP");
+		//String file = "..\\mixture_linked\\Ecoli_allpeptides.txt";
+		String file = "..\\mixture_linked\\Ecoli_allpeptides_plusLinkedpeptides.txt";
+		lib1.removeModSpectra();
+		lib1.computeRank();
+		String probFile = ".\\data\\IonsScore.txt";
+		String noiseModel = ".\\data\\NoiseModel.txt";
+		//String mixturefile = "..\\mixture_linked\\yeast_mixture.name"; 
+		SimplePeakComparator peakscorer = new SimplePeakComparator(probFile, noiseModel);
+		SimpleProbabilisticScorer filter = new SimpleProbabilisticScorer(peakscorer);
+		filter.setIncludeNoise(false);
+		
+//		SpectrumIonRankLearner learner = new SpectrumIonRankLearner(lib1);
+//		PeakComparator peakscorer2 = learner.createComparatorSet();
+		RankBaseScoreLearner peakscorer2 = new RankBaseScoreLearner(lib1);
+		peakscorer2.getIonsCount();
+		SimpleProbabilisticScorer scorer = new SimpleProbabilisticScorer(peakscorer2);
+		//RankBaseMixtureSpectrumScorer scorer = new RankBaseMixtureSpectrumScorer(peakscorer2);
+		
+		//SpectrumLib mixlib = lib1.createMix(mixturefile, 1000, 1, 0.0, 0.00001, 1.0, 2000, true);
+		//SpectrumLib mixlib = lib1.createRandomMix(1000, 1, 0.3, 0.0005, 1.0, 2, false);
+		//SpectrumLib mixlib = lib1.createRandomMix(1000, 0.1, 0.0005, 1.0, 2, false);
+		//List<Spectrum>  specList = SpectrumUtil.getRandomSpectrum(lib1, 1000);
+		lib1 = null;
+		//List<Spectrum>  specList = lib1.getSpectrumList();
+		SpectrumLib mixlib = new SpectrumLib(mixFile, "MGF");
+		//mixlib.windowFilterPeaks(7, 25);
+		//mixlib.computeRank();
+		List<Spectrum>  specList = mixlib.getSpectrumList();
+		CandidateSpectrumLibFactory factory = 
+			CandidateSpectrumLibFactory.createFactoryFromPeptide(file);
+		long start = (new GregorianCalendar()).getTimeInMillis();
+		for(int i = 0; i < specList.size(); i++){
+			Spectrum s = specList.get(i);
+			if(s.getPeak().size() < 10){
+				continue;
+			}
+			s.windowFilterPeaks(8, 25);
+			s.computePeakRank();
+			//s.peptide = s.peptide + " & " + s.peptide;
+			SpectrumLib lib = factory.createCandidateSpectrumLibX(s, 1.5, false);
+			SpectrumLibSearcher searcher = new SpectrumLibSearcher(lib.getSpectrumList(), filter, scorer);
+			//int[] ranks = searcher.ranks(s);
+			//System.out.println("Spectrum: " + s.peptide + " ranks " +  ranks[0] + " & " + ranks[1]+ " in spectrumLib of size: " + lib.getSpectrumList().size());
+			searcher.bestCandidates(s, 10);
+			//searcher.bestSpectrum(s);
+		}
+		System.out.println("matching " + 100 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+	}
+	
+	public static void testMixtureSearchMethod(){
+		String spectrumFile = ".\\MSPLib\\Lib\\ecoli.msp";
+		SpectrumLib lib1 = new SpectrumLib(spectrumFile, "MSP");
+		//String file = "..\\mixture_linked\\longrunInpsect_plus_allEcoli_peptides.txt";
+		String file = "..\\mixture_linked\\Yeast_allPeptides_plusDecoy.txt";
+		lib1.removeModSpectra();
+		lib1.computeRank();
+		String probFile = ".\\data\\IonsScore.txt";
+		String noiseModel = ".\\data\\NoiseModel.txt";
+		SimplePeakComparator peakscorer = new SimplePeakComparator(probFile, noiseModel);
+		SimpleProbabilisticScorer filter = new SimpleProbabilisticScorer(peakscorer);
+		filter.setIncludeNoise(false);
+		
+		RankBaseScoreLearner peakscorer2 = new RankBaseScoreLearner(lib1);
+		peakscorer2.getIonsCount();
+		//SimpleProbabilisticScorer scorer = new SimpleProbabilisticScorer(peakscorer2);
+		RankBaseMixtureSpectrumScorer scorer = new RankBaseMixtureSpectrumScorer(peakscorer2);
+		
+		//String mixlibFile = "..\\mixture_compressed\\new80min.mgf";
+		String mixlibFile = "..\\mixture_linked\\yeast_data\\klc_010908p_yeast-digest.mgf";
+		//SpectrumLib mixlib = new SpectrumLib(mixlibFile, "MGF");
+		Iterator<Spectrum> specIterator = new LargeSpectrumLibIterator<Spectrum>(mixlibFile);
+		lib1 = null;
+		//mixlib.windowFilterPeaks(7, 25);
+		//mixlib.computeRank();
+		//List<Spectrum>  specList = mixlib.getSpectrumList();
+		CandidateSpectrumLibFactory factory = 
+			CandidateSpectrumLibFactory.createFactoryFromPeptide(file);
+		long start = (new GregorianCalendar()).getTimeInMillis();
+		
+		for(;specIterator.hasNext();){
+			Spectrum s = specIterator.next();
+//			String[] tokens = s.spectrumName.split("[_.]");
+//			int num = Integer.parseInt(tokens[1]);
+//			if(num < 80 || num > 400){
+//				//continue;
+//			}
+			s.windowFilterPeaks(10, 25);
+			if(s.getPeak().size() < 30){
+				continue;
+			}
+			s.computePeakRank();	
+			//s.peptide = s.peptide + " & " + s.peptide;
+			SpectrumLib lib = factory.createCandidateSpectrumLibX(s, 3, false);
+			System.out.println("After mFilter we have " + lib.getAllSpectrums().size());
+//			LookUpSpectrumLib filteredLib = new LookUpSpectrumLib(lib.getSpectrumList());
+//			List<Peak> queryPeaks = s.getTopPeaks(25);
+//			//List<Peak> queryPeaks = s.topWindowPeaks(6, 200);
+//			System.out.println("Query peaks has: " + queryPeaks.size());
+//			List<Spectrum> candidates = filteredLib.getSpectrumByPeaks(queryPeaks, 4);
+			SpectrumLibSearcher searcher = new SpectrumLibSearcher(lib.getAllSpectrums(), filter, scorer);
+			//SpectrumLibSearcher searcher = new SpectrumLibSearcher(lib.getSpectrumList(), scorer);
+
+			//int[] ranks = searcher.ranks(s);
+			//System.out.println("Spectrum: " + s.peptide + " ranks " +  ranks[0] + " & " + ranks[1]+ " in spectrumLib of size: " + lib.getSpectrumList().size());
+			searcher.bestCandidates(s, 10);
+			//searcher.topSpectrum(s);
+			//searcher.bestSpectrum(s);
+		}
+		System.out.println("matching " + 100 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+	}
+	
+	public static void testLookUpTableSearch(){
+		String spectrumFile = ".\\MSPLib\\Lib\\ecoli.msp";
+		String spectrumFile2 = "..\\mixture_linked\\yeast_annotated_spectra.mgf";
+		SpectrumLib lib1 = new SpectrumLib(spectrumFile, "MSP");
+		//String file = "..\\mixture_linked\\Yeast_allPeptides_plusDecoy.txt";
+		String file = "..\\mixture_linked\\Yeast_allPeptides_plusSpecLib_plusDecoy.txt";
+		lib1.removeModSpectra();
+		lib1.computeRank();
+		String probFile = ".\\data\\IonsScore.txt";
+		String noiseModel = ".\\data\\NoiseModel.txt";
+		String mixturefile = "..\\mixture_linked\\ecoli_mixture2.name";
+		SimplePeakComparator peakscorer = new SimplePeakComparator(probFile, noiseModel);
+		SimpleProbabilisticScorer filter = new SimpleProbabilisticScorer(peakscorer);
+		filter.setIncludeNoise(false);
+		
+		//SpectrumIonRankLearner learner = new SpectrumIonRankLearner(lib1);
+		//PeakComparator peakscorer2 = learner.createComparatorSet();
+		RankBaseScoreLearner peakscorer2 = new RankBaseScoreLearner(lib1);
+		peakscorer2.getIonsCount();
+		SimpleProbabilisticScorer scorer = new SimpleProbabilisticScorer(peakscorer2);
+		//RankBaseMixtureSpectrumScorer scorer = new RankBaseMixtureSpectrumScorer(peakscorer2);
+		
+		//SpectrumLib mixlib = lib1.createMix(mixturefile, 1000, 1, 0.0, 0.00001, 1.0, 2000, true);
+		//SpectrumLib mixlib = lib1.createRandomMix(2000, 1, 0.0, 0.0005, 1.0, 2, false);
+		//SpectrumLib mixlib = lib1.createRandomMix(1000, 0.1, 0.0005, 1.0, 2, true);
+		//List<Spectrum>  specList = SpectrumUtil.getRandomSpectrum(lib1, 1000);
+		//lib1 = null;
+		//List<Spectrum>  specList = lib1.getSpectrumList();
+		//SpectrumLib mixlib = new SpectrumLib(mixFile, "MGF");
+		//mixlib.windowFilterPeaks(7, 25);
+		//mixlib.computeRank();
+		//List<Spectrum>  specList = mixlib.getSpectrumList();
+		CandidateSpectrumLibFactory factory = 
+			CandidateSpectrumLibFactory.createFactoryFromPeptide(file);
+		long start = (new GregorianCalendar()).getTimeInMillis();
+		Iterator<Spectrum> specIterator = new LargeSpectrumLibIterator<Spectrum>(spectrumFile2);
+		int i =0;
+		for(;specIterator.hasNext();){
+			Spectrum s = specIterator.next();
+			if(s.getPeak().size() < 30){
+				continue;
+			}
+			s.windowFilterPeaks(8, 25);
+			s.computePeakRank();
+			SpectrumLib lib = factory.createCandidateSpectrumLibX(s, 3, false);
+			System.out.println("After filter one we have: " + lib.getAllSpectrums().size() + " candidates");
+			LookUpSpectrumLib filteredLib = new LookUpSpectrumLib(lib.getSpectrumList());
+			List<Peak> queryPeaks = s.getTopPeaks(25);
+			//List<Peak> queryPeaks = s.topWindowPeaks(6, 200);
+			System.out.println("Query peaks has: " + queryPeaks.size());
+			List<Spectrum> candidates = filteredLib.getSpectrumByPeaks(queryPeaks, 4);
+			SpectrumLibSearcher searcher = new SpectrumLibSearcher(candidates, scorer, scorer);
+			//int[] ranks = searcher.ranks(s);			
+			//System.out.println("Spectrum: " + s.peptide + " ranks " +  ranks[0] + " & " + ranks[1]+ " in spectrumLib of size: " + lib.getSpectrumList().size());
+			searcher.topSpectrum(s);
+			i++;
+			if(i > 200){
+				break;
+			}
+		}
+		System.out.println("matching " + 100 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+
+	}
+	
+	public static void main(String[] args){
+		//testRank();
+		//testMixtureRank();
+		testMixtureRankBaseScorer();
+		//testMixtureSearchMethod();
+		//testTopMatch();
+		//testLookUpTableSearch();
+	}
+}
+

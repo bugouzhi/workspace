@@ -1,0 +1,18 @@
+package org.Spectrums;
+
+public class ToMgf {
+	public static void main(String[] args){
+		String inFile = args[0];
+		String outFile = args[1];
+		inFile = "..\\mixture_linked\\yeast_data1_ms2\\yeast-01.ms2";
+		outFile = "..\\mixture_linked\\test.mgf";
+		if(args.length < 2){
+			System.out.println("usage: java -Xmx1000M  -jar ToMgf.jar <input file> <Mgf-out file>");	
+		}else{
+			System.out.println("Reading input library file");
+			SpectrumLib lib = new SpectrumLib(inFile, "MS2");
+			System.out.println("Printing to MGF format");
+			lib.printLibToFile(outFile, lib);
+		}
+	}
+}

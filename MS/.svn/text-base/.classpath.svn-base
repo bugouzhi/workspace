@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="Spectrums_bk_2_12_09/" kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Graph"/>
+	<classpathentry kind="lib" path="lib/biojava.jar"/>
+	<classpathentry kind="lib" path="lib/biojava-1.6-all.jar"/>
+	<classpathentry kind="lib" path="lib/bytecode-0.92.jar"/>
+	<classpathentry kind="lib" path="lib/javax.servlet.jsp.jar"/>
+	<classpathentry kind="lib" path="lib/mailapi.jar"/>
+	<classpathentry kind="lib" path="lib/mbt.jar"/>
+	<classpathentry kind="lib" path="lib/pdblibs_thin.jar"/>
+	<classpathentry kind="lib" path="lib/pdblibs.jar"/>
+	<classpathentry kind="lib" path="lib/pdbormapping.jar"/>
+	<classpathentry kind="lib" path="lib/servlet.jar"/>
+	<classpathentry kind="lib" path="lib/siteormapping.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

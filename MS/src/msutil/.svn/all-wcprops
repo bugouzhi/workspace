@@ -1,0 +1,239 @@
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/!svn/ver/6305/MS_Java/msgfdb/src/msutil
+END
+NominalMassAASet.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/NominalMassAASet.java
+END
+SpectraMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/6145/MS_Java/msgfdb/src/msutil/SpectraMap.java
+END
+FragmentationType.java
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/FragmentationType.java
+END
+Spectra.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/Spectra.java
+END
+SpecKey.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/6299/MS_Java/msgfdb/src/msutil/SpecKey.java
+END
+Composition.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/6088/MS_Java/msgfdb/src/msutil/Composition.java
+END
+Modification.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/6259/MS_Java/msgfdb/src/msutil/Modification.java
+END
+ScoredString.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/ScoredString.java
+END
+Enzyme.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/6305/MS_Java/msgfdb/src/msutil/Enzyme.java
+END
+ScoringFunction.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/ScoringFunction.java
+END
+Annotation.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/5796/MS_Java/msgfdb/src/msutil/Annotation.java
+END
+SpectraIterator.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/6120/MS_Java/msgfdb/src/msutil/SpectraIterator.java
+END
+Constants.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/Constants.java
+END
+WindowFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/WindowFilter.java
+END
+Peak.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/6273/MS_Java/msgfdb/src/msutil/Peak.java
+END
+SpectrumAccessorBySpecIndex.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/6120/MS_Java/msgfdb/src/msutil/SpectrumAccessorBySpecIndex.java
+END
+ModifiedAminoAcid.java
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/5808/MS_Java/msgfdb/src/msutil/ModifiedAminoAcid.java
+END
+SpectrumAnnotator.java
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/SpectrumAnnotator.java
+END
+Peptide.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/5808/MS_Java/msgfdb/src/msutil/Peptide.java
+END
+Matter.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/Matter.java
+END
+SpectrumRecalibrator.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/SpectrumRecalibrator.java
+END
+AminoAcidSet.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/6264/MS_Java/msgfdb/src/msutil/AminoAcidSet.java
+END
+RankFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/RankFilter.java
+END
+ActivationMethod.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/6232/MS_Java/msgfdb/src/msutil/ActivationMethod.java
+END
+Spectrum.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/6305/MS_Java/msgfdb/src/msutil/Spectrum.java
+END
+SpecFileFormat.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/6081/MS_Java/msgfdb/src/msutil/SpecFileFormat.java
+END
+Mass.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/Mass.java
+END
+SpectraContainer.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/SpectraContainer.java
+END
+Sequence.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/Sequence.java
+END
+InstrumentType.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/6232/MS_Java/msgfdb/src/msutil/InstrumentType.java
+END
+GappedPeptide.java
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/GappedPeptide.java
+END
+CompositionAASet.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/CompositionAASet.java
+END
+AminoAcid.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/5884/MS_Java/msgfdb/src/msutil/AminoAcid.java
+END
+Reshape.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/Reshape.java
+END
+IonType.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/6241/MS_Java/msgfdb/src/msutil/IonType.java
+END
+SpectrumTester.java
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/SpectrumTester.java
+END
+Pair.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/Pair.java
+END
+CompositionFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/5827/MS_Java/msgfdb/src/msutil/CompositionFactory.java
+END
+IntMassAASet.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/5695/MS_Java/msgfdb/src/msutil/IntMassAASet.java
+END

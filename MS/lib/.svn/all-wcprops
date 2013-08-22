@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 25
+/svn/MS/!svn/ver/7/MS/lib
+END
+bytecode-0.92.jar
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/MS/!svn/ver/7/MS/lib/bytecode-0.92.jar
+END
+servlet.jar
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/MS/!svn/ver/7/MS/lib/servlet.jar
+END
+javax.servlet.jsp.jar
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/MS/!svn/ver/7/MS/lib/javax.servlet.jsp.jar
+END
+biojava.jar
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/MS/!svn/ver/7/MS/lib/biojava.jar
+END
+mailapi.jar
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/MS/!svn/ver/7/MS/lib/mailapi.jar
+END
+pdblibs.jar
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/MS/!svn/ver/7/MS/lib/pdblibs.jar
+END
+pdblibs_thin.jar
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/MS/!svn/ver/7/MS/lib/pdblibs_thin.jar
+END
+siteormapping.jar
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/MS/!svn/ver/7/MS/lib/siteormapping.jar
+END
+mbt.jar
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/svn/MS/!svn/ver/7/MS/lib/mbt.jar
+END
+pdbormapping.jar
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/MS/!svn/ver/7/MS/lib/pdbormapping.jar
+END
+biojava-1.6-all.jar
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/MS/!svn/ver/7/MS/lib/biojava-1.6-all.jar
+END

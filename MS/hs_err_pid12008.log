@@ -1,0 +1,104 @@
+#
+# An unexpected error has been detected by Java Runtime Environment:
+#
+# java.lang.OutOfMemoryError: requested 167772160 bytes for GrET in C:\BUILD_AREA\jdk6_06\hotspot\src\share\vm\utilities\growableArray.cpp. Out of swap space?
+#
+#  Internal Error (allocation.inline.hpp:42), pid=12008, tid=12844
+#  Error: GrET in C:\BUILD_AREA\jdk6_06\hotspot\src\share\vm\utilities\growableArray.cpp
+#
+# Java VM: Java HotSpot(TM) Client VM (10.0-b22 mixed mode windows-x86)
+# If you would like to submit a bug report, please visit:
+#   http://java.sun.com/webapps/bugreport/crash.jsp
+#
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x04210c00):  VMThread [stack: 0x042a0000,0x042f0000] [id=12844]
+
+Stack: [0x042a0000,0x042f0000]
+[error occurred during error reporting (printing stack bounds), id 0xc0000005]
+
+VM_Operation (0x01b9f498): GenCollectForAllocation, mode: safepoint, requested by thread 0x003b6400
+
+
+---------------  P R O C E S S  ---------------
+
+Java Threads: ( => current thread )
+  0x0422e800 JavaThread "Low Memory Detector" daemon [_thread_blocked, id=13112, stack(0x04600000,0x04650000)]
+  0x04229c00 JavaThread "CompilerThread0" daemon [_thread_blocked, id=12808, stack(0x04570000,0x045c0000)]
+  0x04228c00 JavaThread "Attach Listener" daemon [_thread_blocked, id=11684, stack(0x044e0000,0x04530000)]
+  0x04227c00 JavaThread "Signal Dispatcher" daemon [_thread_blocked, id=13092, stack(0x04450000,0x044a0000)]
+  0x04216800 JavaThread "Finalizer" daemon [_thread_blocked, id=10492, stack(0x043c0000,0x04410000)]
+  0x04215800 JavaThread "Reference Handler" daemon [_thread_blocked, id=5652, stack(0x04330000,0x04380000)]
+  0x003b6400 JavaThread "main" [_thread_blocked, id=10488, stack(0x01b50000,0x01ba0000)]
+
+Other Threads:
+=>0x04210c00 VMThread [stack: 0x042a0000,0x042f0000] [id=12844]
+  0x04241400 WatcherThread [stack: 0x04690000,0x046e0000] [id=6244]
+
+VM state:at safepoint (normal execution)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x003b5c28/0x000072e8] Threads_lock - owner thread: 0x04210c00
+[0x003b5dc8/0x000072a8] Heap_lock - owner thread: 0x003b6400
+
+Heap
+ def new generation   total 92160K, used 81920K [0x10010000, 0x16410000, 0x16410000)
+  eden space 81920K, 100% used [0x10010000, 0x15010000, 0x15010000)
+  from space 10240K,   0% used [0x15a10000, 0x15a10000, 0x16410000)
+  to   space 10240K,   0% used [0x15010000, 0x15010000, 0x15a10000)
+ tenured generation   total 1228800K, used 1223832K [0x16410000, 0x61410000, 0x61410000)
+   the space 1228800K,  99% used [0x16410000, 0x60f363a8, 0x60f36400, 0x61410000)
+ compacting perm gen  total 12288K, used 4166K [0x61410000, 0x62010000, 0x65410000)
+   the space 12288K,  33% used [0x61410000, 0x61821980, 0x61821a00, 0x62010000)
+No shared spaces configured.
+
+Dynamic libraries:
+0x00400000 - 0x00423000 	C:\Program Files (x86)\Java\jre1.6.0_06\bin\javaw.exe
+0x7d600000 - 0x7d6f0000 	C:\WINDOWS\system32\ntdll.dll
+0x7d4c0000 - 0x7d5f0000 	C:\WINDOWS\syswow64\kernel32.dll
+0x7d1e0000 - 0x7d27c000 	C:\WINDOWS\syswow64\ADVAPI32.dll
+0x7da20000 - 0x7db00000 	C:\WINDOWS\syswow64\RPCRT4.dll
+0x7d8d0000 - 0x7d920000 	C:\WINDOWS\syswow64\Secur32.dll
+0x7d930000 - 0x7da00000 	C:\WINDOWS\syswow64\USER32.dll
+0x7d800000 - 0x7d890000 	C:\WINDOWS\syswow64\GDI32.dll
+0x7dee0000 - 0x7df50000 	C:\WINDOWS\system32\IMM32.DLL
+0x10000000 - 0x1000a000 	C:\WINDOWS\system32\msphstcnjhm.dll
+0x77ba0000 - 0x77bfa000 	C:\WINDOWS\syswow64\MSVCRT.dll
+0x6fa00000 - 0x6fa35000 	c:\PROGRA~2\Sophos\SOPHOS~1\SOPHOS~1.DLL
+0x76b70000 - 0x76b7b000 	C:\WINDOWS\system32\PSAPI.DLL
+0x7c340000 - 0x7c396000 	C:\Program Files (x86)\Java\jre1.6.0_06\bin\msvcr71.dll
+0x6d7c0000 - 0x6da10000 	C:\Program Files (x86)\Java\jre1.6.0_06\bin\client\jvm.dll
+0x76aa0000 - 0x76acd000 	C:\WINDOWS\system32\WINMM.dll
+0x6d270000 - 0x6d278000 	C:\Program Files (x86)\Java\jre1.6.0_06\bin\hpi.dll
+0x6d770000 - 0x6d77c000 	C:\Program Files (x86)\Java\jre1.6.0_06\bin\verify.dll
+0x6d310000 - 0x6d32f000 	C:\Program Files (x86)\Java\jre1.6.0_06\bin\java.dll
+0x6d7b0000 - 0x6d7bf000 	C:\Program Files (x86)\Java\jre1.6.0_06\bin\zip.dll
+
+VM Arguments:
+jvm_args: -Xmx1300M -Dfile.encoding=Cp1252 
+java_command: org.Spectrums.testSpectrumLibSearch           
+Launcher Type: SUN_STANDARD
+
+Environment Variables:
+CLASSPATH=.;C:\Program Files (x86)\Java\jre1.6.0_06\lib\ext\QTJava.zip
+PATH=C:/Program Files (x86)/Java/jre6/bin/client;C:/Program Files (x86)/Java/jre6/bin;C:\Perl64\site\bin;C:\Perl64\bin;C:\Inetpub\tpp-bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\Program Files (x86)\Common Files\Roxio Shared\DLLShared\;C:\Program Files (x86)\Common Files\Roxio Shared\9.0\DLLShared\;C:\Program Files\Java\jdk1.6.0_06\bin;C:\Program Files (x86)\Java\jdk1.6.0_06\jre\bin;C:\Program Files (x86)\Java\jdk1.6.0_06\bin;C:\MATLAB7\bin\win32;C:\Documents and Settings\Jian Wang\workspace\JDock\external\blast-2.2.18\bin;C:\Documents and Settings\Jian Wang\workspace\JDock\external\muscle3.6;C:\Program Files (x86)\Common Files\Adobe\AGL;C:\Program Files\OpenMS-1.6_64\bin;C:\Program Files (x86)\QuickTime\QTSystem\
+USERNAME=Jian Wang
+OS=Windows_NT
+PROCESSOR_IDENTIFIER=EM64T Family 6 Model 23 Stepping 6, GenuineIntel
+
+
+
+---------------  S Y S T E M  ---------------
+
+OS: Windows Server 2003 family Build 3790 Service Pack 2
+
+CPU:total 8 (4 cores per cpu, 1 threads per core) family 6 model 7 stepping 6, cmov, cx8, fxsr, mmx, sse, sse2, sse3, ssse3
+
+Memory: 4k page, physical 4194303k(4194303k free), swap 4194303k(4194303k free)
+
+vm_info: Java HotSpot(TM) Client VM (10.0-b22) for windows-x86 JRE (1.6.0_06-b02), built on Mar 25 2008 01:22:05 by "java_re" with MS VC++ 7.1
+
+time: Mon Mar 28 15:42:56 2011
+elapsed time: 269 seconds
+

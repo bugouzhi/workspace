@@ -1,0 +1,199 @@
+package org.Spectrums;
+
+import java.util.List;
+
+public class LinkedPeptide extends Peptide{
+	private String crossLinker = "";
+	private double crossLinkerMass = 0;
+	Peptide[] peptides; //treated linked peptide as two peptide with PTM
+	public LinkedPeptide(String pep, int charge){
+		String[] peps = pep.split("--");
+		Peptide p1 = new Peptide(peps[0], 1);
+		Peptide p2 = new Peptide(peps[1], 1);
+		this.peptides = new Peptide[2];
+		this.peptides[0] = p1;
+		this.peptides[1] = p2;
+		double mass = (p1.getParentmass() + p2.getParentmass()
+				+ Mass.DSSLINKER_MASS 
+				+ Mass.PROTON_MASS*(charge-2))/charge;	
+		double massShift1 = p1.getParentmass();
+		double massShift2 = p2.getParentmass();
+ 		p1.insertPTM(p1.getPeptide().indexOf('K')+1, massShift2+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+		p2.insertPTM(p2.getPeptide().indexOf('K')+1, massShift1+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+//		System.out.println("we have ptms: " + p1.getPos().length);
+//		System.out.println("we have ptms: " + p2.getPos().length);
+		this.setCharge((short)charge);
+		this.setPeptide(p1 + "--" + p2);
+//		double mass = (PeptideMassAnalysis.computeMolecularMass(peps[0])
+//				+ PeptideMassAnalysis.computeMolecularMass(peps[1]) 
+//				+ Mass.DSSLINKER_MASS 
+//				+ Mass.PROTON_MASS*(charge))/charge;	
+		this.setParentmass(mass);
+	}
+	
+	public static LinkedPeptide createLinkedPeptide(String pep, int charge){
+		String[] peps = pep.split("--");
+		int position1 = peps[0].indexOf('+');
+		int position2 = peps[1].indexOf('+');
+		peps[0] = peps[0].replaceAll("[0-9\\.\\+]", "");
+		peps[1] = peps[1].replaceAll("[0-9\\.\\+]", "");
+		return new LinkedPeptide(peps[0] + "--" + peps[1], charge, position1, position2);
+	}
+	
+	public LinkedPeptide(String pep, int charge, int position1, int position2){
+		String[] peps = pep.split("--");
+		Peptide p1 = new Peptide(peps[0], 1);
+		Peptide p2 = new Peptide(peps[1], 1);
+		this.peptides = new Peptide[2];
+		this.peptides[0] = p1;
+		this.peptides[1] = p2;
+		double mass = (p1.getParentmass() + p2.getParentmass()
+				+ Mass.DSSLINKER_MASS 
+				+ Mass.PROTON_MASS*(charge-2))/charge;	
+		double massShift1 = p1.getParentmass();
+		double massShift2 = p2.getParentmass();
+ 		p1.insertPTM(position1, massShift2+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+		p2.insertPTM(position2, massShift1+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+		System.out.println("we have ptms: " + p1.getPos().length);
+		System.out.println("we have ptms: " + p2.getPos().length);
+		this.setCharge((short)charge);
+		this.setPeptide(p1 + "--" + p2);
+//		double mass = (PeptideMassAnalysis.computeMolecularMass(peps[0])
+//				+ PeptideMassAnalysis.computeMolecularMass(peps[1]) 
+//				+ Mass.DSSLINKER_MASS 
+//				+ Mass.PROTON_MASS*(charge))/charge;	
+		this.setParentmass(mass);
+	}
+//	public LinkedPeptide(Peptide pep1, Peptide pep2, int charge){
+//		Peptide p1 = new Peptide(pep1.toString(), 1);
+//		Peptide p2 = new Peptide(pep2.toString(), 1);
+//		this.peptides = new Peptide[2];
+//		this.peptides[0] = p1;
+//		this.peptides[1] = p2;
+//		double mass = (p1.getParentmass() + p2.getParentmass()
+//				+ Mass.DSSLINKER_MASS 
+//				+ Mass.PROTON_MASS*(charge-2))/charge;	
+//		double massShift1 = p1.getParentmass();
+//		double massShift2 = p2.getParentmass();
+// 		p1.insertPTM(p1.getPeptide().indexOf('K')+1, massShift2+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+//		p2.insertPTM(p2.getPeptide().indexOf('K')+1, massShift1+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+//		System.out.println("we have ptms: " + p1.getPos().length);
+//		System.out.println("we have ptms: " + p2.getPos().length);
+//		this.setCharge((short)charge);
+//		this.setPeptide(p1.getPeptide() + "--" + p2.getPeptide());	
+//		this.setParentmass(mass);
+//	}
+	
+	public LinkedPeptide(Peptide pep1, Peptide pep2, int charge){		
+		this(pep1, pep2, charge, pep1.getPeptide().indexOf('K')+1, pep2.getPeptide().indexOf('K')+1);
+	}
+	
+	public LinkedPeptide(Peptide pep1, Peptide pep2, int charge, int position1, int position2){
+		Peptide p1 = new Peptide(pep1);
+		Peptide p2 = new Peptide(pep2);
+		this.peptides = new Peptide[2];
+		this.peptides[0] = p1;
+		this.peptides[1] = p2;
+		double mass = (p1.getParentmass() + p2.getParentmass()
+				+ Mass.DSSLINKER_MASS 
+				+ Mass.PROTON_MASS*(charge-2))/charge;	
+		double massShift1 = p1.getParentmass();
+		double massShift2 = p2.getParentmass();
+ 		p1.insertPTM(position1, massShift2+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+		p2.insertPTM(position2, massShift1+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+		//System.out.println("we have ptms: " + p1.getPos().length);
+		//System.out.println("we have ptms: " + p2.getPos().length);
+		this.setCharge((short)charge);
+		this.setPeptide(p1.getPeptide() + "--" + p2.getPeptide());	
+		this.setParentmass(mass);
+	}
+	
+	public LinkedPeptide(LinkedPeptide lp){
+		Peptide p1 = new Peptide(lp.peptides[0]);
+		Peptide p2 = new Peptide(lp.peptides[1]);
+		this.peptides = new Peptide[]{p1, p2};
+		this.setParentmass(lp.getParentmass());
+		this.setCharge(lp.getCharge());
+		//this.setPeptide(p1.getPeptide() + "--" + p2.getPeptide());
+		this.setPeptide(lp.getPeptide());
+	}
+	
+	public static int getMinLinkedCharge(int linkedCharge){
+		if(linkedCharge == 1){
+			return 1;
+		}else if(linkedCharge == 2){
+			return 1;
+		}else if(linkedCharge == 3){
+			return 2;
+		}else if(linkedCharge == 4){
+			return 2;
+		}else if(linkedCharge == 5){
+			return 3;
+		}else{
+			return 4;
+		}
+			
+	}
+	
+	public static int getMaxLinkedCharge(int linkedCharge){
+		if(linkedCharge == 1){
+			return 1;
+		}else if(linkedCharge == 2){
+			return 2;
+		}else if(linkedCharge == 3){
+			return 2;
+		}else if(linkedCharge == 4){
+			return 3;
+		}else if(linkedCharge == 5){
+			return 4;
+		}else{
+			return 5;
+		}
+	}
+	
+	public String toString(){
+		return peptides[0] + "--" + peptides[1];
+	}
+	
+	public static int transformPeakCharge(int peakCharge, int pepCharge){
+		if(pepCharge <= 2){
+			return peakCharge;
+		}else if(pepCharge == 3){
+			return peakCharge - 1;
+		}else if(pepCharge == 4){
+			return peakCharge - 2;
+		}else if(pepCharge == 5){
+			return peakCharge - 2;
+		}else{
+			peakCharge = 3;
+			return peakCharge;
+		}
+	}
+	
+	public static void testLinkedPeptideMass(){
+		String filename = "..\\mixture_linked\\t";
+		List<String> lines = Utils.FileIOUtils.createListFromFile(filename);
+		for(int i = 0; i < lines.size(); i++){
+			String[] tokens = lines.get(i).split("\\s+");
+			double mass = Double.parseDouble(tokens[3]);
+			int charge = 3;
+			if(mass < 550){
+				charge =4;
+			}
+			LinkedPeptide lp = new LinkedPeptide(tokens[4] + "--" + tokens[6],charge);
+			double pmass = lp.getParentmass();
+			double pmass12 = pmass +(-138.0680 + 150.1439)/charge;
+			//double diff = Math.abs(pmass - mass + pmass/100000);
+			//double diff2 = Math.abs(pmass12 - mass + pmass/10000);
+			double diff = Math.abs((pmass - mass)*1000000/pmass+100);
+			double diff2 = Math.abs((pmass12 - mass)*1000000/pmass12+100);
+			System.out.println(tokens[0] + " " + tokens[1] + " " + tokens[2] + "\t" + 
+					lp + "\t" +  pmass + "\t" + pmass12 + "\t" +  mass + "\t" 
+					+ diff + "\t" + diff2);
+		}
+	}
+	
+	public static void main(String[] args){
+		testLinkedPeptideMass();
+	}
+}
