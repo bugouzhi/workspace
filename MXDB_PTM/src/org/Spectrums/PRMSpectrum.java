@@ -171,7 +171,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		//SpectrumLib lib = new SpectrumLib(".\\MSPLib\\Lib\\ecoli.msp", "MSP");
 		SpectrumLib lib = new SpectrumLib("../mixture_linked/yeast_annotated_spectra.mgf", "MGF");
 		lib.removeModSpectra();
-		RankBaseScoreLearner pComp = RankBaseScoreLearner.loadComparator("../mixture_linked/yeast_single_peptide_model.o");
+		RankBaseScoreLearner pComp = RankBaseScoreLearner.loadComparator("../mixture_linked/human_single_model_realannotated_win12_25.o");
 		//SpectrumComparator comp = SpectrumUtil.getRankBaseScorer(lib);
 		SpectrumComparator comp = new SimpleProbabilisticScorer(pComp);
 		((SimpleProbabilisticScorer)comp).setMinMatchedPeak(0);
@@ -182,7 +182,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 			s.windowFilterPeaks(5, 25);
 			s.computePeakRank();
 			if(s.scanNumber != 2559){
-				continue;
+				//continue;
 			}
 			System.out.println("query: " + s.parentMass + "\t" + s.charge +"\t" + s.peptide);
 			PRMSpectrum prmSpect = new PRMSpectrum(s, comp);
@@ -338,8 +338,8 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 	}
 	
 	public static void main(String[] args){
-		//testPRMSpectrum();
-		testLinkedPRMSpectrum();
+		testPRMSpectrum();
+		//testLinkedPRMSpectrum();
 	}
 	
 }

@@ -371,10 +371,10 @@ public class MixDBSearcher extends SimpleDBSearcher{
 	}
 	
 	public static void main(String[] args){
-		args[0] = "../mixture_linked/database/RpalTIE1.fasta";
-		args[1] = "../mixture_linked/TIE1_IPTL_sample_mixtures.mgf";
-		args[2] = "0.05";
-		args[3] = "0.5";
+		args[0] = "../mixture_linked/database/yeast_proteins_plusDecoy.fasta";
+		args[1] = "../mixture_linked/yeast_data/klc_010908p_yeast-digest_080110044403.mzXML";
+		args[2] = "0.3";
+		args[3] = "0.05";
 		args[4] = "../mixture_linked/ACG_14348_hardklorPrecursorsList.txt";
 		args[5] = "../mixture_linked/Mod_mixdb.txt";
 		args[6] ="../mixture_linked/testmixdbPtm.txt";

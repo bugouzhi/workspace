@@ -142,18 +142,7 @@ public class IDs2StructureMapper {
 					Group g2 = c2.getSeqResGroup(index2+1);
 					System.out.print("Group1 : " + index + "\t" + g1.getPDBName() + "\t");
 					System.out.print("Group2 : " + index2 + "\t" + g2.getPDBName() +"\t");
-					try{
-						Atom a1 = g1.getAtom("CA");
-						Atom a2 = g2.getAtom("CA");
-						double[] coor1 = a1.getCoords();
-						double[] coor2 = a2.getCoords();
-						double dist1 = coor1[0]-coor2[0];
-						double dist2 = coor1[1]-coor2[1];
-						double dist3 = coor1[2]-coor2[2];
-						System.out.print(Math.sqrt(dist1*dist1+dist2*dist2+dist3*dist3));
-					}catch(StructureException se){
-						
-					}
+					System.out.print(distance(g1, g2));
 					System.out.println();
 				}
 			}
@@ -165,6 +154,46 @@ public class IDs2StructureMapper {
 				System.out.print("\n");
 			}
 		}
+	}
+	
+	private double distance(Group g1, Group g2){
+		try{
+			Atom a1 = g1.getAtom("CA");
+			Atom a2 = g2.getAtom("CA");
+			double[] coor1 = a1.getCoords();
+			double[] coor2 = a2.getCoords();
+			double dist1 = coor1[0]-coor2[0];
+			double dist2 = coor1[1]-coor2[1];
+			double dist3 = coor1[2]-coor2[2];
+			return Math.sqrt(dist1*dist1+dist2*dist2+dist3*dist3);
+		}catch(StructureException se){
+			return 0;
+		}
+	}
+	
+	public List<Object[]> getResWithDist(String resName, double minDist){
+		for(int c = 0; c < this.structure.getChains().size(); c++){
+			Chain chain1 = this.structure.getChain(c);
+			for(int c2 = c+1; c2 < this.structure.getChains().size(); c2++){
+				Chain chain2 = this.structure.getChain(c2);
+				for(int r = 0; r < chain1.getSeqResLength(); r++){
+					for(int r2 = 0; r2 < chain2.getSeqResLength(); r2++){
+						Group g1 = chain1.getSeqResGroup(r);
+						Group g2 = chain2.getSeqResGroup(r2);
+						if(g1.getPDBName().equals(resName) && g2.getPDBName().equals(resName)
+								&& g1.has3D() && g2.has3D()){
+							if(distance(g1, g2) < minDist){
+								System.out.print(r +"\t" + g1.getChainId() + "\t" + g1.getPDBName() + "\t");
+								System.out.print(r2 + "\t" + g2.getChainId() + "\t" + g2.getPDBName() +"\t");
+								System.out.print(distance(g1, g2));
+								System.out.println();
+							}
+						}
+					}
+				}
+			}
+		}
+		return null;
 	}
 	
 	private void mapID(String ID){
@@ -222,6 +251,13 @@ public class IDs2StructureMapper {
 		mapper.getDistance();
 	}
 	
+	public static void testStructure2ID(){
+		String resultFile = "../mixture_linked/testAnnotation.txt";
+		String pdbFile = "../mixture_linked/PDBFiles/3UNE.pdb";
+		IDs2StructureMapper mapper = new IDs2StructureMapper(resultFile, pdbFile);
+		mapper.getResWithDist("LYS", 25);
+	}
+	
 	//map IDs to structure
 	public static void testID2StrcutMapperWithHomolog(){
 		String resultFile = "../mixture_linked/testAnnotation.txt";
@@ -237,7 +273,7 @@ public class IDs2StructureMapper {
 	
 	//maps residues on structure back to IDs
 	public static void testStructureToIDMapperWithHomolog(){
-		String resultFile = "../mixture_linked/3UNE.lks";
+		String resultFile = "../mixture_linked/3UNE.ls";
 		String pdbFile = "../mixture_linked/PDBFiles//3UNE.pdb";
 		String proteinFasta = "..//mixture_linked//database//Rabbit_uniprot_proteasome.fasta";
 		String pdbFasta = "..//mixture_linked//database//3UNE.fasta.txt";
@@ -246,19 +282,26 @@ public class IDs2StructureMapper {
 		for(int i = 0; i < resList.size(); i++){
 			String[] tokens = resList.get(i).split("\\s+");
 			StringBuffer template = new StringBuffer("3UNE:A|PDBID|CHAIN|SEQUENCE");
-			String prot1 = getProtName(tokens[2], template, 5);
-			int pos1 = Integer.parseInt(tokens[1]);  //should confirm whether it is zero or one base index
+			String prot1 = getProtName(tokens[1], template, 5);
+			int pos1 = Integer.parseInt(tokens[0])+1;  //should confirm whether it is zero or one base index
 			String prot2 = getProtName(tokens[4], template, 5);
-			int pos2 = Integer.parseInt(tokens[3]);
+			int pos2 = Integer.parseInt(tokens[3])+1;
 			Object[] mapped1 = hMap.getEquivalentSeqPosition(prot1, pos1);
 			Object[] mapped2 = hMap.getEquivalentSeqPosition(prot2, pos2);
-			String pep1 = "", pep2 = "";
+			List<String> pep1 = null, pep2 = null;
 			if(mapped1[0] != null && mapped2[0] != null){
-				pep1 = hMap.getPeptide((String)mapped1[0], (Integer)mapped1[1]);
-				pep2 = hMap.getPeptide((String)mapped2[0], (Integer)mapped2[1]);
+				pep1 = hMap.getPeptides((String)mapped1[0], (Integer)mapped1[1], 2, 30);
+				pep2 = hMap.getPeptides((String)mapped2[0], (Integer)mapped2[1], 2, 30);
 			}
 			System.out.println(prot1 + "\t" + pos1 + "\tmapped to\t" + mapped1[0] + "\t" + mapped1[1] + "\t" + pep1);
 			System.out.println(prot2 + "\t" + pos2 + "\tmapped to\t" + mapped2[0] + "\t" + mapped2[1] + "\t" + pep2);
+			if(pep1 != null && pep2 != null){
+				for(int p = 0; p < pep1.size(); p++){
+					for(int p2=0; p2 < pep2.size(); p2++){
+						System.out.println("possible linked: " + pep1.get(p) + "\t" + pep2.get(p2) +"\tat site-" + i);
+					}
+				}
+			}
 		}
 		
 	}
@@ -267,8 +310,10 @@ public class IDs2StructureMapper {
 	
 	public static void main(String[] args){
 		//testID2StrcutMapper();
+		//testStructure2ID();
 		//testID2StrcutMapperWithHomolog();
 		testStructureToIDMapperWithHomolog();
+		
 	}
 	
 	

@@ -1,12 +1,14 @@
 package mixdb;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Perform SVM classification of
@@ -163,8 +165,8 @@ public class MixtureTDA {
 		MixtureTDA mix = new MixtureTDA("../mixture_linked/MixDBv1.0/Human_heck_trypsin_mixdb_1_topHit_svmresult.txt");
 		mix.filterByTDA(0.01);
 	}
-	public static void MixtureFilter(String resultFile, String outFile, double FDR){
-		MixtureSVMClassify classify = new MixtureSVMClassify(resultFile);
+	public static void MixtureFilter(String resultFile, String outFile, double FDR, String tempDir){
+		MixtureSVMClassify classify = new MixtureSVMClassify(resultFile, tempDir);
 		classify.spectrumMatchClassify();
 		String svmOut = classify.getSvmResultFile();
 		MixtureTDA mixTDA = new MixtureTDA(svmOut);
@@ -172,8 +174,12 @@ public class MixtureTDA {
 		mixTDA.printOutFile(outFile);
 	}
 	
+	public static void parseInputs(String inputFile){
+		Map<String, String> table = Utils.FileIOUtils.createTableFromFile(inputFile, 0, 1);
+	}
+	
 	public static void main(String[] args){
-		if(args.length != 3){
+		if(args.length != 3 && args.length != 4){
 			System.out.println("usage: java -Xmx1000M -jar MixDBFilter.jar <mixdb results> <output> <fdr>");
 			return;
 		}
@@ -184,7 +190,11 @@ public class MixtureTDA {
 			String outFile = args[1];
 			double FDR = Double.parseDouble(args[2]);
 			//double FDR = 0.01;
-			MixtureFilter(resultFile, outFile, FDR);
+			String svmtempDir = System.getProperty("user.dir")+File.separator;
+			if(args.length == 4){
+				svmtempDir = args[3];
+			}
+			MixtureFilter(resultFile, outFile, FDR, svmtempDir);
 		}catch(Exception e){
 			System.err.println(e.getMessage());
 			e.printStackTrace();

@@ -40,6 +40,10 @@ public class HomologMapper {
 	private LinkedHashMap<String, List<AlignedSequence>> homologMap;
 	private Map<String, Integer> chainMap;
 	
+	public HomologMapper(){
+		
+	}
+	
 	public HomologMapper(String seqFile1, String seqFile2){
 		this.seqFile1 = seqFile1;
 		this.seqFile2 = seqFile2;
@@ -178,7 +182,12 @@ public class HomologMapper {
 	
 	//gets tryptic peptides
 	public String getPeptide(String proteinName, int index){
+		return getPeptides(proteinName, index, 0, 45).get(0);
+	}
+	
+	public List<String> getPeptides(String proteinName, int index, int missCleave, int maxLength){
 		String prot = null;
+		List<String> peptides = new ArrayList<String>();
 		if(this.homologMap.containsKey(proteinName)){
 			AlignedSequence align = this.homologMap.get(proteinName).get(0);
 			AlignedSequence align2 = this.homologMap.get(proteinName).get(1);
@@ -190,26 +199,50 @@ public class HomologMapper {
 				prot = align2.getOriginalSequence().getSequenceAsString();
 			}
 		}
-		//System.out.println("seq: " + prot.substring(index, index+1));
-		//looking left
-		int begin = -1;
-		for(int i = index-1; i > 0 && i < prot.length(); i--){
-			if(prot.charAt(i) == 'K' || prot.charAt(i) == 'R'){
-				begin=i;
-				break;
+		return getPeptides(prot, index, missCleave, maxLength, "[KR]");
+	}
+	
+	//cut prot into peptides but require the peptides contain the position index in protein sequence
+	public List<String> getPeptides(String prot, int index, int missCleave, int maxLength, String match){
+		List<String> peptides = new ArrayList<String>();
+		int start = index-maxLength > 0 ? index - maxLength : 0;
+		int end  = index + maxLength < prot.length() ? index + maxLength : prot.length();
+		String seg = prot.substring(start, end);
+		List<int[]> pepLocuss = getPeptides(seg, missCleave, maxLength, match);
+		int relIndex = index - start;
+		for(int i = 0; i < pepLocuss.size(); i++){
+			int[] pepLoc = pepLocuss.get(i);
+			if(pepLoc[0] < relIndex && pepLoc[1] > relIndex+1){
+				peptides.add(seg.substring(pepLoc[0], pepLoc[1]));
 			}
 		}
-
-		//looking right
-		int end = prot.length()-1;
-		for(int i = index+1; i > 0 && i < prot.length(); i++){
-			if(prot.charAt(i) == 'K' || prot.charAt(i) == 'R'){
-				end=i;
-				break;
+		return peptides;
+	}
+	
+	//cut prot into peptides
+	public List<int[]> getPeptides(String prot, int missCleave, int maxLength, String match){
+		List<Integer> cutPoss = new ArrayList<Integer>();
+		if(!prot.substring(0,1).matches(match)){
+			cutPoss.add(-1);
+		}
+		List<int[]> pepLocates = new ArrayList<int[]>();
+		for(int i = 0; i < prot.length(); i++){
+			if(prot.substring(i,i+1).matches(match)){
+				cutPoss.add(i);
 			}
 		}
-		System.out.println("offset: " + (index - begin - 1) + "\t" + (end - index + 1));
-		return prot.substring(begin+1, end+1);
+		for(int i = 0; i < cutPoss.size(); i++){
+			for(int j = i+1; j < cutPoss.size(); j++){
+				if(j - i <= missCleave+1 
+						&& cutPoss.get(j)-cutPoss.get(i) <= maxLength){
+					pepLocates.add(new int[]{cutPoss.get(i)+1, cutPoss.get(j)+1});
+				}
+			}
+		}
+		if(!prot.substring(prot.length()-1).matches(match)){
+			cutPoss.add(prot.length()-1);
+		}
+		return pepLocates;
 	}
 	
 	//given non-gapped index, return gapped index in alignment
@@ -274,8 +307,25 @@ public class HomologMapper {
 		HomologMapper map = new HomologMapper(file1, file2);
 	}
 	
+	public static void testGetPeptides(){
+		HomologMapper map = new HomologMapper();
+		String prot = "MAKRGYSFSLTTFSPSGKLVQIEYALAAVAGGAPSVGIKAANGVVLATEKKQKSILYDERSVHKVEPITKHIGLVYSGMGPDYRVLVHRARKLAQQYYLVYQEPIPTAQLVQRVASVMQEYTQSGGVRPFGVSLLICGWNEGRPYLFQSDPSGAYFAWKATAMGKNYVNGKTFLEKRYNEDLELEDAIHTAILTLKESFEGQMTEDNIEVGICNEAGFRRLTPTEVRDYLAAIA";
+		List<int[]> pepLocs = map.getPeptides(prot, 2, 45, "[KR]");
+		for(int i = 0; i < pepLocs.size(); i++){
+			int[] loc =pepLocs.get(i);
+			//System.out.println("peptide: " + prot.substring(loc[0], loc[1]));
+		}
+		List<String> peps = map.getPeptides(prot, 10, 2, 45, "[KR]");
+		for(int i = 0; i < peps.size(); i++){
+			System.out.println("peptide: " + peps.get(i));
+		}
+	}
+	
 	public static void main(String[] args){
 		testHomologMapper();
+		//testGetPeptides();
 	}
+	
+	
 	
 }

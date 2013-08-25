@@ -2,11 +2,17 @@
  * Parse output from feature finder of openMS
  */
 package org.Spectrums;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.Iterator;
 
 import javax.xml.parsers.*;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -15,6 +21,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
 
 public class FeatureXMLParser {
 	private Document dom;
@@ -35,10 +42,41 @@ public class FeatureXMLParser {
 	public void setFeatureList(List<MSFeature> featureList) {
 		this.featureList = featureList;
 	}
-
+	
+	//create a parser for xml file
+	//if input string is folder, parse all files and extrac all features
 	public FeatureXMLParser(String filename){
-		parseXmlFile(filename);
-		parseDocument();
+		File path = new File(filename);
+		this.featureList = new ArrayList<MSFeature>();
+		if(path.isDirectory()){
+			File[] files = path.listFiles();
+			for(int i = 0; i < files.length; i++){
+				String filepath = files[i].getAbsolutePath();
+				FeatureXMLParser parser = new FeatureXMLParser(filepath);
+				this.featureList.addAll(parser.getFeatureList());
+			}
+		}else if(path.exists()){
+			parseXmlFile(filename);
+			parseDocument();
+		}
+	}
+	
+	public FeatureXMLParser(String filename, String filter){
+		File path = new File(filename);
+		this.featureList = new ArrayList<MSFeature>();
+		if(path.isDirectory()){
+			File[] files = path.listFiles();
+			for(int i = 0; i < files.length; i++){
+				if(files[i].getName().matches(filter)){
+					String filepath = files[i].getAbsolutePath();
+					FeatureXMLParser parser = new FeatureXMLParser(filepath);
+					this.featureList.addAll(parser.getFeatureList());
+				}
+			}
+		}else if(path.exists()){
+			parseXmlFile(filename);
+			parseDocument();
+		}
 	}
 	
 	private void parseXmlFile(String filename){
@@ -93,14 +131,13 @@ public class FeatureXMLParser {
 					feature.setMaxRT(timeSpan[1]);
 					feature.setRt(0.5*(feature.getMaxRT()-feature.getMinRT())+feature.getMinRT());
 					feature.setMz(location[1]);
-					System.out.print(el.getAttribute("id") + "\t" 
-							+ getTextValue(el, "intensity") + "\t"
-							+ getTextValue(el, "overallquality") + "\t"
-							+ location[0] + "\t" + location[1] + "\t" 
-							+ getTextValue(el, "charge") + "\t"
-							+ timeSpan[0] +"\t" + timeSpan[1] +"\t"
-							+ "\n");
-					
+//					System.out.print(el.getAttribute("id") + "\t" 
+//							+ getTextValue(el, "intensity") + "\t"
+//							+ getTextValue(el, "overallquality") + "\t"
+//							+ location[0] + "\t" + location[1] + "\t" 
+//							+ getTextValue(el, "charge") + "\t"
+//							+ timeSpan[0] +"\t" + timeSpan[1] +"\t"
+//							+ "\n");
 					featureList.add(feature);
 					count++;
 				}
@@ -216,14 +253,21 @@ public class FeatureXMLParser {
 			MSFeature feature1 = featureList.get(i);
 			for(int j = i+1; j < this.featureList.size(); j++){
 				MSFeature feature2 = featureList.get(j);
-				if(feature1.getCharge() == feature2.getCharge()
-						//&& (feature1.getMz() - feature2.getMz()) * (feature1.getRt() - feature2.getRt()) > 0   //we assume the lighter form should elude first, not neccessarily this requirement 
-						&& SWATHUtils.checkMass(Math.abs(feature1.getMz() - feature2.getMz()), expectedMassDiff/feature1.getCharge(), massTolerance, mode)
-						&& Math.abs(feature1.getMinRT() - feature2.getMinRT()) < maxRTDiff){
+				if(checkPair(feature1, feature2, expectedMassDiff, massTolerance, maxRTDiff, mode)){
 					System.out.println("Isotopic pairs:\t" + feature1 + "\t" + feature2);
 				}
 			}
 		}
+	}
+	
+	public boolean checkPair(MSFeature feature1, MSFeature feature2, double massDiff, double massTolerance, double maxRTDiff, int massMode){
+		if(feature1.getCharge() == feature2.getCharge()
+				//&& (feature1.getMz() - feature2.getMz()) * (feature1.getRt() - feature2.getRt()) > 0   //we assume the lighter form should elude first, not neccessarily this requirement 
+				&& SWATHUtils.checkMass(Math.abs(feature1.getMz() - feature2.getMz()), massDiff/feature1.getCharge(), massTolerance, massMode)
+				&& Math.abs(feature1.getMinRT() - feature2.getMinRT()) < maxRTDiff){
+				return true;
+		}
+		return false;
 	}
 	
 	public void mapScanFromRT(String spectrumLibFile){
@@ -370,10 +414,76 @@ public class FeatureXMLParser {
 		System.out.println("matching spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
 	}
 	
+	public static void testMapPeptidePairToMSFeature(){
+		String peptidePairFile = "..//mixture_linked//randpair.txt";
+		String featureFile = "..//mixture_linked//openMS//feature_detection\\TOPPAS_out\\005-FeatureFinderCentroided\\";
+		List<String> peptides = Utils.FileIOUtils.createListFromFile(peptidePairFile);
+		List<Peptide> pepList = new ArrayList<Peptide>(peptides.size());
+		FeatureXMLParser parser = new FeatureXMLParser(featureFile, "aleitner_M1108_136.*XML");
+		SortedMap<Double, MSFeature> featureMap = new TreeMap<Double, MSFeature>();
+		Map<Peptide, String> siteMap = new HashMap<Peptide, String>();
+		for(int i = 0; i < peptides.size(); i++){
+			String[] tokens = peptides.get(i).split("\\s+");
+			double linkerMass = 138.068;
+			//linkerMass = Math.random()*13;
+			LinkedPeptide lp = new LinkedPeptide(new Peptide(tokens[2],1), new Peptide(tokens[3],1), 1, 
+					tokens[2].indexOf('K')+1, tokens[3].indexOf('K')+1, linkerMass);
+			//Peptide lp = new Peptide(tokens[2],1);
+			pepList.add(lp);
+			siteMap.put(lp, tokens[5]);
+		}
+		List<MSFeature> featureList = parser.getFeatureList();
+		for(int i = 0; i < parser.getFeatureList().size(); i++){
+			MSFeature feature = featureList.get(i);
+			System.out.println(feature);
+			featureMap.put(feature.getMz()*feature.getCharge() - (feature.getCharge()-1)*Mass.PROTON_MASS, feature);
+		}
+		System.out.println("we have peptides: " + peptides.size());
+		double tolerance = 15;
+		for(int i = 0; i < pepList.size(); i++){
+			Peptide current = pepList.get(i);
+			Peptide currentD12 = new Peptide(current);
+			String site = siteMap.get(current);
+			System.out.println("peptide: " + current);
+			currentD12.setParentmass(currentD12.getParentmass()+12.0759/currentD12.getCharge());
+			double deltaMass = current.getParentmass()*tolerance/1000000;
+			System.out.println("deltaMass: " + deltaMass);
+			Map subMap = featureMap.subMap(current.getParentmass() - deltaMass, 
+					current.getParentmass() + deltaMass);
+			if(subMap.size() > 0){
+				System.out.println("macthed size: " + subMap.size());
+				System.out.println("mapping peptide " + current + " to feature " + subMap.values().iterator().next() +"\t" + site);
+			}
+			Map subMap2 = featureMap.subMap(currentD12.getParentmass() - deltaMass, 
+					currentD12.getParentmass() + deltaMass);
+			if(subMap2.size() > 0){
+				System.out.println("macthed size: " + subMap.size());
+				System.out.println("mapping peptide D12 " + current + " to feature " + subMap2.values().iterator().next() +"\t" + site);
+			}
+			if(subMap.size() > 0 && subMap2.size() > 0){
+				for(Iterator it1 = subMap.values().iterator(); it1.hasNext();){
+					MSFeature feature = (MSFeature)it1.next();
+					for(Iterator it2 = subMap2.values().iterator(); it2.hasNext();){
+						MSFeature feature2 = (MSFeature)it2.next();
+						if(parser.checkPair(feature, feature2, 12.0759, 30, 30, 2)){
+							System.out.println("mapping peptide " + current + " to feature-pair " + feature + " & " + feature2 +"\t" + site);
+						}
+					}
+				}
+			}
+			//System.out.println("checking : " + current + "\t" + current.getCharge());
+			//int matched = checker.matchPeptidePrecursorProfile2(current, 10);
+			
+		}	
+	}
+	
 	public static void testFindFeaturePair(){
-		String featureFile = "..//mixture_linked//openMS//feature_detection\\TOPPAS_out\\005-FeatureFinderCentroided\\aleitner_M1108_136.featureXML";
-		FeatureXMLParser parser = new FeatureXMLParser(featureFile);
-		parser.getFeaturePair(12.0759, 50, 60, 2);
+		String featureFile = "..//mixture_linked//openMS//feature_detection\\TOPPAS_out\\005-FeatureFinderCentroided\\";
+		FeatureXMLParser parser = new FeatureXMLParser(featureFile, "aleitner_M1108_136.*");
+		double offset = 12.0759;
+		//offset = Math.random()*50;
+		System.out.println("offset: " + offset);
+		parser.getFeaturePair(offset, 30, 40, 2);
 	}
 	
 	
@@ -386,6 +496,7 @@ public class FeatureXMLParser {
 		//testMapMSFeatureToPeptide();
 		//testMapPeptideToMSFeature();
 		testFindFeaturePair();
+		//testMapPeptidePairToMSFeature();
 	}
 }
 

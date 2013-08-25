@@ -44,7 +44,11 @@ public class FileIOUtils {
 			while(line != null){
 				//System.out.println("line is: " + line);
 				token = line.split("\\t");
-				table.put(token[index1], token[index2]);
+				if(index1 < token.length && index2 < token.length){
+					table.put(token[index1], token[index2]);
+				}else{
+					System.err.println("warninig: line does not have the specified fileds to create table");
+				}
 				line = bf.readLine();
 			}
 			bf.close();

@@ -77,6 +77,28 @@ public class LinkedPeptide extends Peptide{
 		this.setParentmass(mass);
 	}
 	
+	public LinkedPeptide(Peptide pep1, Peptide pep2, int charge, int position1, int position2, double linkerMass){
+		Peptide p1 = new Peptide(pep1);
+		Peptide p2 = new Peptide(pep2);
+		this.peptides = new Peptide[2];
+		this.peptides[0] = p1;
+		this.peptides[1] = p2;
+		double mass = (p1.getParentmass() + p2.getParentmass()
+				+ linkerMass 
+				+ Mass.PROTON_MASS*(charge-2))/charge;	
+		double massShift1 = p1.getParentmass();
+		double massShift2 = p2.getParentmass();
+ 		p1.insertPTM(position1, massShift2+linkerMass-Mass.PROTON_MASS);
+		p2.insertPTM(position2, massShift1+linkerMass-Mass.PROTON_MASS);
+		p1.setLinkedPos(position1);
+		p2.setLinkedPos(position2);
+		//System.out.println("we have ptms: " + p1.getPos().length);
+		//System.out.println("we have ptms: " + p2.getPos().length);
+		this.setCharge((short)charge);
+		//this.setPeptide(p1.getPeptide() + "--" + p2.getPeptide());	
+		this.setParentmass(mass);
+	}
+	
 	
 	public LinkedPeptide(Peptide p1, Peptide p2, int charge){
 		this.peptides = new Peptide[2];
