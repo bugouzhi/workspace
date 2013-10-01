@@ -78,7 +78,7 @@ public class MS2Summary {
 	}
 	
 	public static void main(String[] args){
-		String filename = "..\\mixture_linked\\msdata\\ACG_disulfide_lib\\disulfide_lib2\\PeptideLibrary2_750ng_TRP_MS2.mzXML";
+		String filename = "..\\mixture_linked\\msdata\\ACG_disulfide_lib\\disulfide_lib2\\disulfidelib2_BS3_linked/18285_PL2__750ng_5mM_BS3_TCEP_IOA_TRP_SCX_cleanup_IDA.mzXML";
 		String dir = "../mixture_linked/msdata/toni_110510_Crosslink/";
 //		getSummaryForMSFiles(dir);
 		MS2Summary ms2sum = new MS2Summary(filename);

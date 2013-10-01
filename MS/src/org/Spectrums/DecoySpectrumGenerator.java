@@ -93,14 +93,14 @@ public class DecoySpectrumGenerator {
 			}
 			if(neighs.size() > 0){
 				//System.out.println("annotated peaks\t" + p);
-				pList.add(p);
+				//pList.add(p);
 			}
 			if(neighs.size() == 0){
 				//System.out.println("unannotated peaks\t" + p);
 			}
 			if(closestP != null){
 				Peak theo = new Peak(closestP.getMass(), p.getIntensity());
-				//pList.add(theo);
+				pList.add(theo);
 			}
 		}
 		System.out.println(s.spectrumName + "\t" + s.peptide + " number of annotated: " + pList.size() + "\t" + s.getPeak().size());
@@ -235,7 +235,7 @@ public class DecoySpectrumGenerator {
 	}
 	
 	public static void testShuffleSpectra(String spectrumFile){
-		spectrumFile = "..\\mixture_linked\\ACG_swathdevelopment_UPS12Ecoli_IDA_combined_trypticpeps.mgf";
+		spectrumFile = "..\\mixture_linked\\UPS_Human_lysateREP123_IDA_1pepFDR.mgf";
 		LargeSpectrumLibIterator<Spectrum> iter = new LargeSpectrumLibIterator(spectrumFile);
 		int index = spectrumFile.lastIndexOf('.');
 		String decoyName = spectrumFile.substring(0, index) + "_plusDecoy2.mgf";
@@ -262,7 +262,7 @@ public class DecoySpectrumGenerator {
 				//}
 				Spectrum target = generator.generateTarget(s);
 				if(target.getPeak().size() < 15){
-					//continue;
+					continue;
 				}
 				
 				Spectrum decoy = generator.generateDecoy(s);

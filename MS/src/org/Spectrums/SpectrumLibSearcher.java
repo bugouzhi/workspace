@@ -194,17 +194,19 @@ public class SpectrumLibSearcher {
 		}
 		for(int i = 1; i <= topN && i <= this.spectrumScorePairs.size(); i++){
 			SpectrumScorePair best = this.spectrumScorePairs.get(this.spectrumScorePairs.size()-i);
-			System.out.println("Query " + query.spectrumName + "\t" + query.peptide +  " with top answer is: " 
-					+ ((TheoreticalSpectrum)this.spectrumScorePairs.get(this.spectrumScorePairs.size()-i).s).p + "\t"
-					+ ((TheoreticalSpectrum)this.spectrumScorePairs.get(this.spectrumScorePairs.size()-i).s).p.getCharge()
-					+ " score: " + this.spectrumScorePairs.get(this.spectrumScorePairs.size()-i).score);
+//			System.out.println("Query " + query.spectrumName + "\t" + query.peptide +  " with top answer is: " 
+//					+ ((TheoreticalSpectrum)this.spectrumScorePairs.get(this.spectrumScorePairs.size()-i).s).p + "\t"
+//					+ ((TheoreticalSpectrum)this.spectrumScorePairs.get(this.spectrumScorePairs.size()-i).s).p.getCharge()
+//					+ " score: " + this.spectrumScorePairs.get(this.spectrumScorePairs.size()-i).score);
 		}
 		
 		return topSpectra;
 	}
 	
-	
 	public Spectrum[] topLinkedSpectra(Spectrum query, int topN){
+		return topLinkedSpectra(query, topN, 0);
+	}
+	public Spectrum[] topLinkedSpectra(Spectrum query, int topN, double minScore){
 		Spectrum[] topSpectra = new Spectrum[topN];
 		sortSpecListByScore(query);
 		int i = this.spectrumScorePairs.size()-1;
@@ -215,7 +217,7 @@ public class SpectrumLibSearcher {
 		double prevScore = this.spectrumScorePairs.get(i).score;
 		SpectrumScorePair prev = this.spectrumScorePairs.get(i);
 		//System.out.println("score: " + prev.score );
-		while(i >= 0 && count < topN && prev.score > 0.1){
+		while(i >= 0 && count < topN && prev.score > minScore){
 			SpectrumScorePair current = this.spectrumScorePairs.get(i);
 			printTopLinkedCandidateInfo(query, prev);
 			if(Math.abs(current.score - prevScore) > 0.000001){  //consider same score within resonable precision

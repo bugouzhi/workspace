@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Iterator;
+import java.util.TreeMap;
+
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
@@ -83,7 +85,7 @@ public class MZXMLReader implements Iterator<Spectrum>{
 		return tree;
 	}
 	
-	public void getSpectrumStat(){
+	public int[] getSpectrumStat(){
 		int count1 = 0, count2 = 0, count3 = 0;
 		for(int i = 1; i < this.parser.getScanCount(); i++){
 			Scan current = parser.rap(i);
@@ -93,11 +95,12 @@ public class MZXMLReader implements Iterator<Spectrum>{
 			if(current.getHeader().getMsLevel() == 2){
 				count2++;
 			}
-			if(current.getHeader().getMsLevel() == 3){
+			if(current.getHeader().getMsLevel() >= 3){
 				count3++;
 			}
 		}
-		System.out.println("Total MS1: " + count1 + "\tMS2: " + count2 + "\tMS3: " + count3);
+		//System.out.println("Total MS1: " + count1 + "\tMS2: " + count2 + "\tMS3: " + count3);
+		return new int[]{count1, count2, count3};
 	}
 	
 	public void setParser(MSXMLParser parser) {
@@ -122,14 +125,14 @@ public class MZXMLReader implements Iterator<Spectrum>{
 		}
 		s.setPeaks(peakList);
 		s.spectrumName = "Scan Number: " + scanNum + " Retention Time: " + current.getHeader().getRetentionTime();
-		s.peptide = s.spectrumName;
 		s.scanNumber = scanNum;
+		s.rt = getRT(current.getHeader().getRetentionTime());
 		//s.upperBound = pif;
 		s.upperBound = current.getHeader().getTotIonCurrent();
 		//s.score = this.getPIF(s.scanNumber, s.parentMass, 50, -2.0, 2.0, 1, s.charge)[0];
 		return s;
 	}
-	
+		
 	public Map<Integer, Double> getRTScanMapping(){
 		Map<Integer,Double> rtMapping = new HashMap<Integer, Double>();
 		for(int i = 1; i < this.parser.getScanCount(); i++){
@@ -142,10 +145,10 @@ public class MZXMLReader implements Iterator<Spectrum>{
 	}
 	
 	public Map<Double, Integer> getRTScanMappingReverse(){
-		Map<Double, Integer> rtMapping = new HashMap<Double, Integer>();
+		Map<Double, Integer> rtMapping = new TreeMap<Double, Integer>();
 		for(int i = 1; i < this.parser.getScanCount(); i++){
 			Scan current = parser.rap(i);
-			if(current.getHeader().getMsLevel()==1){ //only map MS1 scan in this direction
+			if(current.getHeader().getMsLevel() > 0){ //only map MS1 scan in this direction
 				double rt = getRT(current.getHeader().getRetentionTime());
 				int scan = current.getHeader().getNum();
 				rtMapping.put(rt, scan);
@@ -153,8 +156,17 @@ public class MZXMLReader implements Iterator<Spectrum>{
 		}
 		return rtMapping;
 	}
+	
+	public Map<Double, Spectrum> getSpectrumTimeMap(){
+		Map<Double, Spectrum> rtMapping = new TreeMap<Double, Spectrum>();
+		for(int i = 1; i < this.parser.getScanCount(); i++){
+			Spectrum s = getSpectrum(i);
+			rtMapping.put(s.rt, s);
+		}
+		return rtMapping;
+	}
 
-	private double getRT(String rt){
+	private static double getRT(String rt){
 		rt = rt.replaceAll("[^0-9,\\.]", "");
 		return Double.parseDouble(rt);
 	}
@@ -164,6 +176,7 @@ public class MZXMLReader implements Iterator<Spectrum>{
 		Spectrum s = new Spectrum();
 		s.parentMass  = current.getHeader().getPrecursorMz();
 		s.charge = current.getHeader().getPrecursorCharge();
+		s.rt = getRT(current.getHeader().getRetentionTime());
 //		if(s.charge < 0){ //cannot obtain charge information from file we try to compute them from MS1
 //			s.charge = this.getPrecursorCharge(current); 
 //		}
@@ -177,6 +190,7 @@ public class MZXMLReader implements Iterator<Spectrum>{
 		s.scanNumber = current.getHeader().getNum();
 		return s;
 	}
+	
 	public int getPrecursorCharge(Scan spectrum){
 		return getPrecursorCharge(spectrum, 70);
 	}

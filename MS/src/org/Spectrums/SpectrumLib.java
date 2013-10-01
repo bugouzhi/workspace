@@ -405,7 +405,7 @@ public class SpectrumLib implements Iterable, Serializable{
 		while(it.hasNext()){
 			v = it.next();
 			for(index = 0; index < v.size(); index++){
-				if(v.get(index).modMass > 0){
+				if(v.get(index).modMass > 0 ){
 					v.remove(index);
 					index--; //since we just remove one element, backtrack one pointer
 				}

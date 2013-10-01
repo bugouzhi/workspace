@@ -83,10 +83,10 @@ public class TheoreticalSpectrum extends Spectrum{
 				isoList.add(isoPeak);
 			}
 		}
-		System.out.println("we start with peaks " + pList.size());
+		//System.out.println("we start with peaks " + pList.size());
 		pList.addAll(isoList);
 		Collections.sort(pList, PeakMassComparator.comparator);
-		System.out.println("we end with peaks: " + th.getPeak().size());
+		//System.out.println("we end with peaks: " + th.getPeak().size());
 		th.setPeaks(pList);
 	}
 	

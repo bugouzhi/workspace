@@ -38,6 +38,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 	double score = 0; //provide certain kind of score to this spectrum
 	                  //we can utilize this field to order the spectrums
 	double upperBound = 0;// upper bound for searching
+	double rt = 0;
 	public int scanNumber = 0; //scan number of the spectrum
 	public Spectrum(){ //create dummy spectrum
 			this.peaks =new Vector();
@@ -62,6 +63,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		this.scanNumber = s.scanNumber;
 		this.score = s.score;
 		this.upperBound = s.upperBound;
+		this.protein = s.protein;
 		for(int i = 0; i < s.peaks.size(); i++){
 			Peak p = s.peaks.get(i);
 			//System.out.println("copying: " + p);
@@ -1444,7 +1446,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 	 	//those values that are non-zero in this vector		
 		double mz1, mz2; 
 		int i = 0, j = 0;
-		//System.out.println("Matching  " + this.peptide + " with " + s1.peptide);
+		System.out.println("Matching  " + this.peptide + " with " + s1.peptide);
 		while(i < this.peaks.size() && j < s1.peaks.size()){
 			mz1 = this.peaks.get(i).getMass();
 			mz2 = s1.peaks.get(j).getMass();
@@ -1468,7 +1470,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				if(currMass - mz2 > tolerance){
 					break;
 				}
-				//System.out.println("matched " + currMass + "\t" + this.peaks.get(p).getIntensity() + "\t" + mz2 + "\t" + s1.peaks.get(j).getIntensity());
+				System.out.println("matched " + currMass + "\t" + this.peaks.get(p).getIntensity() + "\t" + mz2 + "\t" + s1.peaks.get(j).getIntensity());
 				//bestIntensity = bestIntensity < currInt ? currInt : bestIntensity;
 				shareIntensity += s1.peaks.get(j).getIntensity()*s1.peaks.get(j).getIntensity();
 				break;

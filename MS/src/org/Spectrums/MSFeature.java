@@ -23,10 +23,23 @@ public class MSFeature {
 	private double minRT;
 	private double maxRT;
 	private int Scan;
+
+
 	public double RTTolerance = 5; //we should allow some retension time tolerance when mapping since there will delay btw MS1 and MS2 scans 
+
+	public MSFeature(){
+		this.id = "";
+		this.quality = 0.0;
+		this.intensity = 0.0;
+		this.mz = 0.0;
+		this.rt = 0.0;
+		this.peakList = null;
+	}
+
 	public int getScan() {
 		return Scan;
 	}
+
 	public void setScan(int scan) {
 		Scan = scan;
 	}
@@ -35,14 +48,6 @@ public class MSFeature {
 	}
 	public void setCharge(int charge) {
 		this.charge = charge;
-	}
-	public MSFeature(){
-		this.id = "";
-		this.quality = 0.0;
-		this.intensity = 0.0;
-		this.mz = 0.0;
-		this.rt = 0.0;
-		this.peakList = null;
 	}
 	
 	public boolean isWithinFeature(double monoMass, double RTtime, int charge, double massTolerance){
@@ -132,6 +137,9 @@ public class MSFeature {
 	public void setMaxRT(double maxRT) {
 		this.maxRT = maxRT;
 	}
+	public double getMeanRT(){
+		return this.minRT + (this.maxRT - this.minRT)/2;
+	}
 	public void setFeatureList(MultiValueMap featureList) {
 		this.peakList = featureList;
 		List<Double> keyList = new ArrayList<Double>();
@@ -172,7 +180,8 @@ public class MSFeature {
 		buff.append(this.quality + "\t");
 		buff.append(this.charge + "\t");
 		buff.append(this.intensity + "\t");
-		buff.append(this.rt + "\t");
+		buff.append(this.minRT + "\t");
+		buff.append(this.maxRT + "\t");
 		buff.append(this.Scan + "\t");
 		buff.append(this.mz + "\t");
 //		List<Double> rtList = new ArrayList(); 

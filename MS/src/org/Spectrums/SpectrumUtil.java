@@ -2,6 +2,7 @@ package org.Spectrums;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+
 import Utils.FileIOUtils;
 
 
@@ -141,6 +143,7 @@ public class SpectrumUtil {
 		}
 		return specList;
 	}
+	
 	public static List<Spectrum> getSpectra(String file, SpectrumLib lib){
 		Map<String, String> spectrumIds = 
 			FileIOUtils.createTableFromFile(file, 0, 0);
@@ -445,6 +448,16 @@ public class SpectrumUtil {
 
 	}
 	
+	public static SimpleMatchingGraph getMatchGraph(Spectrum s, double tolerance){
+		Peptide pep = new Peptide(s.peptide, s.charge);
+		TheoreticalSpectrum.prefixIons = new String[]{"b"};//, "b-H20", "b-NH3"};//, "b(iso)"};
+		TheoreticalSpectrum.suffixIons = new String[]{"y"};//, "y-H20", "y-NH3"};//, "y(iso)"};
+		TheoreticalSpectrum th = new TheoreticalSpectrum(pep);
+		//TheoreticalSpectrum.addIsotopicPeaks(th, 1);
+		SimpleMatchingGraph g = th.getMatchGraph(s, tolerance);
+		return g;
+	}
+	
 	public static void annotateSpectrumLib(){
 		String libFile = "..\\mixture_linked\\yeast_data/klc_122007p_yeast_digest1.mgf";
 		String annotationFile = "..\\mixture_linked\\yeast1_MSPLIT_result.txt";
@@ -464,9 +477,9 @@ public class SpectrumUtil {
 	}
 	
 	public static void annotateSpectrumLibFromMzXMLs(String spectrumDir, String annotationFile, String outfile){
-		//String spectrumDir = "../mixture_linked//msdata/UPS12_Human";
-		//String annotationFile = "..\\mixture_linked/ACG_swathdevelopment_UPS_Human_All_IDA_msgfdb_IDs_1pepFDR.txt";
-		//String outfile = "..\\mixture_linked\\test.mgf";
+		spectrumDir = "../mixture_linked//msdata/UPS12_Human/";
+		annotationFile = "..\\mixture_linked/t0";
+		outfile = "..\\mixture_linked\\test.mgf";
 		List<Spectrum> specList = new ArrayList<Spectrum>();
 		Map<String, MZXMLReader> readers = new HashMap<String, MZXMLReader>();
 		try{
@@ -476,10 +489,13 @@ public class SpectrumUtil {
 			String prevFile= "";
 			MZXMLReader reader = null;
 			int counter = 1; //one base index
+			int pepInd = 4;
+			int chargeInd = 6;
 			while((line=buff.readLine()) != null){
 				String[] tokens = line.split("\\t");
 				String file = tokens[0];
 				file = file.replaceAll("\\s+", "");
+				file = FileIOUtils.getFileName(file);
 				if(!readers.containsKey(file)){
 					MZXMLReader newreader = new MZXMLReader(spectrumDir+"\\" + file);
 					readers.put(file, newreader);
@@ -487,11 +503,12 @@ public class SpectrumUtil {
 				reader = readers.get(file);
 				System.out.println("line\t"+line);
 				Spectrum s = reader.getSpectrum(Integer.parseInt(tokens[1]));
-				String peptide = tokens[7];
-				peptide = peptide.substring(2, peptide.length()-2);
-				Peptide p = new Peptide(peptide, Integer.parseInt(tokens[6]));
+				String peptide = tokens[pepInd];
+				int charge = Integer.parseInt(tokens[chargeInd]);
+				//peptide = peptide.substring(2, peptide.length()-2);
+				Peptide p = new Peptide(peptide, charge);
 				s.peptide=peptide;
-				s.charge = Integer.parseInt(tokens[6]);
+				s.charge = charge;
 				//s.protein = tokens[8];
 //				if(Math.abs(p.getParentmass() - s.parentMass) > 1.2){
 //					s = reader.getSpectrum(Integer.parseInt(tokens[1])-1); //try to fix off-1 difference in scan number in proteowiz conversion

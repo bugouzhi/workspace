@@ -383,6 +383,23 @@ public class CandidateSpectrumLibFactory {
 		return toBeAdded;
 	}
 	
+	public static List<Peptide> getCrossLinkPeptides(Peptide p1, Peptide p2, CrossLinker linker, int minCharge, int maxCharge){
+		List<Peptide> toBeAdded = new ArrayList<Peptide>();
+		List<Integer> positions = linker.getLinkerPositions1(p1.getPeptide());
+		List<Integer> positions2 = linker.getLinkerPositions2(p2.getPeptide());
+		for(int c = minCharge; c <= maxCharge; c++){
+			for(int m = 0; m < positions.size(); m++){
+				for(int n = 0; n < positions2.size(); n++){
+					LinkedPeptide linked = new LinkedPeptide(p1, p2, c, positions.get(m)+1, positions2.get(n)+1, linker.getLinkerMassOffSet());
+					//System.out.println(p1);
+					//System.out.println("number of linked peptides: " + toBeAdded.size());
+					toBeAdded.add(linked);
+				}
+			}
+		}
+		return toBeAdded;
+	}
+	
 	public void internalLinkPeptides(int minCharge, int maxCharge, CrossLinker linker){
 		List<Peptide> allpeptides = this.getAllPeptide();
 		this.minCharge = minCharge;

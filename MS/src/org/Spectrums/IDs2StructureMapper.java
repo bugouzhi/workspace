@@ -310,9 +310,9 @@ public class IDs2StructureMapper {
 	
 	public static void main(String[] args){
 		//testID2StrcutMapper();
-		//testStructure2ID();
+		testStructure2ID();
 		//testID2StrcutMapperWithHomolog();
-		testStructureToIDMapperWithHomolog();
+		//testStructureToIDMapperWithHomolog();
 		
 	}
 	

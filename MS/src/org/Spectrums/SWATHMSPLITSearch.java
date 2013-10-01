@@ -22,13 +22,13 @@ import org.systemsbiology.jrap.stax.Scan;
  *
  */
 public class SWATHMSPLITSearch {
-	public static void testMSPLITSearch(int minScan, int maxScan){
-		String queryFile = "../mixture_linked/msdata/UPS_Ecoli/14342_UPS1-400fm_SWATH_5600.mzXML";
+	public static void testMSPLITSearch(int minScan, int maxScan, String queryFile, String libraryFile){
+		queryFile = "../mixture_linked/msdata/UPS_Ecoli/14342_UPS1-400fm_SWATH_5600.mzXML";
 		//String queryFile = "../mixture_linked/swath_expanded.mgf";
 		//String libraryFile = "../mixture_linked/leftOneLib_plusDecoy2_test2.mgf";
-		String libraryFile = "../mixture_linked/ACG_swathdevelopment_UPS12Ecoli_IDA_combined_trypticpeps_plusDecoy2.mgf";
+		libraryFile = "../mixture_linked/ACG_swathdevelopment_UPS12Ecoli_IDA_combined_RTlib_plusDecoy2.mgf";
 		Iterator<Spectrum> reader = new MZXMLReader(queryFile);
-		//ConsensusSpectrumReader reader = new ConsensusSpectrumReader(queryFile);
+		ConsensusSpectrumReader reader2 = new ConsensusSpectrumReader(queryFile);
 		//reader.minInt=40;
 		//reader.numNeighbors=2;
 		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
@@ -54,7 +54,7 @@ public class SWATHMSPLITSearch {
 			Spectrum s = iter.next();
 			minScan = 100;
 			//maxScan = 41;
-			if(s.scanNumber < minScan || s.scanNumber > maxScan){
+			if(s.scanNumber < minScan || s.scanNumber > maxScan || s.scanNumber < 27000 || s.scanNumber > 27500 ){
 				continue;
 			}else{
 				if(go){
@@ -83,7 +83,7 @@ public class SWATHMSPLITSearch {
 			//s.filterPeaks(500);
 			
 			//s.deIsoPeaks(s, 0.03);
-			s.windowFilterPeaks2(15, 25);
+			s.windowFilterPeaks2(20, 25);
 			//s.filterPeaksByRankScore(3);
 			//s.filterPeaksByIntensity(100);
 			//s.filterPeaksByIntensity(50);
@@ -94,7 +94,7 @@ public class SWATHMSPLITSearch {
 			//TreeMap<Double,Spectrum> bestCands = bestPsimSpec(lib.getAllSpectrums(), s, 1, 2, 0.05);
 			//s.shiftSpectrumPPM(100);
 			double tolerance = 0.05;
-			TreeMap<Double,Spectrum> bestCands = bestPsimSpec(lib.getAllSpectrums(), s, MSMap, 0.7, 25, tolerance);
+			TreeMap<Double,Spectrum> bestCands = bestPsimSpec(lib.getAllSpectrums(), s, MSMap, 0.5, 25, tolerance);
 			Iterator it = bestCands.descendingKeySet().iterator();
 			double maxInt = 0.0; //matches with maximum abundance
 			while(it.hasNext()){
@@ -114,22 +114,32 @@ public class SWATHMSPLITSearch {
 				}
 				
 				double sharePeaks = cand.sharePeaks(s, tolerance, DEBUG);
-				double projectInt = cand.projectedPeakIntensity(s, tolerance);
-				double projectInt2 = s.projectedPeakIntensity(cand, tolerance);
-				double libInt = cand.magnitude();
-				libInt = libInt*libInt;
-				if(sharePeaks > 6){
-					double[] scores = localSim(cand, s, 5, tolerance);
+				if(sharePeaks > 5 && cand.peptide.contains("QAGEEPLGVGSVAAGGR")){
+					double projectInt = cand.projectedPeakIntensity(s, tolerance);
+					double projectInt2 = s.projectedPeakIntensity(cand, tolerance);
+					double libInt = cand.magnitude();
+					libInt = libInt*libInt;
+					//System.out.println("name is: " + s.spectrumName);
+					String RT = "0";
+					if(cand.spectrumName.split("\\s+").length > 5){  //check if retention time is in lib
+						RT = cand.spectrumName.split("\\s+")[5];
+						RT = RT.substring(2, RT.length()-3);
+					}	
+					double libRT = Double.parseDouble(RT);
+					List<Spectrum> neighs = reader2.getNeighborScans(s.scanNumber, 5, 5);
+					double[] simTwoD = reader2.getProjectCosine(cand, neighs);		
 					System.out.print(queryFile + "\t" +  s.scanNumber + "\t" + s.parentMass +"\t" + s.charge +"\t" 
 							+ cand.peptide + "\t"  + cand.parentMass + "\t" + cand.charge + "\t" + psim 
 							+ "\t" + cand.protein + "\t" + s.getPeaks().size() + "\t" + cand.getPeak().size()
-							+"\t" + sharePeaks + "\t" + projectInt + "\t" + projectInt/maxInt + "\t" + s.upperBound +"\t" + libInt);
-					for(int i = 0; i < scores.length; i++){
-						System.out.print(scores[i] + "\t");
+							+"\t" + sharePeaks + "\t" + projectInt2 + "\t" + projectInt/maxInt + "\t" + s.upperBound +"\t" + libInt
+							+"\t" + s.rt + "\t" + libRT + "\t");
+					
+					//double projCosTop = libSpect.projectedCosine(query, 0.05);
+					for(int i = 0; i < simTwoD.length; i++){
+						System.out.print(simTwoD[i] + "\t");
 					}
-					//System.out.println(s);
-					System.out.println();
-					//System.out.println(cand);
+					System.out.println(psim*simTwoD[5] +"\t" + simTwoD[1]*simTwoD[5]);
+					//System.out.println();
 				}
 			}
 		//System.out.println("start second pass " + s.scanNumber);	
@@ -542,7 +552,10 @@ public class SWATHMSPLITSearch {
 				if(!tokens[4].equals("GAEPSGGAAR")){
 					//continue;
 				}
-				List<Spectrum> neighs = reader2.getNeighborScans(scan, 1, 1);
+				if(Double.parseDouble(tokens[7]) < 0.75){
+					//continue;
+				}
+				List<Spectrum> neighs = reader2.getNeighborScans(scan, 5, 5);
 				double[] simTwoD = reader2.getProjectCosine(libSpect, neighs);		
 				double score = reader2.getProjectCosine(libSpect, query);
 				double projCos = libSpect.projectedCosine(query, 0.05);
@@ -574,14 +587,15 @@ public class SWATHMSPLITSearch {
 //			if(Math.abs(s1.parentMass - s.parentMass) < parentMassTol 
 //					|| Math.abs(s1.parentMass - offSetC13 - s.parentMass) < parentMassTol
 //					|| Math.abs(s1.parentMass + offSetC13 - s.parentMass) < parentMassTol){
+//			if(Math.abs(s1.parentMass - s.parentMass) < 25){
 			if(s1.parentMass > s.parentMass -5 &&  
-					(s1.parentMass  - s.parentMass + 5 < 25)){
+					(s1.parentMass  - s.parentMass + 5 < parentMassTol)){
 				//if(MSMap.checkPeak(s1.parentMass, 0.03)){
 					//Spectrum s2 = new Spectrum(s1);
 					//for(int i = 0; i < s1.getPeak().size(); i++){
 					//	s2.getPeak().get(i).setIntensity(10);
 					//}
-					s1.removePeaksInMass(s.parentMass-4, s.parentMass+21);
+					//s1.removePeaksInMass(s.parentMass-4, s.parentMass+21);
 					currScore = s1.projectedCosine(s, fragMassTol);
 					//currScore = s2.projectedCosine(s, fragMassTol);
 					//currScore = s1.projectedCosineWithSkip(s, fragMassTol, 1);
@@ -596,9 +610,11 @@ public class SWATHMSPLITSearch {
 				while(it.hasNext()){
 					double currBest = it.next();
 					Spectrum cand = bestList.get(currBest);
+					//System.out.println("self-match " + cand.peptide + "\t" + s1.peptide + "\t" + 
+					//+ cand.projectedCosine(s1, fragMassTol) + "\t" + s1.projectedCosine(cand, fragMassTol));
 					//double shared = cand.sharePeaks(s1, fragMassTol);
-					if((cand.projectedCosine(s1, fragMassTol) > 0.78
-							|| s1.projectedCosine(cand, fragMassTol) > 0.78)){
+					if((cand.projectedCosine(s1, fragMassTol) > 0.708
+							|| s1.projectedCosine(cand, fragMassTol) > 0.708)){
 						isFound = true;
 						if(currScore > currBest){
 							redundance.add(currBest);
@@ -805,7 +821,7 @@ public class SWATHMSPLITSearch {
 	
 	public static void main(String[] args){
 		//targetedIdentification();
-		testMSPLITSearch(10, 1000000);
+		testMSPLITSearch(10, 1000000, args[0], args[1]);
 		//testReverseMSPLITSearch(100, 100000);
 		//testHybridLibrarySearch(10,100000);
 		//test2DSim(10, 90000);

@@ -7,12 +7,12 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
- * An wrapper of spectrum that enable quick query of peaks
- * in spectrum by mass or intensity
+ * An sortedmap back implementation of spectrum that enalbe quick lookup
+ * of peak by mass or intensity
  * @author Jian
  *
  */
-public class SpectrumMap{
+public class SpectrumMap extends Spectrum{
 	private Spectrum s;
 	TreeMap<Double, Peak> intensityMap = new TreeMap<Double, Peak>();
 	TreeMap<Double, Peak> massMap = new TreeMap<Double, Peak>();
@@ -22,10 +22,14 @@ public class SpectrumMap{
 		for(int i = 0; i < s.getPeaks().size(); i++){
 			Peak current = s.getPeaks().get(i);
 			current.setIntensity(current.getIntensity()+Math.random()*0.000000001);//in case exact same intensity
-			current.setMoz(current.getMass()+Math.random()*0.000000001); //in case exact same mass
+			current.setMoz(current.getMass()+Math.random()*0.000000001); //in case exact same mass for two peaks
 			intensityMap.put(current.getIntensity(), current); 
-			massMap.put(current.getMass(), current); //in case exact same masses
+			massMap.put(current.getMass(), current); 
 		}
+	}
+	
+	public SortedMap<Double, Peak> getMatchedPeaks(double mass, double tolerance){
+		return massMap.subMap(mass - tolerance, mass + tolerance);
 	}
 	
 	public boolean checkPeak(double mass, double tolerance){

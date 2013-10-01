@@ -1,10 +1,12 @@
 package org.Spectrums;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -324,9 +326,9 @@ public class SWATHStatistics {
 	
 	
 	public static void getSWATHInterference(){
-		String queryFile = "../mixture_linked/msdata/UPS_Ecoli/14342_UPS1-400fm_SWATH_5600.mzXML";
-		String libraryFile = "../mixture_linked/ACG_swathdevelopment_P94_UPS_Ecoli_MSGFDB_IDs_uniqpeps_plusDecoy2_test.mgf";
-		String ssmResultFile = "../mixture_linked/ACG_swathdevelopment_14342_UPS1_swath_SSMs.txt";
+		String queryFile = "../mixture_linked/msdata/UPS_Ecoli/14344_UPS1_400fm_Ecolilysate_SWATH_5600.mzXML";
+		String libraryFile = "../mixture_linked/ACG_swathdevelopment_P94_UPS_Ecoli_MSGFDB_IDs_uniqpeps_plusDecoy2_test2.mgf";
+		String ssmResultFile = "../mixture_linked/ACG_swathdevelopment_14344_Swath_SSMs.txt";
 		String locationFile = "../mixture_linked/t00";
 		MZXMLReader reader = new MZXMLReader(queryFile);
 		//ConsensusSpectrumReader reader = new ConsensusSpectrumReader(queryFile);
@@ -348,23 +350,14 @@ public class SWATHStatistics {
 			matches.add(tokens[4] + "." + tokens[6]);
 		}
 		
-		for(int i = 0; i < results.size(); i++){
-			String[] tokens = results.get(i).split("\\s+");
-			if(tokens.length < 6  || lib.getSpectra(tokens[4] + "." + tokens[6]) == null){
-				continue; //skipping non-formatted lines
-			}
-			String pepKey = tokens[4] + "." + tokens[6];
-			Spectrum libEntry = lib.getSpectra(pepKey).get(0);
-			int swathScan = Integer.parseInt(tokens[1]);
+		Set<Integer> keys = ssmMap.keySet();
+		for(Iterator<Integer> it = keys.iterator(); it.hasNext();){
+			int swathScan = it.next();
 			Spectrum swathSpec = reader.getSpectrum(swathScan);
 			//System.out.println(swathSpec);
-			//libEntry.windowFilterPeaks2(6, 25);
-			libEntry.filterPeaks(30);
-			libEntry.mergePeaks(libEntry, 0.05);
-			//swathSpec.filterPeaks(1000);
 			swathSpec.windowFilterPeaks2(15, 25);
 			//swathSpec.filterPeaks(700);	
-			List<String> matches = ssmMap.get(Integer.parseInt(tokens[1]));
+			List<String> matches = ssmMap.get(swathScan);
 			if(matches == null){
 				continue;
 			}
@@ -373,13 +366,31 @@ public class SWATHStatistics {
 			}
 			System.out.println("mixture matches: " + matches.size());
 			for(int j = 0; j < matches.size(); j++){
-				String pepKey2 = matches.get(j);
-				Spectrum match = lib.getSpectra(pepKey2).get(0);
-				match.mergePeaks(match, 0.05);
-				double share = libEntry.sharePeaks(match, 0.05);
-				if(!libEntry.peptide.equals(match.peptide)){
-					System.out.println("Shared-stat:\t" + libEntry.scanNumber + "\t" + libEntry.peptide + "\tand\t" + match.peptide + "\t" + share);					
+				Spectrum sameSwath = new Spectrum();
+				String pepKey1 = matches.get(j);
+				Spectrum libSpect = lib.getSpectra(pepKey1).get(0);
+				libSpect.mergePeaks(libSpect, 0.05);
+				libSpect.filterPeaks(30);
+				for(int i = 0; i < matches.size(); i++){
+					if(i != j){
+						String pepKey2 = matches.get(i);
+						System.out.println("key " + pepKey2);
+						if(lib.getSpectra(pepKey2) != null){
+							Spectrum match = lib.getSpectra(pepKey2).get(0);
+							match.mergePeaks(match, 0.05);
+							match.filterPeaks(30);
+							sameSwath.getPeak().addAll(match.getPeak());
+						}
+					}
 				}
+				Collections.sort(sameSwath.getPeak(), PeakMassComparator.comparator);
+				Spectrum proj = swathSpec.project(sameSwath, 0.05);
+				proj.sqrtSpectrum();
+				libSpect.sqrtSpectrum();
+				double share = sameSwath.sharePeaks(libSpect, 0.05);
+				double score = libSpect.projectedCosine(proj, 0.05);
+				double score2 = libSpect.projectedCosine(swathSpec, 0.05);
+				System.out.println("Shared-stat:\t" + swathScan + "\t" + libSpect.peptide + "\tShared-Stat\t" +  + share + "\t" + score +"\t" + score2);					
 			}
 		}
 	}

@@ -96,6 +96,14 @@ public class Mass {
 		}
 	}
 	
+	public static double[] getIonsOffset(String[] ions){
+		double[] offsets = new double[ions.length];
+		for(int i = 0; i < ions.length; i++){
+			offsets[i] = getIonMod(ions[i]);
+		}
+		return offsets;
+	}
+	
 	public static double getAAMass(char aa){
 		//System.out.println("aa: " + aa);
 		if(aa == '*'){
@@ -119,15 +127,50 @@ public class Mass {
 		return false;
 	}
 	
-	public static void main(String[] args){
-		System.out.println("hihi");
-	}
-	
+
 	public static double roundMass(double mass, int decimal){
 		System.out.println("started: " + mass);
 		long round = Math.round((mass*10*decimal));
 		System.out.println("long is: " + round);
 		return ((double)round)/(10*decimal);
+	}
+	
+	public static int[] getValidAAMasses(double scaleFactor){
+		int validAA = 0;
+		int[] validAAMass;
+		for(int i = 0; i < Mass.aaMap.length; i++){
+			if(Mass.aaMap[i] > 0 && Mass.aaMap[i] != 111.0316){
+				validAA++;
+			}
+		}
+		validAAMass = new int[validAA];
+		int j = 0;
+		for(int i = 0; i < Mass.aaMap.length; i++){
+			if(Mass.aaMap[i] > 0 && Mass.aaMap[i] != 111.0316){
+				validAAMass[j] = (int)Math.round(Mass.aaMap[i]*scaleFactor);
+				j++;
+			}
+		}
+		return validAAMass;
+	}
+	
+	public static int[] getAAInds(){
+		int validAA = 0;
+		int[] aaIndMap;
+		aaIndMap = new int[Mass.aaMap.length];
+		int j = 0;
+		for(int i = 0; i < Mass.aaMap.length; i++){
+			if(Mass.aaMap[i] > 0 && Mass.aaMap[i] != 111.0316){
+				aaIndMap[i] = j;
+				j++;
+			}
+		}
+		return aaIndMap;
+	}
+	
+	
+	public static void main(String[] args){
+		System.out.println("hihi");
 	}
 		
 }

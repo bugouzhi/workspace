@@ -16,6 +16,7 @@ public class CrossLinker {
 	public static int ANYPOSITION = -1;
 	public static int NTERM = 0;
 	public static int CTERM = -2;
+	public static int BUTCTERM = -3;
 	public static char ANYRESIDUE = '*';
 	private static int MONOFUNCTIONAL = 1;
 	private static int BIFUNCTIONAL = 2;
@@ -54,6 +55,12 @@ public class CrossLinker {
 		return this.linkerMass;
 	}
 	
+	
+	
+	public void setLinkerMassOffSet(double mass){
+		this.linkerMass = mass;
+	}
+	
 	//to be implemented
 	//the mass of linker only linked one-side
 	//to-be-implemented
@@ -90,8 +97,10 @@ public class CrossLinker {
 		Set<Integer> positions = new HashSet<Integer>();
 		for(int i = 0; i < targetedPos.length; i++){
 			int pos = targetedPos[i];
-			if(pos < peptide.length() && pos != CrossLinker.ANYPOSITION && pos != CrossLinker.CTERM &&  
-					(targetedRes[i] == peptide.charAt(pos) 
+			if(pos < peptide.length() && pos != CrossLinker.ANYPOSITION 
+					&& pos != CrossLinker.CTERM 
+					&& pos != CrossLinker.BUTCTERM
+					&&  (targetedRes[i] == peptide.charAt(pos) 
 							|| targetedRes[i] == CrossLinker.ANYRESIDUE)){
 				positions.add(pos);
 			}
@@ -99,10 +108,13 @@ public class CrossLinker {
 					&& peptide.charAt(peptide.length()-1) == targetedRes[i]){
 				positions.add(peptide.length()-1);
 			}
-			if(pos == CrossLinker.ANYPOSITION){
+			if(pos == CrossLinker.ANYPOSITION || pos == CrossLinker.BUTCTERM){
 				for(int j = 0; j < peptide.length(); j++){
 					if(peptide.charAt(j) == targetedRes[i] ||
 							targetedRes[i] == CrossLinker.ANYPOSITION){
+						if(j  == CrossLinker.BUTCTERM && j == peptide.length()-1){
+							continue;
+						}
 						positions.add(j);
 					}
 				}
@@ -116,17 +128,35 @@ public class CrossLinker {
 	
 	public List<LinkedPeptide> crossLinkPeptides(Peptide p1, Peptide p2, int minCharge, int maxCharge){
 		List<Integer> positions = getLinkerPositions1(p1.getPeptide());
-		List<Integer> positions2 = getLinkerPositions2(p1.getPeptide());
+		List<Integer> positions2 = getLinkerPositions2(p2.getPeptide());
 		List<LinkedPeptide> toBeAdded = new ArrayList<LinkedPeptide>();
 		for(int c = minCharge; c <= maxCharge; c++){
 			for(int m = 0; m < positions.size(); m++){
 				for(int n = 0; n < positions2.size(); n++){
-					LinkedPeptide linked = new LinkedPeptide(p1, p2, c, positions.get(m)+1, positions2.get(n)+1);
+					LinkedPeptide linked = new LinkedPeptide(p1, p2, c, positions.get(m)+1, positions2.get(n)+1, this.getLinkerMassOffSet());
 					toBeAdded.add(linked);
 				}
 			}
 		}
 		return toBeAdded;
+	}
+	
+	
+	public List<LinkedPeptide> crossLinkPeptides(List<Peptide> pepList, int minCharge, int maxCharge, boolean selfLink){
+		List<LinkedPeptide> linkedPeptides = new ArrayList<LinkedPeptide>();
+		List<LinkedPeptide> toBeAdded = new ArrayList<LinkedPeptide>();
+		//System.out.println("peplist size: " + pepList.size());
+		for(int i = 0; i < pepList.size(); i++){
+			Peptide p1 = pepList.get(i);
+			for(int j = i; j < pepList.size(); j++){
+				Peptide p2 = pepList.get(j);
+				if(selfLink || i != j){
+					toBeAdded = crossLinkPeptides(p1, p2, minCharge, maxCharge);
+					linkedPeptides.addAll(toBeAdded);
+				}
+			}
+		}
+		return linkedPeptides;
 	}
 	
 	public boolean isLinkedPosition(char aa){
@@ -137,4 +167,42 @@ public class CrossLinker {
 		}
 		return false;
 	}
+	
+	public List<Peptide> getLinkedPeptidesFromPair(String pepPairFile){
+		List<String> peptides = Utils.FileIOUtils.createListFromFile(pepPairFile);
+		List<Peptide> pepList = new ArrayList<Peptide>(peptides.size());
+		for(int i = 0; i < peptides.size(); i++){
+			String[] tokens = peptides.get(i).split("\\t");
+			Peptide p1 = new Peptide(tokens[2],1);
+			Peptide p2 = new Peptide(tokens[3], 2);
+			pepList.addAll(this.crossLinkPeptides(p1, p2, 1, 2));
+		}
+		return pepList;
+	}
+	
+	public List<LinkedPeptide> getLinkedPeptideFromFile(String pepFile){
+		List<String> peptides = Utils.FileIOUtils.createListFromFile(pepFile);
+		List<Peptide> pepList = new ArrayList<Peptide>(peptides.size());
+		for(int i = 0; i < peptides.size(); i++){
+			Peptide p1 = new Peptide(peptides.get(i),1);
+			pepList.add(p1);
+		}
+		return this.crossLinkPeptides(pepList, 1, 1, true);
+	}
+	
+	public static void main(String[] args){
+		String pepPairFile = "..//mixture_linked/testpep.txt";
+		CrossLinker linker = new CrossLinker(-116.0430, 
+				new int[]{CrossLinker.BUTCTERM}, new int[]{CrossLinker.BUTCTERM},
+				new char[]{'C'}, new char[]{'C'});
+		//linker.getLinkedPeptidesFromPair(pepPairFile);
+		List<LinkedPeptide> lps = linker.getLinkedPeptideFromFile(pepPairFile);
+		for(int i = 0; i < lps.size(); i++){
+			LinkedPeptide lp = lps.get(i);
+			String seq = lp.toString().replaceAll("[0-9\\.\\+]", "");
+			System.out.println("Linked " + seq + "\t" + (lp.getParentmass()-Mass.PROTON_MASS));
+		}
+	}
+	
+	
 }

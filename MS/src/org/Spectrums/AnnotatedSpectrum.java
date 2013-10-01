@@ -17,6 +17,11 @@ public class AnnotatedSpectrum extends Spectrum{
 		this.annotation = new HashMap<String, Object>();
 	}
 	
+	public AnnotatedSpectrum(Spectrum s){
+		super(s);
+		this.annotation = new HashMap<String, Object>();
+	}
+	
 	public Map<String, Object> getAnnotation() {
 		return annotation;
 	}

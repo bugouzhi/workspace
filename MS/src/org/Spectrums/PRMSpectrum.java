@@ -32,14 +32,14 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 	SpectrumComparator comp;
 	int charge = 0;
 	double resolution = 1.0;
-	double scaleFactor = 1.0;//0.9995;
+	double scaleFactor = 0.9995;
 	
 	public PRMSpectrum(Spectrum s, SpectrumComparator comp){
 		this(s, s.charge, comp, 1.0);
 	}
 	
 	public PRMSpectrum(Spectrum s, int charge, SpectrumComparator comp){
-		this(s, charge, comp,1.0);
+		this(s, charge, comp, 1.0);
 	}
 	
 	
@@ -105,6 +105,17 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 			counter++;
 		}
 		
+	}
+	
+	//compute massInd for a peptide in the PRM spectrum
+	public int[] getMassIndex(Peptide p){
+		double[][] base = this.computeBaseMass(p.getPeptide(), p.getPos(), p.getPtmmasses());
+		int[] massInds = new int[base[0].length];
+		for(int i = 0; i < base[0].length; i++){
+			//int massIndex = (int)Math.round((0.9995*base[0][i]));
+			massInds[i] = this.getMassIndex(base[0][i]);
+		}
+		return massInds;
 	}
 	
 	public int getMassIndex(double mass){
@@ -173,6 +184,22 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		return this.scoredSpectrum[1];
 	}
 	
+	public double getScore(Peptide p){
+		double[][] base = this.computeBaseMass(p.getPeptide(), p.getPos(), p.getPtmmasses());
+		for(int i = 0; i < this.scoredSpectrum.length; i++){
+			//System.out.println(s.spectrumName + "\t" + i + "\t" + prmSpect.scoredSpectrum[i]);
+		}
+		double totalScore = 0;
+		double[] scores = this.getScoredSpectrum(p.getParentmass()*p.getCharge());
+		for(int i = 0; i < base[0].length; i++){
+			//int massIndex = (int)Math.round((0.9995*base[0][i]));
+			int massIndex = this.getMassIndex(base[0][i]);
+			//System.out.println("scored: " + massIndex +"\t" + scores[massIndex]);
+			totalScore += scores[massIndex];
+		}
+		return totalScore;
+	}
+	
 	public static void testPRMSpectrum(){
 		//SpectrumLib lib = new SpectrumLib(".\\MSPLib\\Lib\\ecoli.msp", "MSP");
 		SpectrumLib lib = new SpectrumLib("../mixture_linked//FedorMix_CIDHiacc_msgfdb_0_1FDR.mgf", "MGF");
@@ -180,7 +207,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		RankBaseScoreLearner pComp = RankBaseScoreLearner.loadComparator("../mixture_linked/human_single_model_realannotated_win12_25.o");
 		//SpectrumComparator comp = SpectrumUtil.getRankBaseScorer(lib);
 		SpectrumComparator comp = new SimpleProbabilisticScorer(pComp);
-		((SimpleProbabilisticScorer)comp).matchTolerance =0.05;
+		((SimpleProbabilisticScorer)comp).matchTolerance =0.5;
 		((SimpleProbabilisticScorer)comp).setMinMatchedPeak(0);
 		Iterator<Spectrum> reader = lib.getAllSpectrums().iterator();
 		int counter = 0;
@@ -192,21 +219,11 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 				//continue;
 			}
 			System.out.println("query: " + s.parentMass + "\t" + s.charge +"\t" + s.peptide);
-			PRMSpectrum prmSpect = new PRMSpectrum(s, s.charge, comp, 0.05);
 			Peptide p = new Peptide(s.peptide, s.charge);
-			double[][] base = prmSpect.computeBaseMass(p.getPeptide(), p.getPos(), p.getPtmmasses());
-			prmSpect.computePRMSpectrum();
-			for(int i = 0; i < prmSpect.scoredSpectrum.length; i++){
-				//System.out.println(s.spectrumName + "\t" + i + "\t" + prmSpect.scoredSpectrum[i]);
-			}
-			double totalScore = 0;
-			double[] scores = prmSpect.getScoredSpectrum(p.getParentmass()*p.getCharge());
-			for(int i = 0; i < base[0].length; i++){
-				//int massIndex = (int)Math.round((0.9995*base[0][i]));
-				int massIndex = prmSpect.getMassIndex(base[0][i]);
-				System.out.println("scored: " + massIndex +"\t" + scores[massIndex]);
-				totalScore += scores[massIndex];
-			}
+			s.parentMass = p.getParentmass();
+			s.charge = p.getCharge();
+			PRMSpectrum prmSpect = new PRMSpectrum(s, s.charge, comp, 0.5);
+			double totalScore = prmSpect.getScore(p);
 			TheoreticalSpectrum t = new TheoreticalSpectrum(s.peptide + "." + s.charge);
 			System.out.println(s.spectrumName + "\t" + s.parentMass + "\t" + s.peptide + "\tTotal score: " + totalScore + "\toriginal score: " + comp.compare(t, s));
 			counter++;

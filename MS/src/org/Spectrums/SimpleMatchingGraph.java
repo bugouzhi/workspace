@@ -1,6 +1,6 @@
 package org.Spectrums;
 /**
- * Very basic implementation of a graph object
+ * Very basic implementation of a bi-partite graph object
  * using adacency list. We try to keep the implementation
  * minimal as to optimize the performance for mathicng graph
  * @author jian wang
@@ -120,6 +120,23 @@ public class SimpleMatchingGraph implements UndirectedGraph{
 		neigh.clear();
 	}
 	
+	public Collection getVerticeWithEdges(int group, int minEdges){
+		Set vertexSet = new HashSet();
+		Iterator it;
+		Map<Object, List> adjList;
+		if(group == SimpleMatchingGraph.Observed){
+			adjList = this.adjList1;
+		}else{
+			adjList = this.adjList2;
+		}
+		for(it = adjList.keySet().iterator(); it.hasNext();){
+			Object key = it.next();
+			if(adjList.containsKey(key) && adjList.get(key).size() >= minEdges){
+				vertexSet.add(key);
+			}
+		}
+		return vertexSet;
+	}
 	
 	public void clearGraph(){
 		this.adjList1.clear();

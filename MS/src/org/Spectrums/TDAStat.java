@@ -3,6 +3,7 @@ package org.Spectrums;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -14,7 +15,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 /**
- * Compute various TDA related info for a set of PSMs
+ * Estimate FDR using TDA, various info related to FDR is computed
  * @author Jian
  *
  */
@@ -25,23 +26,111 @@ public class TDAStat{
 	private int protInd=8;
 	private int scoreInd = 11;
 	public int sortMode = 1;  //default in natural order, but many quality scores (as oppose to stat significance) are higher the better, so use this to switch sorting mode
+	public boolean logMode = false; //some scores such as probability are usually better handle using the log-transform
 	//private int scoreInd2 = 28;
 	//private int rawScoreInd = 9;
 	private double minScore = 0.0;
 	private List<AnnotatedSpectrum> results;
-	private Map<Integer, AnnotatedSpectrum> resultMap;
+	public Map<String, AnnotatedSpectrum> peptideMap;
+	public Map<Integer, AnnotatedSpectrum> resultMap;
+	public Map<String, AnnotatedSpectrum> proteinMap;
 	private double threshold;
-	public double[] thresholds = new double[]{0.01, 0.02, 0.03, 0.05, 0.1};
-	private int[] PSMs = new int[thresholds.length];
-	private int[] peps = new int[thresholds.length];
+	public double[] thresholds = new double[]{0.01, 0.02, 0.03, 0.05, 0.1}; //we extract a set of results with standard fdr
+	public int[] Prots = new int[thresholds.length];
+	public int[] PSMs = new int[thresholds.length];
+	public int[] peps = new int[thresholds.length];
 	
 	public TDAStat(String resultFile){
+		this(resultFile, 7, 8, 11, 1);
+	}
+
+	public TDAStat(String resultFile, int pepInd, int protInd, int scoreInd, int sortMode){
+		this.pepInd = pepInd;
+		this.protInd = protInd;
+		this.scoreInd = scoreInd;
+		this.sortMode = sortMode;
 		this.resultFile = resultFile;
 		this.parseResult();
 		this.getFDRByTDA();
+		this.getProteinFDR();
 	}
 	
 	
+	
+	public int getKeyInd() {
+		return keyInd;
+	}
+
+	public void setKeyInd(int keyInd) {
+		this.keyInd = keyInd;
+	}
+
+	public int getPepInd() {
+		return pepInd;
+	}
+
+	public void setPepInd(int pepInd) {
+		this.pepInd = pepInd;
+	}
+
+	public int getProtInd() {
+		return protInd;
+	}
+
+	public void setProtInd(int protInd) {
+		this.protInd = protInd;
+	}
+
+	public int getScoreInd() {
+		return scoreInd;
+	}
+
+	public void setScoreInd(int scoreInd) {
+		this.scoreInd = scoreInd;
+	}
+
+	public int getSortMode() {
+		return sortMode;
+	}
+
+	public void setSortMode(int sortMode) {
+		this.sortMode = sortMode;
+	}
+
+	public List<AnnotatedSpectrum> getResults() {
+		return results;
+	}
+	
+	public Collection<AnnotatedSpectrum> getPeptideResults() {
+		return this.peptideMap.values();
+	}
+	
+	public Collection<AnnotatedSpectrum> getProteinResults() {
+		return this.proteinMap.values();
+	}
+	
+	
+	
+	public int[] getPSMs() {
+		return PSMs;
+	}
+
+
+	public void setPSMs(int[] pSMs) {
+		PSMs = pSMs;
+	}
+
+
+	public int[] getPeps() {
+		return peps;
+	}
+
+
+	public void setPeps(int[] peps) {
+		this.peps = peps;
+	}
+
+
 	private void parseResult(){
 		BufferedReader reader = Utils.FileIOUtils.createReaderFromFile(resultFile);
 		//System.out.println("got reader");
@@ -50,23 +139,75 @@ public class TDAStat{
 			int counter = 0;
 			results = new ArrayList<AnnotatedSpectrum>();
 			resultMap = new HashMap<Integer, AnnotatedSpectrum>();
+			peptideMap = new HashMap<String, AnnotatedSpectrum>();
+			proteinMap = new HashMap<String, AnnotatedSpectrum>();
 			while(result != null){
 				if(isHeader(result)){
 					result = reader.readLine();
 					continue;
 				}
-				String[] tokens = result.split("\\t");
+				//System.out.println("line is: " + result);
+				String[] tokens = result.split("\\t+");
+				if(tokens[0].startsWith("#") || tokens.length < 5){
+					result = reader.readLine();
+					continue;
+				}
+				if(Double.parseDouble(tokens[11]) < 10){
+					result = reader.readLine();
+					continue;
+				}
 				AnnotatedSpectrum s = new AnnotatedSpectrum();
 				s.scanNumber = Integer.parseInt(tokens[1]);
 				s.peptide = tokens[pepInd];
 				s.protein = tokens[protInd];
-				s.score = Double.parseDouble(tokens[scoreInd]);
+				s.score = Double.parseDouble(tokens[scoreInd])*sortMode;
+				if(this.logMode){
+					s.score = Math.log(s.score)/Math.log(10);
+				}
 				s.spectrumName = ""+counter;
 				results.add(s);
+				String key = s.peptide + "@";// +s.charge;
+				if(peptideMap.containsKey(key)){
+					AnnotatedSpectrum prev = peptideMap.get(key);
+					if(s.score < prev.score){
+						this.peptideMap.put(key, s);
+					}
+				}else{
+					if(!this.isDecoy(s.protein)){
+						this.peptideMap.put(key, s);
+					}
+				}
+				//System.out.println("protein: " + s.protein);
+				if(s.protein.contains("PROTEIN")){
+					String name =  s.protein.substring(s.protein.indexOf("PROTEIN:"));
+					//System.out.println("name " + name);
+					name = name.split("_")[1];
+					//name=name.replaceAll("_HUMAN", "");
+					if(s.protein.contains("DECOY_")){
+						s.protein = "DECOY_" + name;
+					}else{	
+						s.protein = name;
+					}
+				}
+				//System.out.println("Protein: " + s.protein);
+				key = s.protein;
+				if(proteinMap.containsKey(s.protein)){
+					AnnotatedSpectrum prev = proteinMap.get(s.protein);
+					if(s.score < prev.score){
+						prev.score = s.score;
+						prev.peptide = s.peptide;
+						prev.charge = s.charge;
+					}
+					//prev.score += s.score;
+				}else{
+					AnnotatedSpectrum ps = new AnnotatedSpectrum(s);
+					this.proteinMap.put(key, ps);
+				}
 				resultMap.put(counter, s);
 				counter++;
 				result = reader.readLine();
 			}
+			System.out.println("parsed result " + counter);
 			reader.close();
 		}catch(IOException ioe){
 			System.err.println(ioe.getMessage());
@@ -88,11 +229,13 @@ public class TDAStat{
 					result = reader.readLine();
 					continue;
 				}
-				AnnotatedSpectrum s = this.resultMap.get(counter);
-				System.out.println(result + "\t" + s.getAnnotation().get("fdr") +"\t"
+				if(this.resultMap.containsKey(counter)){
+					AnnotatedSpectrum s = this.resultMap.get(counter);
+					System.out.println(result + "\t" + s.getAnnotation().get("fdr") +"\t"
 						+ s.getAnnotation().get("pepfdr"));
-				result = reader.readLine();
-				counter++;
+					result = reader.readLine();
+					counter++;
+				}
 			}
 		}catch(IOException ioe){
 			System.err.println(ioe.getMessage());
@@ -117,6 +260,12 @@ public class TDAStat{
 		for(int k = 0; k < this.thresholds.length; k++){
 			System.out.print(this.peps[k] + "\t");
 		}
+		
+		System.out.println();
+		System.out.print("Prot:\t");
+		for(int k = 0; k < this.thresholds.length; k++){
+			System.out.print(this.Prots[k] + "\t");
+		}
 		System.out.println();
 
 		
@@ -131,6 +280,7 @@ public class TDAStat{
 		double FDR = 0;
 		double pepFDR = 0;
 		Set<String> peps = new HashSet<String>();
+		
 		for(int i = 0; i < results.size(); i++){
 			AnnotatedSpectrum s = results.get(i);
 			//System.out.println("proteins " + s.protein + "\t" + isDecoy(s.protein));
@@ -168,7 +318,38 @@ public class TDAStat{
 			s.getAnnotation().put("pepfdr", pepFDR);
 		}
 	}
+	
+	public void getProteinFDR(){
+		List<AnnotatedSpectrum> protResults = new ArrayList();
+		protResults.addAll(this.proteinMap.values());
+		Collections.sort(protResults, new ScoreComparator());
+		int targetCount = 0;
+		int decoyCount = 0;
+		int targetPep = 0;
+		int decoyPep = 0;
+		double protFDR = 0;
+		Set<String> peps = new HashSet<String>();
+		System.out.println("protein results list: " + protResults.size());
+		for(int i = 0; i < protResults.size(); i++){
+			AnnotatedSpectrum s = protResults.get(i);
+			//System.out.println("proteins " + s.protein + "\t" + isDecoy(s.protein));
+			if(isDecoy(s.protein)){
+				decoyCount++;
+			}else{
+				targetCount++;
+			}
 		
+			protFDR = ((double)decoyCount) / targetCount;
+			
+			for(int k = 0; k < this.thresholds.length; k++){
+				if(protFDR < thresholds[k]){
+					this.Prots[k] = targetCount;
+				}
+			}
+			s.getAnnotation().put("Protfdr", protFDR);
+		}
+	}
+	
 	protected double getThreshold(List<Double> target, List<Double> decoy, double fdr){
 		int totalTarget = target.size();
 		int totalDecoy = decoy.size();

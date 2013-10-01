@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import Utils.RKLookup;
 
 import sequences.*;
 /**
@@ -27,27 +28,59 @@ public class ProteinIDExtractor {
 	private String outputFile;
 	private BufferedWriter out;
 	FastaSequence seqDB;
+	char[] seqArray;
 	String seqStr;
 	Set<String> proteinIDs;
 	Set<String> peptideIDs;
+	RKLookup strMatches;
 	Map<String, List<String>> peptideMap;
 	Map<String, List<String>> proteinMap;
 	Map<String, List<Object>> positionMap;
 	
-	private int pepIDIndex = 7;
+	private int pepIDIndex = 4;
 	private int pepIDIndex2 = 8;
 	
 	public ProteinIDExtractor(String dbFile, String result){
 		this.proteinDBFile = dbFile;
 		this.searchResultFile = result;
-		this.seqDB = new FastaSequence(this.proteinDBFile);
-		this.seqStr = seqDB.getSubsequence(0, seqDB.getSize());
 		System.out.println("resultFile: " + this.searchResultFile);
 		this.outputFile = searchResultFile.split("\\.txt")[0]+".fasta";
 		System.out.println("out: " + this.outputFile);
+		init();
 		parseResultFile();
 		getPeptideProteinMap();
 		//printProteins();
+	}
+	
+	public ProteinIDExtractor(List<AnnotatedSpectrum> IDs, String dbFile){
+		this.peptideIDs = new HashSet();
+		this.proteinDBFile = dbFile;
+		this.seqDB = new FastaSequence(this.proteinDBFile);
+		this.seqStr = seqDB.getSubsequence(0, seqDB.getSize());
+		System.out.println("resultFile: " + this.searchResultFile);
+		//this.outputFile = searchResultFile.split("\\.txt")[0]+".fasta";
+		//System.out.println("out: " + this.outputFile);
+		for(int i = 0; i < IDs.size(); i++){
+			Spectrum s = IDs.get(i);
+			String peptide = s.peptide;
+			//System.out.println("peptide: " + peptide);
+			//peptide = getStrippedSeq(peptide);
+			peptideIDs.add(peptide);
+		}
+		init();
+		getPeptideProteinMap();
+		//getPeptideReport();
+		
+	}
+	
+	private void init(){
+		this.seqDB = new FastaSequence(this.proteinDBFile);
+		this.seqStr = seqDB.getSubsequence(0, seqDB.getSize());
+		this.seqArray = seqStr.toCharArray();
+	}
+	
+	private String getStrippedSeq(String pep){
+		return Utils.StringUtils.getStrippedSeq(pep);
 	}
 	
 	private void parseResultFile(){
@@ -57,8 +90,11 @@ public class ProteinIDExtractor {
 			String line = results.get(i);
 			//System.out.println("line is: " + line);
 			String[] tokens = line.split("\\t");
+			if(tokens.length < this.pepIDIndex){
+				continue;
+			}
 			String peptide = tokens[pepIDIndex];
-			peptide = peptide.replaceAll("[0-9\\+\\-\\.\\_]", "");
+			 
 			//peptide = peptide.substring(1, peptide.length()-1);
 			//System.out.println("IDs is  : " + peptide);
 			peptideIDs.add(peptide);
@@ -66,6 +102,7 @@ public class ProteinIDExtractor {
 			peptide2 = peptide2.replaceAll("[0-9\\+\\-\\.\\_]", "");
 			//peptideIDs.add(peptide2);
 		}
+		//System.out.println("Done parsing results");
 	}
 		
 	private void getPeptideProteinMap(){
@@ -73,39 +110,78 @@ public class ProteinIDExtractor {
 		this.proteinMap = new HashMap<String, List<String>>();
 		this.positionMap = new HashMap<String, List<Object>>();
 		this.proteinIDs = new HashSet();
-		for(Iterator it = peptideIDs.iterator(); it.hasNext();){
-			String id = (String)it.next();
-			List<String> proteins = new ArrayList<String>();
-			List<Object> positions = new ArrayList<Object>();
-			this.peptideMap.put(id, proteins);
-			this.positionMap.put(id, positions);
-			//System.out.println("peptide IDs is: " + id);
-			int index = this.seqStr.indexOf(id);
-			long start = this.seqDB.getStartPosition(index);
-			//System.out.println("starting residue: " + seqStr.charAt((int) start));
-			while(index > 0){
-				String protein = this.seqDB.getAnnotation(index);
-				proteins.add(protein);
-				positions.add(protein);
-				positions.add((int)(index-start-1));
-				List<String> peptides = null;
-				if(this.proteinMap.containsKey(protein)){
-					peptides = this.proteinMap.get(protein);
-				}else{
-					peptides = new ArrayList<String>();
-					this.proteinMap.put(protein, peptides);
-				}
-				peptides.add(protein);
-				//System.out.println("Protein ID is: "  + protein);
-				proteinIDs.add(protein);
-				index = this.seqStr.indexOf(id, index+1);
+		int counter =0;
+		Map<String, List<String>> modSeqMap = new HashMap<String, List<String>>();
+		for(Iterator<String> it = this.peptideIDs.iterator(); it.hasNext();){
+			String pep = it.next();
+			String stripped = getStrippedSeq(pep);
+			if(modSeqMap.containsKey(stripped)){
+				modSeqMap.get(stripped).add(pep);
+			}else{
+				List<String> mods = new ArrayList();
+				mods.add(pep);
+				modSeqMap.put(stripped, mods);
 			}
 		}
+		RKLookup strMatcher = new RKLookup(modSeqMap.keySet(), 5);
+		Map<String, List<Integer>> matches = strMatcher.matches(this.seqStr);
+		for(Iterator<String> it = matches.keySet().iterator(); it.hasNext();){
+			String pep = it.next();
+			List<Integer> positions = matches.get(pep);
+			List<String> proteins = new ArrayList<String>();
+			List<Object> pos = new ArrayList<Object>();
+			for(int i = 0; i < positions.size(); i++){
+				int ind = positions.get(i);
+				String prot = this.seqDB.getAnnotation(ind);
+				List<String> peps;
+				if(this.proteinMap.containsKey(prot)){
+					peps = this.proteinMap.get(prot);
+				}else{
+					peps = new ArrayList<String>();
+					this.proteinMap.put(prot, peps);
+				}
+				proteins.add(prot);
+				pos.add(prot);
+				pos.add(ind-this.seqDB.getStartPosition(ind-1));
+			}
+			List<String> modSeq = modSeqMap.get(pep);
+			for(int i = 0; i < modSeq.size(); i++){
+				this.peptideMap.put(modSeq.get(i), proteins);
+				this.positionMap.put(modSeq.get(i), pos);
+			}
+		}
+		
 		System.out.println("After constructing positionmap size: " + this.positionMap.keySet().size());
 		this.proteinIDs = this.proteinMap.keySet();
 	}
 	
-		
+	
+	//get a list of peptides not shared by proteins
+	public Set<String> getNonSharedPeps(){
+		Set<String> nonDegenerate = new HashSet<String>();
+		for(Iterator<String> it = this.peptideMap.keySet().iterator(); it.hasNext();){
+			String pep = it.next();
+			List<String> protIds = this.peptideMap.get(pep);
+			if(protIds.size() == 1){
+				nonDegenerate.add(pep);
+			}
+		}
+		System.out.println("Total non-degenerate " + nonDegenerate.size());
+		return nonDegenerate;
+	}
+	
+	//get a list of proteins do not contain shared peptides
+	public Set<String> getProtWithNoSharePeps(){
+		Set<String> prots =  new HashSet<String>();
+		Set<String> peps = getNonSharedPeps();
+		for(Iterator<String> it = peps.iterator(); it.hasNext();){
+			String pep = it.next();
+			prots.add(this.peptideMap.get(pep).get(0));
+		}
+		return prots;
+	}
+	
+	
 	public void printProteins(boolean printDecoy){
 		try{
 			this.out = new BufferedWriter(new FileWriter(this.outputFile));
@@ -135,14 +211,10 @@ public class ProteinIDExtractor {
 	}
 	
 	public void getPeptideReport(){
-		List<String> results = Utils.FileIOUtils.createListFromFile(this.searchResultFile);
 		String proteinIDPattern = "";
 		int matchCount = 0;
-		for(int i = 0; i < results.size(); i++){
-			String line = results.get(i);
-			String[] tokens = line.split("\\t");
-			String peptide = tokens[pepIDIndex];
-			peptide = peptide.replaceAll("[0-9\\+\\-\\.\\_]", "");
+		for(Iterator<String> it = this.peptideMap.keySet().iterator(); it.hasNext();){
+			String peptide = it.next();
 			//peptide = peptide.substring(1, peptide.length()-1);
 			List<String> proteins = this.peptideMap.get(peptide);
 			System.out.print("ID: " + peptide + "\t");
@@ -238,11 +310,11 @@ public class ProteinIDExtractor {
 	}
 	
 	public static void main(String[] args){
-		ProteinIDExtractor IDS = new ProteinIDExtractor("../mixture_linked/database/UPS_plusHuman_plusDecoy.fasta"
-				, "../mixture_linked/test.txt");
+		ProteinIDExtractor IDS = new ProteinIDExtractor("../mixture_linked/database/UPS2.fasta"
+				, "../mixture_linked/SWATH/Swath_Human_searches/Swathmsplit/UPS_Human_REP3withlysateLib_msplit_1_pep.txt");
 		IDS.getPeptideReport();
 		IDS.getProteinReport();
-		IDS.printProteins(false);
+		//IDS.printProteins(false);
 		//IDS.getPeptidePairReport();
 		//extractProteinsFromResultFiles("../mixture_linked/");
 	}

@@ -40,6 +40,7 @@ public class RankBaseScoreLearner implements PeakComparator, Serializable{
 	//to define an convention, here mass error means theoretical mass - actual mass of a peak
 	private double[] massToleranceInterval = {-0.51,0.51}; //need to setup this automatically in the future
 	private double[] massErrorInterval = {-0.55, -0.45, -0.35, -0.25, -0.15, -0.05, 0.05, 0.15, 0.25, 0.35, 0.45, 0.55};
+	//private double[] massErrorInterval = {-0.55, -0.045, -0.035, -0.025, -0.015, -0.005, 0.005, 0.015, 0.025, 0.035, 0.045, 0.55};
 	private double[] sector = {0,1,2};
 	public double[] getMassErrorInterval() {
 		return massErrorInterval;
@@ -143,6 +144,12 @@ public class RankBaseScoreLearner implements PeakComparator, Serializable{
 		int peptideCharge = lp.getPep().getCharge()-1;
 		int peakCharge = lp.getCharge()-1;
 		int ionIndex = getIonIndex(lp)+1;
+		if(peptideCharge > 3){
+			peptideCharge = 3;
+		}
+		if(peakCharge > 3){
+			peakCharge = 3;
+		}
 		//System.out.println(peptideLength+"\t"+peptideCharge+"\t"+peakCharge+"\t"+ionIndex+"\t"+rankIndex+"\t"+errorIndex);
 		return new int[]{peptideLength, peptideCharge, peakCharge, sector, ionIndex, rankIndex, errorIndex};
 	}
@@ -220,7 +227,13 @@ public class RankBaseScoreLearner implements PeakComparator, Serializable{
 			//System.out.println("peptide is: " + s.peptide);
 			//LabelledPeakFactory.setPoolMode(true);
 			LabelledPeakFactory.resetFactory();
+			//DecoySpectrumGenerator d = new DecoySpectrumGenerator();
 			TheoreticalSpectrum t = new TheoreticalSpectrum(new Peptide(s.peptide+"."+s.charge), Mass.standardPrefixes, Mass.standardSuffixes);//+"."+s.charge));//, Mass.standardPrefixes, Mass.standardSuffixes);
+			//System.out.println("pep " + s.peptide);
+			//if(s.peptide.contains("+")|| s.peptide.contains("-")){
+			//	continue;
+			//}
+//			TheoreticalSpectrum t = new TheoreticalSpectrum(new Peptide(d.shuffle(s.peptide)+"."+s.charge), Mass.standardPrefixes, Mass.standardSuffixes);//+"."+s.charge));//, Mass.standardPrefixes, Mass.standardSuffixes);
 //			TheoreticalSpectrum t = new TheoreticalSpectrum(new Peptide(s.peptide), Mass.prefixes_plus_noises, Mass.standardSuffixes);
 			SimpleMatchingGraph matchingG = t.getMatchGraph(s, 0.5);
 			this.getIonsCount(matchingG, totalCount);
@@ -601,13 +614,14 @@ public class RankBaseScoreLearner implements PeakComparator, Serializable{
 	}
 	
 	public static void testGetIonStat(){
-		String file = "..\\MSPLib\\Lib\\yeast.msp";
-		SpectrumLib lib = new SpectrumLib(file, "MSP");
+		String file = "..\\mixture_linked\\msdata\\Training\\MSGFDB_Tryp_7_z.mgf";
+		SpectrumLib lib = new SpectrumLib(file, "MGF");
 		lib.removeModSpectra();
+		lib.windowFilterPeaks(12, 25);
 		lib.computeRank();
 		RankBaseScoreLearner learner = new RankBaseScoreLearner(lib);
 		learner.getIonsCount();
-		learner.writeLibToFile("..\\mixture_linked\\yeast_single_peptide_model_win8_25.o");
+		learner.writeLibToFile("..\\mixture_linked\\Cid_HiAccuracy_model_z_win12_25.o");
 	}
 	
 	

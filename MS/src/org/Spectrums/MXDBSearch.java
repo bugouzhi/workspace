@@ -96,13 +96,11 @@ public class MXDBSearch {
     		List<Spectrum> candidateSpectrum = LinkedPeakScoreLearner.generateSpectra3(linkedPeps, s);
    			SpectrumLibSearcher searcher = new SpectrumLibSearcher(candidateSpectrum, filter);
 			if(targetPeptides.length == 2){
-				int[] ranks = searcher.linkedRanks(s);
-				System.out.println(s.spectrumName + " target peptides ranks " + ranks[0] + "\t" + ranks[1]);
+				//int[] ranks = searcher.linkedRanks(s);
+				//System.out.println(s.spectrumName + " target peptides ranks " + ranks[0] + "\t" + ranks[1]);
 			}
 			Spectrum[] topSpectra = searcher.topSpectra(s, this.topFirstPassMatch);
-			if(true){
-			 	//continue;
-			}
+
 			List<Spectrum> candidatePairs = new ArrayList<Spectrum>();
 			for(int j = 0; j < topSpectra.length && topSpectra[j] != null; j++){
 				String p = topSpectra[j].peptide.split("\\.")[0];
@@ -213,12 +211,13 @@ public class MXDBSearch {
 				//candidates2.add(p);
 				Set<String> uniques = new HashSet<String>();
 			}
+			System.out.println(s.spectrumName + " has candidates pairs: " + candidatePairs.size());
 			lookup.setParentMassTolerance(3000.0);
 			searcher = new SpectrumLibSearcher(candidatePairs, scorer2);
 			searcher.matchTolerance = this.fragmentMassTolerance;
 			searcher.setSingleScorer(scorer1);
 			searcher.topSpectrum(s);
-			searcher.topLinkedSpectra(s, 10);
+			searcher.topLinkedSpectra(s, 1, -100);
     	}
 		System.out.println("matching " + 100 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
 	}

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.Spectrums.ArrayUtils;
+import org.apache.axis.utils.ArrayUtil;
 
 public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 	private MZXMLReader reader;
@@ -79,7 +80,7 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 				}
 			}
 		}
-		System.out.println("neighbor size: " + specList.size());
+		//System.out.println("neighbor size: " + specList.size());
 		return specList;
 	}
 	
@@ -126,6 +127,7 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		
 		double[][] precursorProjection1 = getProjections(precur, surveyScanList);
 		double[][] projections = getProjections(s, specList);
+		double[][] rawprojections = getProjections(s, specList);  //raw intensity can get raw intensity without being normalize 
 		double[][] precursorProjection2 = getProjections(precur, specList);
 		ArrayUtils.normalize(precursorProjection1[0]);
 		ArrayUtils.normalize(precursorProjection2[0]);
@@ -157,7 +159,7 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		
 		//extracting only for top peaks for some statistics
 		List<Integer> topIndex = new ArrayList<Integer>();
-		int top = 30;
+		int top = 10;
 		Iterator<Double> keys = intensityMap.keySet().iterator(); 
 		for(int i = 0; i < top && keys.hasNext(); i++){
 			topIndex.add(intensityMap.get(keys.next()));
@@ -216,7 +218,9 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		double sim = 0.0;
 		double baseSim = 0.0; //sim to a base/reference peak
 		int count = 0;
-		
+		int matchCount = 0;
+		int dropCount = 0;
+		SortedMap<Double,Integer> corrMap = new TreeMap();
 		for(int i = 0; i < s.getPeak().size(); i++){
 			double localSim = 0;
 			for(int j = 0; j < s.getPeak().size(); j++){
@@ -233,13 +237,41 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 					}
 				}
 			}
-			if(corrs[i] > 0){
-				marry[i] = corrs[i]*tarry[i];
-			}else{
-				marry[i] = 0;
+			corrs[i] = localSim / projections.length;
+			if(corrs[i] > 0 && tarry[i] > sarry[i])
+				corrMap.put(corrs[i], i);
+			s.computePeakRank();
+//			System.out.println(s.spectrumName + "\t" + ArrayUtils.dotProd(sarry, tarry) + "\t" + s.peptide + "\t" 
+//				+ s.getPeak().get(i).getIntensity() + "\t" + rawprojections[i][targetInd] + "\t" 
+//				+ sarry[i] +"\t" + tarry[i] + "\t"
+//				+ s.getPeak().get(i).getRank() + "\t"
+//				+ localSim/s.getPeak().size());
+		}
+		for(int i = 0; i < sarry.length; i++){
+			marry[i] = tarry[i];
+			if(sarry[i] > 0 && marry[i] > 0){
+				matchCount++;
 			}
 		}
+		
+		Iterator<Double> it = corrMap.keySet().iterator();
+		//System.out.println(ArrayUtils.getString(sarry));
+		//System.out.println(ArrayUtils.getString(tarry));
+		//System.out.println(ArrayUtils.getString(marry));
+		for(int i = 0; i < 1 && it.hasNext(); i++){
+			int ind = corrMap.get(it.next());
+			if(corrs[ind] < 0.3){
+				//System.out.println("setting " + ind + "\t" + corrs[ind] + "\t" +  sarry[ind]);
+				marry[ind] = 0;
+				sarry[ind] = 0;
+			}
+		}
+		ArrayUtils.normalize(sarry);
 		ArrayUtils.normalize(marry);
+		//System.out.println(ArrayUtils.getString(sarry));
+		//System.out.println(ArrayUtils.getString(tarry));
+		//System.out.println(ArrayUtils.getString(marry));
+
 		baseSim /= s.getPeak().size()-1;
 			
 		double topSim = 0;
@@ -315,9 +347,11 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 			//corr /= projections[i].length;
 			//corrs[i] = corr;
 			presenceCount +=corr;
-
-			if(corr > 0){
-				marry2[i] = corr*tarry[i];
+			
+			//idealize similarity
+			//if(corr > 0){
+			if(tarry[i] > 0){
+				marry2[i] = sarry[i];//corr*tarry[i];
 			}else{
 				marry2[i] = 0;
 			}
@@ -325,21 +359,6 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		//presenceCount /= projections.length;
 
 		ArrayUtils.normalize(marry2);
-		
-		//compute pearson correlation instead
-//		for(int i = 0; i < topIndex.size(); i++){
-//			for(int j = i+1; j < topIndex.size(); j++){
-//				double corr = dotProd(projectionDev[topIndex.get(i)], 
-//						projectionDev[topIndex.get(j)]);
-//				if(corr > -10){
-//					topCorr+=corr;
-//					topCount2 += 1;
-//				}
-//			}
-//		}
-		
-		//System.out.println(s.peptide + "\t" + s.spectrumName + "\taverage sim to base peak:\t" + sim/count);
-		//normalize(marry);
 		
 		if(DEBUG) System.out.println(s.spectrumName + " sarry: " + ArrayUtils.getString(sarry));
 		if(DEBUG) System.out.println(s.spectrumName + " tarry: " + ArrayUtils.getString(tarry));
@@ -353,7 +372,7 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 				ArrayUtils.dotProd(sarry, marry2),
 				sim/count, topSim, baseSim, topBaseSim, 
 				topPresence, presenceCount,
-				topPreSim1, topPreSim2};
+				matchCount, topPreSim1, topPreSim2};
 	}
 	
 	//compute relative intensity of peaks directly
@@ -398,7 +417,7 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 //			}else{
 //				ratios[i] = rel1[i] / (rel2[i] + 0.0000000001);
 //			}
-			ratioScore += ratios[i];//*sarry[i];
+			ratioScore += ratios[i]*sarry[i];
 		}
 		return ratioScore;		
 	}
@@ -421,15 +440,17 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		int targetInd = maxWidth;
 		int width = 2;
 		int j = 1;
-		for(j = 1; j <= maxWidth; j++){
-			if(mat[ind][targetInd-j] == 0 
-					&& mat[ind][targetInd+j] == 0){
+		for(j = 1; j <= maxWidth; j++){	
+			//if(mat[ind][targetInd-j] == 0 
+			//		&& mat[ind][targetInd+j] == 0){
 				//break;
-			}
-			if(mat[ind][targetInd-j] > 0){ 
+			//}
+			if(targetInd - j > 0 && mat[ind][targetInd-j] > 0){ 
 				count++;
 			}
-			if(mat[ind][targetInd+j] > 0){ 
+			//System.out.println("size: " + mat.length + "\t" +  mat[0].length);
+			//System.out.println("inds: " + ind + "\t" + targetInd + "\t" + j);
+			if(targetInd + j < mat[0].length && mat[ind][targetInd+j] > 0){ 
 				count++;
 			}
 		}

@@ -60,14 +60,20 @@ public class FileIOUtils {
 	}
 	
 	public static List<String> createListFromFile(String file){
+		return readLines(file, Integer.MAX_VALUE);
+	}
+	
+	public static List<String> readLines(String file, int num){
 		List<String> lines = new ArrayList<String>();
+		int count = 0;
 		try{
 			BufferedReader bf = new BufferedReader(new FileReader(file));
 			String line = bf.readLine();
 			//lines.add(line);
-			while(line != null){
+			while(line != null && count < num){
 				lines.add(line);
 				line = bf.readLine();
+				count++;
 			}
 			bf.close();
 		}catch(IOException ioe){
@@ -121,6 +127,18 @@ public class FileIOUtils {
 		return filename.substring(0, index);
 	}
 	
+	//get only the file name from the path 
+	public static String getFileName(String path){
+		int ind = 0;
+		if(path.contains("/")){
+			ind = path.lastIndexOf("/");
+		}
+		if(path.contains("\\")){
+			ind = path.lastIndexOf("\\");
+		}
+		//System.out.println("Filename is: " + path.substring(ind+1));
+		return path.substring(ind+1);
+	}
 	
 	public static void createFileFromList(List<String> lines, String file){
 		try{
