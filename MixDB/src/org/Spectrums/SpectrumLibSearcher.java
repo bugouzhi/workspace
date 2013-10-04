@@ -390,7 +390,7 @@ public class SpectrumLibSearcher {
 		//System.out.println("total number of pairs considered: " + count);
 		return null;
 	}
-	
+
 	
 	public List<Spectrum> bestArrayCandidates(Spectrum mixturequery, int topN){
 		sortSpecListByScore(mixturequery);

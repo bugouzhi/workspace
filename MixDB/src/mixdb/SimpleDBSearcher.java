@@ -127,7 +127,7 @@ public class SimpleDBSearcher implements DBSearcher{
 	}
 	
 	public static void main(String[] args){
-		args[0] = "../mixture_linked/./database/Ecoli_genome_plusUPS_plusDecoy.fasta";
+		args[0] = "../mixture_linked/database/Ecoli_genome_plusUPS_plusDecoy.fasta";
 		args[1] = "../mixture_linked/msdata/UPS_Ecoli/14344_UPS1_400fm_Ecolilysate_SWATH_5600.mzXML";
 		SimpleDBSearcher searcher = new SimpleDBSearcher(args[0], args[1]);
 		searcher.searchDB();
