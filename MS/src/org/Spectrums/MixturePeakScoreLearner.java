@@ -96,12 +96,12 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 			double score2 = this.table.get(index2);
 			if(p2 != null){
 				//System.out.println("peptide " + lp.getPeptideIndex()  +  "\t" +  lp +  "\trank: " + p2.getRank() + " score: " + score + "\t" + score2 + "\t" + Math.log(score/score2));
-				double errorScore = this.errorModel.get(errorIndex);
-				score *= errorScore;
+				//double errorScore = this.errorModel.get(errorIndex);
+				//score *= errorScore;
 				if(score == 0){
 					score = 0.00001;
 				}
-				score2 = score2 / (this.massErrorInterval.length-1);
+				//score2 = score2 / (this.massErrorInterval.length-1);
 				//System.out.println("peptide " + lp.getPeptideIndex()  +  "\t" +  lp +  "\trank: " + p2.getRank() + " score: " + score + "\t" + score2 + "\t" + Math.log(score/score2));
 			}
 //			System.out.println("score: " + score);
@@ -138,7 +138,7 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 			return 0;
 		}else{
 			int[] index =  getIndex(lp, p2);
-			int[] index2 = getNoiseIndex(lp.getPep(), p2, this.combineCharge-1, this.mode-1); //assuem if we were to match the peak to noise
+			int[] index2 = getNoiseIndex(lp.getPep(), p2, this.combineCharge, this.mode-1); //assume if we were to match the peak to noise
 			int[] errorIndex = getErrorIndex(lp, p2);
 //			int[] index2 = getNoiseIndex(lp, p2); //assuem if we were to match the peak to noise
 			double score = this.table.get(index);
@@ -173,6 +173,9 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 //			}else{
 //				System.out.println("scoring: " + lp +  ":\t" + Math.log(score/score2));
 //			}
+			if(Double.isNaN(Math.log(score/score2))){
+				System.out.println("score: " + score + "\t" + score2 + "\t" + lp + "\t" + p2 +"\t" + this.combineCharge);
+			}
 			return Math.log(score/score2);
 		}
 	}
@@ -268,7 +271,7 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 		int peptideCharge = lp.getPep().getCharge()-1;
 		int peakCharge = lp.getCharge()-1;
 		int ionIndex = getIonIndex(lp)+1;
-		//System.out.println(peptideIndex +"\t" + (lp.getPep().getCharge()+1) +"\t" + peptideLength +"\t" + peptideCharge +"\t"+ peakCharge +"\t"+ ionIndex+"\t"+ rankIndex +"\t" + errorIndex);
+		//System.out.println(peptideIndex +"\t" + (this.combineCharge-1) +"\t" + peptideLength +"\t" + peptideCharge +"\t"+ peakCharge +"\t"+ ionIndex+"\t"+ rankIndex +"\t" + errorIndex);
 		return new int[]{peptideIndex, this.combineCharge-1, peptideLength, peptideCharge, peakCharge, ionIndex, rankIndex, errorIndex};
 	}
 	
@@ -300,6 +303,7 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 		int peptideCharge = p.getCharge()-1;
 		int peakCharge = 0;
 		int ionIndex = 0;
+		//System.out.println(peptideIndex +"\t" + (this.combineCharge-1) + "\t" + peptideLength +"\t" + peptideCharge +"\t"+ peakCharge +"\t"+ ionIndex+"\t"+ rankIndex);
 		return new int[]{peptideIndex, combineCharge-1, peptideLength, peptideCharge, peakCharge, ionIndex, rankIndex, 0};
 	}
 	
@@ -348,14 +352,15 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 			String[] peps = s.peptide.split(" & " );
 			//System.out.println("peptide is: " + s.peptide);
 			TheoreticalSpectrum t = new TheoreticalSpectrum(peps[0], peps[1]);
-			SimpleMatchingGraph matchingG = t.getMatchGraph(s, 0.5);
+			SimpleMatchingGraph matchingG = t.getMatchGraph(s, 0.1);
+			//System.out.println("matching size: " + matchingG.getVerticeWithEdges(SimpleMatchingGraph.Observed, 1).size());
 			this.getIonsCount(matchingG, peps[0], peps[1]);
 			count++;
 			if(count % 1000 == 0){
 				System.out.println("Finish Analyzing " + count);
 			}
 			if(count == 20000){
-				//break;
+				break;
 			}
 			//return;
 		}
@@ -431,7 +436,6 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 		int combineCharge = Integer.parseInt(peps1[1]) 
 			+ Integer.parseInt(peps2[1]);
 		int peptideIndex = 0;
-		
 		while(it.hasNext()){
 			p = (Peak)it.next();
 			if(p instanceof LabelledPeak){
@@ -524,6 +528,7 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 										}else{
 											label = "Peptide2 (" + combineCharge + ") ";
 										}
+										System.out.println(peptide +"\t" + combineCharge + "\t" + length +"\t" + pepCharge +"\t"+ 0 +"\t"+ 0 + "\t"+ (rank+1));
 										System.out.println(label+ this.ionsType[ionIndex] + "@" + (peakCharge+1) + "@" + (pepCharge+1) + 
 												" rank " + (rank+1) +  " error: " + noise + ": "    
 												+ this.table.get(index) 
@@ -568,6 +573,7 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 			BufferedInputStream bi = new BufferedInputStream(new FileInputStream(file));
 			ObjectInputStream oi = new ObjectInputStream(bi);
 		    Object o = oi.readObject();
+		   // ((MixturePeakScoreLearner)o).printIonTable();
 		    return (MixturePeakScoreLearner)o;
 		}catch(IOException ioe){
 			System.out.println(ioe.getMessage());
@@ -580,8 +586,8 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 	}
 	
 	public static void testLoadComparator(){
-		String trainFile = "..\\mixture_linked\\mixtures100000_alpha1.0.mgf";
-		String outfile = "..\\mixture_linked\\mixtures_alpha_models.o";
+		String trainFile = "..\\mixture_linked\\mixtures.mgf";
+		String outfile = "..\\mixture_linked\\mixtures_TOF_alpha01-10_models.o";
 		MixturePeakScoreLearner peakscorer = new MixturePeakScoreLearner(trainFile); //scorer
 		peakscorer.getMixtureIonCount();
 		peakscorer.writeLibToFile(outfile);
@@ -932,18 +938,18 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 	}
 	
 	public static void main(String[] args){
-		//testLoadComparator();
+		testLoadComparator();
 		//testMixtureScoring();
 		//testMixtureModel();
 		//testMixtureModelSubset();
 		//testMixtureModelExperimental();
-		args[0] = "..//mixture_linked//linked_peptide_library/disulfide_lib/20111221_ananiav_DTT_IAA_lib1_90min_CID35.mzXML";
-		args[1] = "10";
-		args[2] = "25";
-		args[3] = "..\\mixture_linked\\database\\lib_disulfide_plusYeastDecoy.txt";
+		//args[0] = "..//mixture_linked//linked_peptide_library/disulfide_lib/20111221_ananiav_DTT_IAA_lib1_90min_CID35.mzXML";
+		//args[1] = "10";
+		//args[2] = "25";
+		//args[3] = "..\\mixture_linked\\database\\lib_disulfide_plusYeastDecoy.txt";
 		//args[3] = "..\\mixture_linked\\testpeptides.txt";
 		//runSearch(args[0], Double.parseDouble(args[1]),  args[2]);
-		runSearch(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), args[3]);
+		//runSearch(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), args[3]);
 	}
 
 }

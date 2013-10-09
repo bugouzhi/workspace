@@ -72,7 +72,12 @@ public class HarklorParser {
 	}
 	
 	//check if search results has harklor precursor present in the survey scans
+	
 	public static void checkHarklorPrecursor(String hardklorPath, String searchResults, String swathFile){
+		checkHarklorPrecursor(hardklorPath, searchResults, swathFile, true);
+	}
+	
+	public static void checkHarklorPrecursor(String hardklorPath, String searchResults, String swathFile, boolean checkCharge){
 		HarklorParser parser = new HarklorParser(hardklorPath);
 		List<String> results = Utils.FileIOUtils.createListFromFile(searchResults);
 		MZXMLReader reader = new MZXMLReader(swathFile);
@@ -98,20 +103,38 @@ public class HarklorParser {
 				//System.out.println("precursor: " + precursor);
 				SortedMap<Double, Double[]> precursors = precursorList.subMap(precursor - tolerance, precursor + tolerance);
 				if(precursors.size() > 0){
-					found = "MATCH";
+					for(Iterator<Double[]> it = precursors.values().iterator(); it.hasNext();){
+						Double[] p = it.next();
+						if(p[1] == charge || !checkCharge){
+							found = "Match";
+							break;
+						}
+					}
 				}
 				double precursorLeft = precursor-(Mass.C13-Mass.C12)/charge;
 				//System.out.println("precursor: " + precursorLeft);
 				precursors = precursorList.subMap(precursorLeft - tolerance, precursorLeft + tolerance);
 				if(precursors.size() > 0){
-					found = "MATCH";
+					for(Iterator<Double[]> it = precursors.values().iterator(); it.hasNext();){
+						Double[] p = it.next();
+						if(p[1] == charge || !checkCharge){
+							found = "Match";
+							break;
+						}
+					}
 				}
 				double precursorRight = precursor+(Mass.C13-Mass.C12)/charge;
 				//System.out.println("precursor: " + precursorRight);
 				precursors = precursorList.subMap(precursorRight - 1, precursorRight + 1);
 				//System.out.println("submap size: " + precursors.size());
 				if(precursors.size() > 0){
-					found = "MATCH";
+					for(Iterator<Double[]> it = precursors.values().iterator(); it.hasNext();){
+						Double[] p = it.next();
+						if(p[1] == charge){
+							found = "Match";
+							break;
+						}
+					}
 				}
 				if(found.equals("MATCH")){
 					matched++;
@@ -124,8 +147,8 @@ public class HarklorParser {
 	
 	
 	public static void main(String[] args){
-		String hardklorPath = "../Hardklor/win32/14344_UPS1_400fm_Ecolilysate_SWATH_5600_min0.6.hkout";
-		String searchPath = "..//mixture_linked/t0";
+		String hardklorPath = "../Hardklor/win32/14344_UPS1Ecolilysate_SWATH_5600_0.7min.hkout";
+		String searchPath = "..//mixture_linked/ACG_swathdevelopment_14344_Swath_SSMs.txt";
 		String swathPath = "..//mixture_linked/msdata/UPS_Ecoli/14344_UPS1_400fm_Ecolilysate_SWATH_5600.mzXML";
 		checkHarklorPrecursor(hardklorPath, searchPath, swathPath);
 		//getSWATHPrecursors(hardklorPath, swathPath);

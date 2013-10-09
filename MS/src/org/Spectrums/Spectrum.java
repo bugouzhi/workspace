@@ -273,9 +273,9 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 					if(neigh.equals(current)){
 						continue;
 					}
-					//double weight = current.getIntensity() / (current.getIntensity()+neigh.getIntensity());
-					//current.setMoz(current.getMass()*weight + neigh.getMass()*(1-weight));
-					//current.setIntensity(current.getIntensity()+neigh.getIntensity());
+					double weight = current.getIntensity() / (current.getIntensity()+neigh.getIntensity());
+					current.setMoz(current.getMass()*weight + neigh.getMass()*(1-weight));
+					current.setIntensity(current.getIntensity()+neigh.getIntensity());
 					toBeRemoved.add(neigh);
 				}
 				for(int j = 0; j < toBeRemoved.size(); j++){
@@ -677,8 +677,11 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 					token = line.split("\\s+");
 					//System.out.println("line is: " + line);
 					try{
+						//if(token.length < 2){
+						//	System.out.println("line is: " + line);
+						//}
 						this.peaks.add(new Peak(Double.valueOf(token[0]), //note multiply by 0.9995 to make peaks center around integer values
-						Double.valueOf(token[1])));   //squareroot transform of intensity, try stabalized peak intentsity variance
+						Double.valueOf(token[1])));   //
 					}catch(NumberFormatException e){
 						break;//return whatever is readed
 					}

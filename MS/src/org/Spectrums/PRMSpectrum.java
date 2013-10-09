@@ -1,7 +1,10 @@
 package org.Spectrums;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import Utils.FileIOUtils;
@@ -107,6 +110,81 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		
 	}
 	
+	//remove from first peptide if we cannot find a potentially better
+	//explanation in the space of second peptides
+	public void removeSharePeaks(Spectrum s, String pep1, String pep2, double[] prm1, double[] prms2){
+		Peptide p1 = new Peptide(pep1);
+		Peptide p2 = new Peptide(pep2);
+//		System.out.println("pep1 " + pep1);
+		TheoreticalSpectrum t = new TheoreticalSpectrum(pep1);
+		TheoreticalSpectrum t2 = new TheoreticalSpectrum(pep2);
+
+		//t.analyzeAnnotation(s, pep1);
+		//t2.analyzeAnnotation(s, pep2);
+		
+		SimpleMatchingGraph g = t.getMatchGraph(s, 0.05);
+		Set<Peak> toBeRemoved = new HashSet();
+		Collection<Peak> matched = g.vertexSet(SimpleMatchingGraph.Observed);
+		for(Iterator<Peak> it = matched.iterator(); it.hasNext();){
+			Peak p = it.next();
+			List<Peak> annotations = g.getNeighbors(p);
+			if(annotations.size() == 0){
+				continue;
+			}
+			double currScore = -1000, maxScore2 = -1000;
+			for(int i = 0; i < annotations.size(); i++){
+				LabelledPeak annot = (LabelledPeak)annotations.get(i);
+				int massInt = (int)(Math.round(this.scaleFactor*getPRMInd(p, annot))); 
+				currScore = currScore > prm1[massInt] ? currScore: prm1[massInt];
+				//System.out.println("peak " +  annot + "\tscore\t" + prm1[massInt] +"\tat\t" + massInt);
+			}
+			for(int i = 0; i < t.prefixIons.length; i++){
+				for(int c = 1; c <= 2; c++){
+					int massInt = (int)(Math.round(this.scaleFactor*getPRMInd(p, t.prefixIons[i], c)));
+					if(massInt < prms2.length && massInt > 0){
+						maxScore2 = maxScore2 > prms2[massInt] ? maxScore2 : prms2[massInt];
+					}
+				}
+			}
+			
+			for(int i = 0; i < t.suffixIons.length; i++){
+				for(int c = 1; c <= 2; c++){
+					int massInt = (int)(Math.round(this.scaleFactor*getPRMInd(p, p2.getParentmass(), p2.getCharge(), t.suffixIons[i], c)));
+					if(massInt > 0 && massInt < prms2.length){
+						maxScore2 = maxScore2 > prms2[massInt] ? maxScore2 : prms2[massInt];
+					}
+				}
+			}
+			if(currScore > maxScore2){
+				//System.out.println("Removing " + p + "\t" + currScore + "\t" + maxScore2);
+				toBeRemoved.add(p);
+			}else{
+				//System.out.println("Keeping " + p + "\t" + currScore + "\t" + maxScore2);
+			}
+		}
+		//System.out.println("Removed peaks: " + toBeRemoved.size());
+		s.getPeak().removeAll(toBeRemoved);
+		//t2.analyzeAnnotation(s, pep2);
+	}
+	
+	//get the corresponding PRM mass value for an observed peaks
+	public double getPRMInd(Peak p, LabelledPeak lp){
+		if(lp.isPrefixPeak()){
+			return getPRMInd(p, lp.getType(), lp.getCharge());
+		}else{
+			return getPRMInd(p, lp.getPep().getParentmass(), lp.getPep().getCharge(), lp.getType(), lp.getCharge());
+		}
+	}
+	public double getPRMInd(Peak p, String ionType, int charge){
+		//System.out.println(p.getMass()*charge - Mass.getIonMod(ionType) - (charge-1)*Mass.PROTON_MASS);
+		return (p.getMass()*charge - Mass.getIonMod(ionType) - (charge-1)*Mass.PROTON_MASS);
+	}
+	//get PRM mass Ind for a suffix ions
+	public double getPRMInd(Peak p, double parentMass, int parentCharge, String ionType, int charge){
+		return (parentMass*parentCharge - Mass.WATER - parentCharge*Mass.PROTON_MASS 
+				- (p.getMass()*charge - Mass.getIonMod(ionType) - (charge-1)*Mass.PROTON_MASS));
+	}
+	
 	//compute massInd for a peptide in the PRM spectrum
 	public int[] getMassIndex(Peptide p){
 		double[][] base = this.computeBaseMass(p.getPeptide(), p.getPos(), p.getPtmmasses());
@@ -133,7 +211,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 
 	public TheoreticalSpectrum getSpectrum(double[][] basemass, Spectrum s, int charge){
 		TheoreticalSpectrum t = new TheoreticalSpectrum();
-		List<Peak> theoPeaks = this.generatePeaks(basemass, this.prefixIons, this.suffixIons, ptmPos, ptmMass, 1, this.spectrum.charge);
+		List<Peak> theoPeaks = this.generatePeaks(basemass, this.prefixIons, this.suffixIons, ptmPos, ptmMass, 1, 1);//this.spectrum.charge);
 		//System.out.println("computed peaks: " + theoPeaks);
 		t.setPeaks(theoPeaks);
 		t.parentMass= s.parentMass;

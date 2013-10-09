@@ -91,7 +91,7 @@ public class Mass {
 		if(modMap.containsKey(ion)){
 			return modMap.get(ion).doubleValue();
 		}else{
-			System.err.println("warning: ion type do not exits, returning zero mass mod");
+			System.err.println("warning: ion type do not exits, returning zero mass mod " + " type is: " + ion);
 			return 0.0;
 		}
 	}

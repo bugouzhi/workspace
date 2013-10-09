@@ -405,7 +405,9 @@ public class SpectrumLib implements Iterable, Serializable{
 		while(it.hasNext()){
 			v = it.next();
 			for(index = 0; index < v.size(); index++){
-				if(v.get(index).modMass > 0 ){
+				if(v.get(index).modMass > 0 
+						|| v.get(index).peptide.contains("+") 
+						|| v.get(index).peptide.contains("-")){
 					v.remove(index);
 					index--; //since we just remove one element, backtrack one pointer
 				}
@@ -846,6 +848,10 @@ public class SpectrumLib implements Iterable, Serializable{
 					   	mixture.score = s1.cosineSim(s2);
 						counts++;
 						repeat++;
+						if(!toVector){
+							mixture.mergePeaks(mixture, 0.05);
+						}
+						mixture.scaleSpectrum(1000);//scale the intensity to avoid the number getting too small
 						bo.write(mixture.toString());
 						bo.write("\n");
 						if(counts % 1000 == 0){

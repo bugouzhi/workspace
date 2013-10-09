@@ -47,7 +47,7 @@ public class LabelledPeak extends Peak{
 			return "\t" + this.printType()+ "\t" + this.pos+"@"+this.charge+"\t" + this.getMass() + "\t"+this.getIntensity();
 
 		}
-		return this.pep.getPeptide() + ":\t" + this.printType()+ "\t" + this.pos+"@"+this.charge+"\t" + this.getMass() + "\t"+this.getIntensity();
+		return this.pep.getPeptide() + ":\t" + this.printType()+ "\t" + this.pos+"@"+this.charge+"@" + this.pep.getCharge() + "\t" + this.getMass() + "\t"+this.getIntensity();
 	}
 	
 	public String printType(){
