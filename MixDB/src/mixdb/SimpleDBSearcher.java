@@ -35,13 +35,13 @@ public class SimpleDBSearcher implements DBSearcher{
 	public TreeSet topCandidates;
 	public String spectrumFile;
 	public String dbPath;
-	public String singleScorer="/resources/yeast_single_model_realannotated_win10_25.o";
-	public double parentTolerance = 25;
+	public String singleScorer="/resources/Cid_TOF_5600_win12_25.o";
+	public double parentTolerance = 1.5;
 	public double fragmentTolerance = 0.05;
 	public int topPeakKept = 10;
 	public int windowWidth = 25;
 	public int minCharge = 2;
-	public int maxCharge = 2;
+	public int maxCharge = 3;
 	public boolean matchCharge=false;
 	public String outputFile="./mixdb.out"; //default output
 
@@ -63,7 +63,7 @@ public class SimpleDBSearcher implements DBSearcher{
 			if(s.getPeak().size() < 10){
 				continue;
 			}
-			s.windowFilterPeaks(topPeakKept, windowWidth);
+			s.windowFilterPeaks(topPeakKept, windowWidth);	
 			s.computePeakRank();
 			ArraySpectrum a = ArraySpectrum.getRankSpectrum(s);
 			List<Spectrum> cands = new ArrayList();
@@ -75,7 +75,7 @@ public class SimpleDBSearcher implements DBSearcher{
 			System.out.println("Scan\t" + s.scanNumber + "\tNumber of candidates:\t" + cands.size());
 			SpectrumLibSearcher searcher = new SpectrumLibSearcher(cands, this.comp);
 			searcher.spectrumFile = this.spectrumFile;
-			searcher.bestSpectra(a, 10);
+			searcher.bestSpectra(a, 2);
 			counter++;
 		}
 		System.out.println("matching " + counter + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000);
@@ -127,8 +127,8 @@ public class SimpleDBSearcher implements DBSearcher{
 	}
 	
 	public static void main(String[] args){
-		args[0] = "../mixture_linked/database/Ecoli_genome_plusUPS_plusDecoy.fasta";
-		args[1] = "../mixture_linked/msdata/UPS_Ecoli/14344_UPS1_400fm_Ecolilysate_SWATH_5600.mzXML";
+		args[0] = "../mixture_linked/database/UPS_plusHuman_plusDecoy.fasta";
+		args[1] = "../mixture_linked/msdata/UPS12_Human/IDA_combine/18307_REP2_40fmol_UPS1_500ng_HumanLysate_IDA_1.mzXML";
 		SimpleDBSearcher searcher = new SimpleDBSearcher(args[0], args[1]);
 		searcher.searchDB();
 	}

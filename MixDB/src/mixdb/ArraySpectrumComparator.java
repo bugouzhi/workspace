@@ -69,8 +69,14 @@ public class ArraySpectrumComparator implements SpectrumComparator{
 				isMatched[p]=true;
 				double currScore = 	getPeakScore((int)massIntList1[ArraySpectrum.INTENSITY][p],
 						(int)massIntList2[ArraySpectrum.INTENSITY][j]);
+				if(Double.isInfinite(currScore)){
+					currScore = 0;
+				}
 				double errorScore = getErrorScore(massIntList1[ArraySpectrum.MASS][p]-massIntList2[ArraySpectrum.MASS][j],
 						(int)massIntList2[ArraySpectrum.INTENSITY][j]);
+				if(Double.isInfinite(errorScore)){
+					errorScore = 0;
+				}
 				currScore += errorScore;
 				peakMaxScore = peakMaxScore > currScore ? peakMaxScore : currScore;
 				if(DEBUG){

@@ -10,16 +10,25 @@ public class SortedMZXMLReader extends MZXMLReader{
 	private int currentIndex = 0;
 	private Spectrum current;
 	private List<Integer> scanList;
+	private int minScan = 0;
+	private int maxScan = Integer.MAX_VALUE;
 	
 	public SortedMZXMLReader(String filename){
 		super(filename);
 		initialize();
 	}
 	
+	//only read spectrum within certain range
+	public SortedMZXMLReader(String filename, int minScan, int maxScan){
+		super(filename);
+		this.minScan = minScan;
+		this.maxScan = maxScan;
+		initialize();
+	}
 	
 	public void initialize(){
 		TreeMap<Double, Integer> scanMap = new TreeMap<Double, Integer>();
-		for(int i = 1; i < this.parser.getScanCount(); i++){
+		for(int i = this.minScan; i < this.parser.getScanCount() && i < this.maxScan; i++){
 			Scan s = parser.rap(i);
 			if(s!= null && s.getHeader().getMsLevel() == 2){
 				scanMap.put(new Double(s.getHeader().getPrecursorMz()+ Math.random()* 0.000001), s.getHeader().getNum());

@@ -104,7 +104,7 @@ public class MZXMLReader implements Iterator<Spectrum>{
 		s.parentMass  = current.getHeader().getPrecursorMz();
 		s.charge = current.getHeader().getPrecursorCharge();
 		if(s.charge < 0 && current.getHeader().getMsLevel() > 1){ //cannot obtain charge information from file we try to compute them from MS1
-			s.charge = -1-this.getPrecursorCharge(current); 
+			//s.charge = -1-this.getPrecursorCharge(current); 
 		}
 		double[][] peaks = current.getMassIntensityList();
 		for(int j = 0; j < peaks[0].length; j++){

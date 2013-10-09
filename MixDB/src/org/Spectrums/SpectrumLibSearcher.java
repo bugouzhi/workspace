@@ -434,6 +434,52 @@ public class SpectrumLibSearcher {
 				}
 			}
 		}
+		System.out.println("best has size: " + bestList.size());
+		printTopCandidatesInfo(mixturequery, bestList);
+		//System.out.println("total number of pairs considered: " + count);
+		return null;
+	}
+	
+	public List<Spectrum> bestArrayCandidates(Spectrum mixturequery, int topN, int Mix){
+		sortSpecListByScore(mixturequery);
+		//System.out.println("candidate size: " + this.spectrumScorePairs.size());
+		Spectrum best = null;
+		TreeMap<Double, List<Spectrum>> bestListPrev = new TreeMap();
+		TreeMap<Double, List<Spectrum>> bestList = new TreeMap();
+		double bestScore = -1000000.0, currScore = 0.0;
+		int maxIndex = this.spectrumScorePairs.size()-1;
+		int topK = 20, topK2 = 500;
+		int firstIndex = maxIndex - 20, secondIndex = maxIndex - 500;
+		firstIndex = firstIndex < 0 ? 0 : firstIndex;	
+		secondIndex = secondIndex < 0 ? 0 : secondIndex;
+		int besti = 0, bestj = 0;
+		int count=0;
+		for(int i = 0; i < topK; i++){
+			List<Spectrum> cand = new ArrayList();
+			SpectrumScorePair curr = this.spectrumScorePairs.get(maxIndex);
+			insertBestPair(cand, curr.score, bestListPrev, topK);
+		}
+		
+		for(int m = 2; m <= Mix; m++){
+			for(Iterator it = bestListPrev.keySet().iterator(); it.hasNext();){
+				Spectrum s = bestListPrev.get(it.next()).get(0);
+				for(int j = maxIndex; j >= topK2; j--){
+					Spectrum s2 = this.spectrumScorePairs.get(j).s;
+					Spectrum mix = MixTheoSpectrumFactory.getMixTheoSpectrum((ArrayTheoreticalSpectrum)s, (ArrayTheoreticalSpectrum)s2, m);
+					count++;
+					currScore = this.comparator.compare(mix, mixturequery);
+					if(currScore > bestScore){
+						List<Spectrum> cand = new ArrayList();
+						cand.add(mix);
+						insertBestPair(cand, currScore, bestList, topN);
+						if(bestList.size() >= topN){
+							bestScore = bestList.firstKey().doubleValue();
+						}
+					}
+				}
+			}
+			
+		}
 		//System.out.println("best has size: " + bestList.size());
 		printTopCandidatesInfo(mixturequery, bestList);
 		//System.out.println("total number of pairs considered: " + count);
@@ -512,7 +558,8 @@ public class SpectrumLibSearcher {
 					+ stat[9] + "\t" + stat[10] + "\t" + stat[11] + "\t" + stat[12] + "\n");
 			}else{
 				System.out.print("Spectrum:\t" + query.scanNumber + "\t" + " best:\t" +  query.parentMass + "\t" + best.get(0).parentMass + "\t"  + best.get(1).parentMass 
-						+ "\t" +  bestpeptide  + " \t" + key.doubleValue() + "\t"  + score1 + "\t" + score2 + "\t" + score1/best.get(0).peptide.length() + "\t" + score2/best.get(1).peptide.length()
+						+ "\t" +  bestpeptide  + " \t" 
+						+ key.doubleValue() + "\t"  + score1 + "\t" + score2 + "\t" + score1/best.get(0).peptide.length() + "\t" + score2/best.get(1).peptide.length()
 						+ "\t" + stat[0] + "\t" + stat[1] + "\t"
 						+ stat[2] + "\t" + stat[3] + "\t" + stat[4] + "\t" 
 						+ stat[5] + "\t" + stat[6] + "\t" + stat[7] + "\t" + stat[8] + "\t" 

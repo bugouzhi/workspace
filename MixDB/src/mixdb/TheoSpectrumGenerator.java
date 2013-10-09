@@ -122,11 +122,11 @@ public class TheoSpectrumGenerator {
 	 */
 	public Collection<Spectrum> getCandidates(Spectrum s, double windowWidth, double precursorMass, double tolerance, int charge){
 		Collection<Spectrum> wideCandidates = this.getCandidates(s, windowWidth);
-		System.out.println("window candidates: " + wideCandidates.size());
+		//System.out.println("window candidates: " + wideCandidates.size());
 		List<Spectrum> filteredCandidates = new ArrayList<Spectrum>();
 		for(Iterator<Spectrum> iter = wideCandidates.iterator(); iter.hasNext();){
 			Spectrum cand = iter.next();
-			if(Math.abs((cand.parentMass - precursorMass)) < tolerance
+			if(Math.abs((cand.parentMass - precursorMass)) < tolerance//){
 					&& cand.charge == charge){
 				filteredCandidates.add(cand);
 			}
@@ -152,7 +152,7 @@ public class TheoSpectrumGenerator {
 			min = this.minCharge;
 			max = this.maxCharge;
 		}
-		
+		//DEBUG = true;
 		for(int c = min; c <= max; c++){
 			for(int j = 0; j < ptmList.size(); j++){
 				PTM[] ptm = ptmList.get(j);

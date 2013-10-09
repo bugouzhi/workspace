@@ -133,6 +133,24 @@ public class MixTheoSpectrumFactory{
 		return arry;
 	}
 	
+	//now we add an nonmix to mix
+	public static Spectrum getMixTheoSpectrum(ArrayTheoreticalSpectrum mix, ArrayTheoreticalSpectrum th2, int mixNum){
+		if(mixNum == 2){
+			return getMixTheoSpectrum(mix, th2);
+		}
+		ArrayTheoreticalSpectrum arry = new ArrayTheoreticalSpectrum();
+		double[][] massIntList1 = mix.getMassIntensityList();//MixturePeptideType.HIGH_ABUNDANCE);
+		double[][] massIntList2 = transformIonType(th2.getMassIntensityList(), 2, 1);//we can no longer do mix charge here since it is unknown
+		double[][] massIntList = merge(massIntList1, massIntList2);
+		//System.out.println("size: " + massIntList[0].length);
+		arry.setMassIntensityList(massIntList);
+		arry.peptide = mix.peptide + " & " + th2.peptide;
+		arry.parentMass = mix.parentMass;
+		arry.charge = mix.charge;
+		return arry;
+	}
+	
+	
 	public static double[][] transformIonType(double[][] massIntList, int partnerCharge, int abundance){
 		double[][] transformed = new double[2][massIntList[0].length];
 		for(int i = 0; i < massIntList[0].length; i++){

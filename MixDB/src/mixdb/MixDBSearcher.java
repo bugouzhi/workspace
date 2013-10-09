@@ -40,21 +40,24 @@ public class MixDBSearcher extends SimpleDBSearcher{
 	public List<PTM> ptms;
 	public int maxPTM=2;
 	public List<PTM[]> ptmList;
-	public int minScan;
-	public int maxScan;
+	public int minScan=0;
+	public int maxScan=Integer.MAX_VALUE;
 	
 	public MixDBSearcher(String dbPath, String spectrumFile, double tolerance, String outputFile){
-		super(dbPath, spectrumFile);
-		this.parentTolerance = tolerance;
-		this.outputFile = outputFile;
-		this.fragmentTolerance = 0.5;
+		this(dbPath, spectrumFile, tolerance, 0.5, outputFile);
 	}
 	
 	public MixDBSearcher(String dbPath, String spectrumFile, double tolerance, double fragmentTolerance, String outputFile){
+		this(dbPath, spectrumFile, tolerance, fragmentTolerance, outputFile, 0, Integer.MAX_VALUE);
+	}
+		
+	public MixDBSearcher(String dbPath, String spectrumFile, double tolerance, double fragmentTolerance, String outputFile, int minScan, int maxScan){
 		super(dbPath, spectrumFile);
 		this.parentTolerance = tolerance;
 		this.outputFile = outputFile;
 		this.fragmentTolerance = fragmentTolerance;
+		this.minScan = minScan;
+		this.maxScan = maxScan;
 	}
 	
 	
@@ -82,7 +85,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 			if(s.getPeak().size() < 10){
 				continue;
 			}
-			if(s.scanNumber != 27){
+			if(s.scanNumber != 5709){
 				//continue;
 			}
 			//s.windowFilterPeaks(topPeakKept, windowWidth);
@@ -104,7 +107,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 			searcher.spectrumFile = this.spectrumFile;
 			searcher.bw = out;
 			searcher.setSingleScorer(this.comp);
-			searcher.bestArrayCandidates(a, 1);
+			searcher.bestArrayCandidates(a, 2);
 			counter++;
 		}
 		try{
@@ -117,16 +120,17 @@ public class MixDBSearcher extends SimpleDBSearcher{
 		System.out.println("matching " + counter + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
 	}
 	
-	
-	public void searchWithMultiPrecursors(){
+	public void searchDB(int Mix){
 		initialize();
+		//MZXMLReader reader = new MZXMLReader(this.spectrumFile);
+		//MZXMLReader reader = new SortedMZXMLReader(this.spectrumFile);
 		Iterator reader = null;
 		if(this.spectrumFile.endsWith(".mgf")){
 			reader = new SortedSpectrumReader(this.spectrumFile);
 		}
 		
 		if(this.spectrumFile.toLowerCase().endsWith("mzxml")){
-			reader = new SortedMZXMLReader(this.spectrumFile);
+			reader = new SortedMZXMLReader(this.spectrumFile, this.minScan, this.maxScan);
 		}
 		
 		RankBaseScoreLearner pcomp = RankBaseScoreLearner.loadComparatorLocal(this.singleScorer);
@@ -138,6 +142,64 @@ public class MixDBSearcher extends SimpleDBSearcher{
 		while(reader.hasNext()){
 			Spectrum s = (Spectrum)reader.next();
 			if(s.getPeak().size() < 10){
+				continue;
+			}
+			if(s.scanNumber != 27){
+				//continue;
+			}
+			//s.windowFilterPeaks(topPeakKept, windowWidth);
+			s.windowFilterPeaks(12, 25);
+			s.computePeakRank();
+//			String[] peptides = s.peptide.split(" & ");
+//			Peptide p1 = new Peptide(peptides[0]);
+//			Peptide p2 = new Peptide(peptides[1]);
+//			System.out.println(s.scanNumber + "\t" + s.spectrumName + "\t" + p1 + "\t" + p2 + "\t" + p1.getParentmass() + "\t" + p2.getParentmass());
+			ArraySpectrum a = ArraySpectrum.getRankSpectrum(s);
+			List<Spectrum> cands = new ArrayList();
+			for(int c = minCharge; c <= maxCharge; c++){
+				double pm = s.parentMass*c-Mass.WATER-c*Mass.PROTON_MASS;
+				double tolerance = this.parentTolerance*c;
+				cands.addAll(this.theoDB.getCandidates(s, this.parentTolerance));
+			}
+			System.out.println("Number of candidates: " + cands.size());
+			SpectrumLibSearcher searcher = new SpectrumLibSearcher(cands, this.comp, this.mixScorer);
+			searcher.spectrumFile = this.spectrumFile;
+			searcher.bw = out;
+			searcher.setSingleScorer(this.comp);
+			searcher.bestArrayCandidates(a, 1, 5);
+			counter++;
+		}
+		try{
+			out.flush();
+			out.close();
+		}catch(IOException ioe){
+			System.err.println(ioe.getMessage());
+			ioe.printStackTrace();
+		}
+		System.out.println("matching " + counter + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+	}
+	
+	public void searchWithMultiPrecursors(){
+		initialize();
+		Iterator reader = null;
+		if(this.spectrumFile.endsWith(".mgf")){
+			reader = new SortedSpectrumReader(this.spectrumFile);
+		}
+		
+		if(this.spectrumFile.toLowerCase().endsWith("mzxml")){
+			reader = new SortedMZXMLReader(this.spectrumFile, this.minScan, this.maxScan);
+		}
+		
+		RankBaseScoreLearner pcomp = RankBaseScoreLearner.loadComparatorLocal(this.singleScorer);
+		SimpleProbabilisticScorer scorer3 = new SimpleProbabilisticScorer(pcomp);
+		long start = (new GregorianCalendar()).getTimeInMillis();
+		int counter = 0;
+		System.out.println("start searching");
+		System.out.println("Using mix_model " + this.mixScorerPath);
+		BufferedWriter out = initOutput(this.outputFile);
+		while(reader.hasNext()){
+			Spectrum s = (Spectrum)reader.next();
+			if(s.getPeak().size() < 10 || s.scanNumber < this.minScan || s.scanNumber >= this.maxScan){
 				continue;
 			}
 			//s.windowFilterPeaks(topPeakKept, windowWidth);
@@ -158,11 +220,21 @@ public class MixDBSearcher extends SimpleDBSearcher{
 				precursors = this.precursorList.get(scan);
 			}
 			
+			System.out.println("Number of detected precursors: " + (precursors.length/2));
 			for(int i = 0; i < precursors.length-1; i=i+2){
 				//s.parentMass = precursors[i];
 				//s.charge = (int)precursors[i+1];
 				//System.out.println("precursor: " + s.parentMass + "\t" + s.charge);
-				cands.addAll(this.theoDB.getCandidates(s, this.windowWidth, precursors[i], this.parentTolerance, (int)precursors[i+1]));
+				int charge = (int)precursors[i+1];
+				cands.addAll(this.theoDB.getCandidates(s, this.windowWidth, precursors[i], this.parentTolerance, charge));
+				
+				if(this.parentTolerance < 1.0){
+					double c13Offset = Mass.C13 - Mass.C12;
+					cands.addAll(this.theoDB.getCandidates(s, this.windowWidth, precursors[i]+c13Offset/charge, this.parentTolerance, charge));
+					cands.addAll(this.theoDB.getCandidates(s, this.windowWidth, precursors[i]-c13Offset/charge, this.parentTolerance, charge));
+					//cands.addAll(this.theoDB.getCandidates(s, this.windowWidth, precursors[i]+c13Offset/3, this.parentTolerance, (int)precursors[i+1]));
+					//cands.addAll(this.theoDB.getCandidates(s, this.windowWidth, precursors[i]-c13Offset/3, this.parentTolerance, (int)precursors[i+1]));
+				}
 			}
 			System.out.println("Number of candidates: " + cands.size());
 			SpectrumLibSearcher searcher = new SpectrumLibSearcher(cands, this.comp, this.mixScorer);
@@ -191,6 +263,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 		
 		if(this.spectrumFile.toLowerCase().endsWith("mzxml")){
 			reader = new SortedMZXMLReader(this.spectrumFile);
+			//reader = new MZXMLReader(this.spectrumFile)
 		}
 		
 		RankBaseScoreLearner pcomp = RankBaseScoreLearner.loadComparatorLocal(this.singleScorer);
@@ -204,8 +277,8 @@ public class MixDBSearcher extends SimpleDBSearcher{
 			if(s.getPeak().size() < 10){
 				continue;
 			}
-			if(s.scanNumber != 27){
-				//continue;
+			if(s.scanNumber != 9552){
+				continue;
 			}
 			//s.windowFilterPeaks(topPeakKept, windowWidth);
 			s.windowFilterPeaks(10, 25);
@@ -371,19 +444,21 @@ public class MixDBSearcher extends SimpleDBSearcher{
 	}
 	
 	public static void main(String[] args){
-		args[0] = "../mixture_linked/database/yeast_proteins_plusDecoy.fasta";
-		args[1] = "../mixture_linked/yeast_data/klc_010908p_yeast-digest_080110044403.mzXML";
-		args[2] = "0.3";
+		args[0] = "../mixture_linked/database/UPS_plusEcoli_plusDecoy.fasta";
+		args[1] = "../mixture_linked/msdata/UPS_Ecoli/14344_UPS1_400fm_Ecolilysate_SWATH_5600.mzXML";
+		args[2] = "0.1";
 		args[3] = "0.05";
-		args[4] = "../mixture_linked/ACG_14348_hardklorPrecursorsList.txt";
-		args[5] = "../mixture_linked/Mod_mixdb.txt";
-		args[6] ="../mixture_linked/testmixdbPtm.txt";
-		if(args.length != 6 && args.length != 7){
+		args[4] = "../mixture_linked/ACG_14344_hardklorPrecursorsListmin07.txt";
+		//args[5] = "../mixture_linked/Mod_mixdb.txt";
+		args[5] ="../mixture_linked/testmixdb.txt";
+		args[6] = "100";
+		args[7] ="1000";
+		args[8] = "yeast_simmix_alpha_generic_8_25.o";
+		if(args.length < 6 || args.length > 9){
 			System.out.println("usage: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <modification file> <outfile>");
 			System.out.println("   or: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <precursor list> <modification file> <outfile>");
 			return;
 		}
-		
 		MixDBSearcher searcher;
 		if(args.length == 7 && args[4].length() > 1){
 			searcher = new MixDBSearcher(args[0], args[1], 
@@ -391,18 +466,29 @@ public class MixDBSearcher extends SimpleDBSearcher{
 			searcher.precursorsFile = args[4];
 		}else{
 			searcher = new MixDBSearcher(args[0], args[1], 
-				Double.parseDouble(args[2]), Double.parseDouble(args[3]), args[4]);
+				Double.parseDouble(args[2]), Double.parseDouble(args[3]), args[5]);
+			searcher.precursorsFile = args[4];
 		}
 		searcher.spectrumFile = args[1];
-		searcher.ptmFile = args[5];
+		if(args.length > 7){
+			searcher.minScan = Integer.parseInt(args[6]);
+			searcher.maxScan = Integer.parseInt(args[7]);
+		}
+		if(args.length > 8){
+			searcher.mixScorerPath = "/resources/"+args[8];
+		}
+		//searcher.ptmFile = args[5];
 		System.out.println("Start running");
 		try{
 			if(args.length == 6){
-				searcher.searchWithMultiPrecursors();
+				//searcher.searchWithMultiPrecursors();
+				searcher.searchDB();
 			}else if(args.length == 7){
 				searcher.searchDBWithPTM();
-			}else{
-				searcher.searchDB();
+			}else if(args.length == 8){
+				searcher.searchWithMultiPrecursors();
+			}else if(args.length == 9){
+				searcher.searchWithMultiPrecursors();
 			}
 		}catch(Exception e){
 			System.err.println(e.getMessage());
