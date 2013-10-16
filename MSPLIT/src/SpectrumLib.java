@@ -2090,16 +2090,16 @@ public Spectrum filterAndSearch(Spectrum mix) {
 			throw new IllegalArgumentException("java -jar MSPLIT.jar <library file> <query spectrum file> <precursor mass tolerance> <outputfile>");
 			
 		}else{
-			args[0]= "../mixture_linked/ACG_swathdevelopment_P94_UPS_Ecoli_MSGFDB_IDs_uniqpeps_plusDecoy2_test.mgf";
-			args[1]= "../mixture_linked/msdata/UPS_Ecoli/1ugEcoli_400fmol_UPS2_swath_2012-12-11.mzXML";
-			args[2] = "25";
-			args[3] = "../mixture_linked/out.txt";
+			//args[0]= "../mixture_linked/ACG_swathdevelopment_P94_UPS_Ecoli_MSGFDB_IDs_uniqpeps_plusDecoy2_test.mgf";
+			//args[1]= "../mixture_linked/msdata/MSPLIT_test_data/20131002_MPit1_Ex1_702_0h.mgf";
+			//args[2] = "3";
+			///args[3] = "../mixture_linked/out.txt";
  			String filename = args[0];
 			String fileMix = args[1];
 			String fileout = args[3];
 			SpectrumLib lib1 = null;
-			double parentmassTol = 25;
-			double fragmentTolerance = 0.05;
+			double parentmassTol = 3;
+			double fragmentTolerance = 0.5;
 			try{
 				if(filename.contains(".map")){
 					lib1 = new SpectrumLib();
@@ -2111,6 +2111,7 @@ public Spectrum filterAndSearch(Spectrum mix) {
 			}catch(Exception e){
 				System.err.println("Error loading spectral library: " + filename);
 				System.err.println(e.getMessage());
+				e.printStackTrace();
 				System.exit(1);	
 			}
 			try{

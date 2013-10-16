@@ -518,7 +518,9 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			line = bf.readLine();
 			while(line != null && !line.contains("END IONS")){
 				//System.out.println("line is " + line);
-				if(line.startsWith("PEPMASS")){
+				if(line.length() < 1){
+					
+				}else if(line.startsWith("PEPMASS")){
 					String[] mass = line.split("=");
 					mass = mass[1].split("\\s+");
 					this.parentMass = Double.valueOf(mass[0]);
@@ -533,6 +535,8 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				}else if(line.startsWith("PEPSEQ") || line.startsWith("SEQ")){
 					this.peptide = (line.split("="))[1];
 					//this.peptide = this.peptide + "." + this.charge;
+				}else if(line.startsWith("PROTEIN")){
+					this.protein = (line.split("="))[1];
 				}else if(line.startsWith("TITLE")){
 					String[] tokens = line.split("=");
 					if(tokens.length > 1){
@@ -543,6 +547,10 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 							String[] tokens2 = this.spectrumName.split("\\s+");
 							this.scanNumber = Integer.parseInt(tokens2[2]);
 						}
+						//if(this.spectrumName.contains("PROTEIN")){
+						//	String[] tokens2 = this.spectrumName.split("\\s+");
+						//	this.protein = tokens2[7];
+						//}
 						if(this.spectrumName.contains("DECOY")){
 							this.protein = "DECOY_" + this.protein;
 						}
@@ -557,7 +565,6 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				}else if(Character.isDigit(line.charAt(0))){
 					//System.out.println("currelint is: " + line + "\tfirst: " + line.charAt(0));
 					isPeaks = true;
-					
 				}
 				if(isPeaks){
 					token = line.split("\\s+");
