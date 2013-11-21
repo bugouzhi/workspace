@@ -89,7 +89,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 				//continue;
 			}
 			//s.windowFilterPeaks(topPeakKept, windowWidth);
-			s.windowFilterPeaks(10, 25);
+			s.windowFilterPeaks(12, 25);
 			s.computePeakRank();
 //			String[] peptides = s.peptide.split(" & ");
 //			Peptide p1 = new Peptide(peptides[0]);
@@ -148,7 +148,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 				//continue;
 			}
 			//s.windowFilterPeaks(topPeakKept, windowWidth);
-			s.windowFilterPeaks(12, 25);
+			s.windowFilterPeaks(10, 25);
 			s.computePeakRank();
 //			String[] peptides = s.peptide.split(" & ");
 //			Peptide p1 = new Peptide(peptides[0]);
@@ -166,7 +166,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 			searcher.spectrumFile = this.spectrumFile;
 			searcher.bw = out;
 			searcher.setSingleScorer(this.comp);
-			searcher.bestArrayCandidates(a, 1, 5);
+			searcher.bestArrayCandidates(a, 1, Mix);
 			counter++;
 		}
 		try{
@@ -446,14 +446,14 @@ public class MixDBSearcher extends SimpleDBSearcher{
 	public static void main(String[] args){
 		args[0] = "../mixture_linked/database/UPS_plusEcoli_plusDecoy.fasta";
 		args[1] = "../mixture_linked/msdata/UPS_Ecoli/14344_UPS1_400fm_Ecolilysate_SWATH_5600.mzXML";
-		args[2] = "0.1";
-		args[3] = "0.05";
+		args[2] = "25.0";
+		args[3] = "0.03";
 		args[4] = "../mixture_linked/ACG_14344_hardklorPrecursorsListmin07.txt";
 		//args[5] = "../mixture_linked/Mod_mixdb.txt";
 		args[5] ="../mixture_linked/testmixdb.txt";
-		args[6] = "100";
-		args[7] ="1000";
-		args[8] = "yeast_simmix_alpha_generic_8_25.o";
+		args[6] = "1003";
+		args[7] ="75000";
+		args[8] = "mixtures_TOF_alpha01-10_models.o";
 		if(args.length < 6 || args.length > 9){
 			System.out.println("usage: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <modification file> <outfile>");
 			System.out.println("   or: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <precursor list> <modification file> <outfile>");
@@ -488,7 +488,8 @@ public class MixDBSearcher extends SimpleDBSearcher{
 			}else if(args.length == 8){
 				searcher.searchWithMultiPrecursors();
 			}else if(args.length == 9){
-				searcher.searchWithMultiPrecursors();
+				//searcher.searchWithMultiPrecursors();
+				searcher.searchDB(5);
 			}
 		}catch(Exception e){
 			System.err.println(e.getMessage());

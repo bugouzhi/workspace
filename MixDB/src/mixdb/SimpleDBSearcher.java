@@ -35,7 +35,7 @@ public class SimpleDBSearcher implements DBSearcher{
 	public TreeSet topCandidates;
 	public String spectrumFile;
 	public String dbPath;
-	public String singleScorer="/resources/Cid_TOF_5600_win12_25.o";
+	public String singleScorer="/resources/yeast_single_model_realannotated_win10_25.o";
 	public double parentTolerance = 1.5;
 	public double fragmentTolerance = 0.05;
 	public int topPeakKept = 10;
@@ -54,14 +54,14 @@ public class SimpleDBSearcher implements DBSearcher{
 	public void searchDB(){
 		initialize();
 		//MZXMLReader reader = new MZXMLReader(this.spectrumFile);
-		MZXMLReader reader = new SortedMZXMLReader(this.spectrumFile);
-		//Iterator<Spectrum> reader = new SortedSpectrumReader(this.spectrumFile);
+		//MZXMLReader reader = new SortedMZXMLReader(this.spectrumFile);
+		Iterator<Spectrum> reader = new SortedSpectrumReader(this.spectrumFile);
 		long start = (new GregorianCalendar()).getTimeInMillis();
 		int counter=0;
 		while(reader.hasNext()){
 			Spectrum s = reader.next();
-			if(s.getPeak().size() < 10){
-				continue;
+			if(s.getPeak().size() < 10 || s.scanNumber != 26694){
+				//continue;
 			}
 			s.windowFilterPeaks(topPeakKept, windowWidth);	
 			s.computePeakRank();
@@ -127,8 +127,8 @@ public class SimpleDBSearcher implements DBSearcher{
 	}
 	
 	public static void main(String[] args){
-		args[0] = "../mixture_linked/database/UPS_plusHuman_plusDecoy.fasta";
-		args[1] = "../mixture_linked/msdata/UPS12_Human/IDA_combine/18307_REP2_40fmol_UPS1_500ng_HumanLysate_IDA_1.mzXML";
+		args[0] = "../mixture_linked/database/Human_allproteins.fasta";
+		args[1] = "../mixture_linked/msdata/Training/MSGFDB_Tryp_7.mgf";
 		SimpleDBSearcher searcher = new SimpleDBSearcher(args[0], args[1]);
 		searcher.searchDB();
 	}

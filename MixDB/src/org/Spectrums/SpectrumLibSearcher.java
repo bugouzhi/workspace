@@ -286,7 +286,7 @@ public class SpectrumLibSearcher {
 			SpectrumScorePair curr = this.spectrumScorePairs.get(i);
 			//curr.s = new TheoreticalSpectrum(((TheoreticalSpectrum)curr.s).p);        //why duplicated???
 			curr.score = this.comparator.compare(curr.s, query);
-			//System.out.println("peptide is: " + ((TheoreticalSpectrum)curr.s).p +  "\tscore:\t" + curr.score);
+			//System.out.println("peptide is: " + curr.s.peptide +  "\tscore:\t" + curr.score);
 			filtered.add(curr);
 		}
 		Collections.sort(filtered);
@@ -448,22 +448,25 @@ public class SpectrumLibSearcher {
 		TreeMap<Double, List<Spectrum>> bestList = new TreeMap();
 		double bestScore = -1000000.0, currScore = 0.0;
 		int maxIndex = this.spectrumScorePairs.size()-1;
-		int topK = 20, topK2 = 500;
+		int topK = 5, topK2 = 2000;
 		int firstIndex = maxIndex - 20, secondIndex = maxIndex - 500;
+		int count = 0;
 		firstIndex = firstIndex < 0 ? 0 : firstIndex;	
 		secondIndex = secondIndex < 0 ? 0 : secondIndex;
 		int besti = 0, bestj = 0;
-		int count=0;
 		for(int i = 0; i < topK; i++){
 			List<Spectrum> cand = new ArrayList();
-			SpectrumScorePair curr = this.spectrumScorePairs.get(maxIndex);
+			cand.add(this.spectrumScorePairs.get(maxIndex-i).s);
+			SpectrumScorePair curr = this.spectrumScorePairs.get(maxIndex-i);
 			insertBestPair(cand, curr.score, bestListPrev, topK);
 		}
-		
+
 		for(int m = 2; m <= Mix; m++){
+			bestList = new TreeMap();
+			bestScore = -10000;
 			for(Iterator it = bestListPrev.keySet().iterator(); it.hasNext();){
 				Spectrum s = bestListPrev.get(it.next()).get(0);
-				for(int j = maxIndex; j >= topK2; j--){
+				for(int j = maxIndex; j >= maxIndex - topK2; j--){
 					Spectrum s2 = this.spectrumScorePairs.get(j).s;
 					Spectrum mix = MixTheoSpectrumFactory.getMixTheoSpectrum((ArrayTheoreticalSpectrum)s, (ArrayTheoreticalSpectrum)s2, m);
 					count++;
@@ -471,17 +474,20 @@ public class SpectrumLibSearcher {
 					if(currScore > bestScore){
 						List<Spectrum> cand = new ArrayList();
 						cand.add(mix);
-						insertBestPair(cand, currScore, bestList, topN);
-						if(bestList.size() >= topN){
+						insertBestPair(cand, currScore, bestList, topK);
+						if(bestList.size() >= topK){
 							bestScore = bestList.firstKey().doubleValue();
 						}
 					}
 				}
+			    //System.out.println("total combination so-far at this round: " + count);
 			}
-			
+			//System.out.println("best-" + m + " has size: " + bestList.size());
+			bestListPrev = bestList;
 		}
-		//System.out.println("best has size: " + bestList.size());
-		printTopCandidatesInfo(mixturequery, bestList);
+		System.out.println("total combiniations considered: " + count);
+		System.out.println("best has size: " + bestList.size());
+		printMultiplexTopCandidatesInfo(mixturequery, bestList);
 		//System.out.println("total number of pairs considered: " + count);
 		return null;
 	}
@@ -496,7 +502,7 @@ public class SpectrumLibSearcher {
 			ArrayTheoreticalSpectrum arry = (ArrayTheoreticalSpectrum)match.s;
 			FastaSequence seq = arry.getPeplite().getFastaseq();
 			String annot = seq.getAnnotation(arry.getPeplite().getBeginInd()).split("\\s+")[0];
-			System.out.println(this.spectrumFile + "\t" + query.getPeptide() + "\t" +  th.p + "\t" + annot   
+			System.out.println(this.spectrumFile + "\t" + query.scanNumber + "\t" +  th.p + "\t" + annot   
 					+"\t" + query.parentMass + "\t"  + query.charge + "\t" + match.s.parentMass + "\t" + th.charge + "\t" + match.score + "\t" 
 					+ (match.score/match.s.peptide.length()) + "\t" + stat[0] + "\t" + stat[1] + "\t" + stat[2] + "\t" 
 					+ stat[3] + "\t" + stat[4] + "\t" + stat[5]);
@@ -541,8 +547,8 @@ public class SpectrumLibSearcher {
 				if(!query.peptide.contains("Dummy")){
 					pep = "\t"+query.peptide;
 				}
-				bw.write(this.spectrumFile + "\t" + query.scanNumber + pep + " best: " +  query.parentMass + "\t" + best.get(0).parentMass + "\t"  + best.get(1).parentMass 
-						+ "\t" +  bestpeptide  + "\t" + annot1 + "\t" + annot2 
+				bw.write(this.spectrumFile + "\t" + query.scanNumber + "\t" + query.parentMass + "\t" + best.get(0).parentMass + "\t"  + best.get(1).parentMass + "\t" + query.charge
+						+ "\t" +  + arry1.charge + "\t"  + arry2.charge + "\t" + bestpeptide  + "\t"  + annot1 + "\t" + annot2 
 						+ " \t" + key.doubleValue() + "\t"  + score1 + "\t" + score2 + "\t" + score1/best.get(0).peptide.length() + "\t" + score2/best.get(1).peptide.length()
 						+ "\t" + stat[0] + "\t" + stat[1] + "\t"
 						+ stat[2] + "\t" + stat[3] + "\t" + stat[4] + "\t" 
@@ -566,6 +572,22 @@ public class SpectrumLibSearcher {
 						+ stat[9] + "\t" + stat[10] + "\t" + stat[11] + "\t" + stat[12] + "\n");
 			}
 			bw.flush();
+			}catch(IOException ioe){
+				System.err.println(ioe.getMessage());
+				ioe.printStackTrace();
+			}
+		}
+		//System.out.println();
+	}
+	
+	private void printMultiplexTopCandidatesInfo(Spectrum query, TreeMap<Double, List<Spectrum>> bestList){
+		for(Iterator<Double> it = bestList.keySet().iterator(); it.hasNext();){
+			Double key = it.next();
+			List<Spectrum> best = bestList.get(key);
+			try{
+				bw.write(this.spectrumFile + "\t" + query.scanNumber + "\t" + query.parentMass + "\t" + query.charge +"\t" + key + "\t" + best.get(0).peptide);
+				bw.write("\n");
+				bw.flush();
 			}catch(IOException ioe){
 				System.err.println(ioe.getMessage());
 				ioe.printStackTrace();
@@ -609,7 +631,7 @@ public class SpectrumLibSearcher {
 			//score = score + 0.00000001;  //avoid duplicate scores   @TODO maybe should add check to make sure the canddiate pairs are not the same
 		}
 		
-		if(bestPairs.size() >= numKept){
+		if(bestPairs.size() >= numKept+1){
 			bestPairs.pollFirstEntry();
 		}
 		bestPairs.put(new Double(score), candidate);

@@ -77,8 +77,9 @@ public class TheoSpectrumGenerator {
 		}
 		for(Iterator<Spectrum> iter = this.candidates.iterator(); iter.hasNext();){
 			current = (Spectrum)iter.next();
-			if(Math.abs(s.parentMass - current.parentMass) > parentMassTolerance 
-					|| (matchCharge && s.charge != current.charge)){
+			//if(Math.abs(s.parentMass - current.parentMass) > parentMassTolerance 
+			//		|| (matchCharge && s.charge != current.charge)){
+			if(current.parentMass - s.parentMass < -4 && current.parentMass - s.parentMass > 25){
 				iter.remove();
 			}
 		}
