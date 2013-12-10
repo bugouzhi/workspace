@@ -235,7 +235,7 @@ public class DecoySpectrumGenerator {
 	}
 	
 	public static void testShuffleSpectra(String spectrumFile){
-		spectrumFile = "..\\mixture_linked\\UPS_Human_lysateREP123_IDA_1pepFDR.mgf";
+		spectrumFile = "..\\mixture_linked\\ACG_swathdevelopment_UPS12Ecoli_IDA_combined_testlib.mgf";
 		LargeSpectrumLibIterator<Spectrum> iter = new LargeSpectrumLibIterator(spectrumFile);
 		int index = spectrumFile.lastIndexOf('.');
 		String decoyName = spectrumFile.substring(0, index) + "_plusDecoy2.mgf";

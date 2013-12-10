@@ -467,18 +467,20 @@ public class SpectrumUtil {
 	}
 	
 	public static void annotateSpectrumLibFromMzXML(){
-		String libFile = "..\\mixture_linked\\msdata/mcl1/MCL1_Bo/MCL1_Bo_Light_200fm_40%Collision.mzXML";
+		String libFile = "J:workspace/mixture_linked/msdata/linked_peptide_library/sumo_lib/20101008_Sumo_Library_4350_Bo.mzXML";
 		String annotationFile = "..\\mixture_linked\\testAnnotation.txt";
 		String outfile = "..\\mixture_linked\\test.mgf";
 		MZXMLReader reader = new MZXMLReader(libFile);
 		List<Spectrum> specList = reader.readAllMS2Spectra();
-		loadAnnotationFromFile(annotationFile, specList);
-		printSpectraToFile(outfile, getAnnotatedSpectra(specList));
+		//loadAnnotationFromFile(annotationFile, specList);
+		//printSpectraToFile(outfile, getAnnotatedSpectra(specList));
+		System.out.println("Spectrum list size: " + specList.size());
+		printSpectraToFile(outfile, specList);
 	}
 	
 	public static void annotateSpectrumLibFromMzXMLs(String spectrumDir, String annotationFile, String outfile){
 		spectrumDir = "../mixture_linked//msdata/UPS12_Human/";
-		annotationFile = "..\\mixture_linked/t0";
+		annotationFile = "..\\mixture_linked/Swath_human_REP3_IDA_1pepFDR_msgfdb.txt";
 		outfile = "..\\mixture_linked\\test.mgf";
 		List<Spectrum> specList = new ArrayList<Spectrum>();
 		Map<String, MZXMLReader> readers = new HashMap<String, MZXMLReader>();
@@ -902,7 +904,7 @@ public class SpectrumUtil {
 		TheoreticalSpectrum.prefixIons = prefixIons;
 		TheoreticalSpectrum.suffixIons = suffixIons;
 		TheoreticalSpectrum t = new TheoreticalSpectrum(pep);
-		TheoreticalSpectrum.addIsotopicPeaks(t, 1);
+		//TheoreticalSpectrum.addIsotopicPeaks(t, 1);
 		s = new Spectrum(s); //make a copy of the spectrum because there is some processing below that will alter the spectrum
 		s.removePrecursors(0.1);
 		SimpleMatchingGraph g = t.getMatchGraph(s, tolerance);
@@ -1038,9 +1040,9 @@ public class SpectrumUtil {
 		//String filename = ".\\MSPLib\\Lib\\yeast.msp";
 		///convertMSPToMGF(filename);
 		//annotateSpectrumLib();
-		//annotateSpectrumLibFromMzXML();
+		annotateSpectrumLibFromMzXML();
 		if(Integer.parseInt(args[3]) == 7){
-			annotateSpectrumLibFromMzXMLs(args[0], args[1], args[2]);
+		//	annotateSpectrumLibFromMzXMLs(args[0], args[1], args[2]);
 		}
 		//annotateSpectrumLibFromMGF();
 		//removeAnnotateFromMzXMLs();

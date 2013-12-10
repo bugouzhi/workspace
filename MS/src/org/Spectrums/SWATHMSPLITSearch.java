@@ -23,7 +23,7 @@ import org.systemsbiology.jrap.stax.Scan;
  */
 public class SWATHMSPLITSearch {
 	public static void testMSPLITSearch(int minScan, int maxScan, String queryFile, String libraryFile){
-		queryFile = "../mixture_linked/msdata/UPS_Ecoli/14342_UPS1-400fm_SWATH_5600.mzXML";
+		queryFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18488_REP3_40fmol_UPS1_1ug_Ecoli_NewStock2_SWATH_1.mzXML";
 		//String queryFile = "../mixture_linked/swath_expanded.mgf";
 		//String libraryFile = "../mixture_linked/leftOneLib_plusDecoy2_test2.mgf";
 		libraryFile = "../mixture_linked/ACG_swathdevelopment_UPS12Ecoli_IDA_combined_RTlib_plusDecoy2.mgf";
@@ -34,7 +34,7 @@ public class SWATHMSPLITSearch {
 		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
 		//lib.windowFilterPeaks(6, 50);
 		//lib.removePeakByMass(10, 400);
-		lib.filterPeaks(30);
+		lib.filterPeaks(6);
 		lib.mergeSpectrum(0.05);
 		//SpectrumLib lib = new SpectrumLib(libraryFile, "splib");
 		//SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
@@ -54,7 +54,7 @@ public class SWATHMSPLITSearch {
 			Spectrum s = iter.next();
 			minScan = 100;
 			//maxScan = 41;
-			if(s.scanNumber < minScan || s.scanNumber > maxScan || s.scanNumber < 27000 || s.scanNumber > 27500 ){
+			if(s.scanNumber < minScan || s.scanNumber > maxScan){
 				continue;
 			}else{
 				if(go){
@@ -83,7 +83,7 @@ public class SWATHMSPLITSearch {
 			//s.filterPeaks(500);
 			
 			//s.deIsoPeaks(s, 0.03);
-			s.windowFilterPeaks2(20, 25);
+			s.windowFilterPeaks2(15, 25);
 			//s.filterPeaksByRankScore(3);
 			//s.filterPeaksByIntensity(100);
 			//s.filterPeaksByIntensity(50);
@@ -94,7 +94,7 @@ public class SWATHMSPLITSearch {
 			//TreeMap<Double,Spectrum> bestCands = bestPsimSpec(lib.getAllSpectrums(), s, 1, 2, 0.05);
 			//s.shiftSpectrumPPM(100);
 			double tolerance = 0.05;
-			TreeMap<Double,Spectrum> bestCands = bestPsimSpec(lib.getAllSpectrums(), s, MSMap, 0.5, 25, tolerance);
+			TreeMap<Double,Spectrum> bestCands = bestPsimSpec(lib.getAllSpectrums(), s, MSMap, 0.65, 25, tolerance);
 			Iterator it = bestCands.descendingKeySet().iterator();
 			double maxInt = 0.0; //matches with maximum abundance
 			while(it.hasNext()){
@@ -114,7 +114,7 @@ public class SWATHMSPLITSearch {
 				}
 				
 				double sharePeaks = cand.sharePeaks(s, tolerance, DEBUG);
-				if(sharePeaks > 5 && cand.peptide.contains("QAGEEPLGVGSVAAGGR")){
+				if(sharePeaks > 4){
 					double projectInt = cand.projectedPeakIntensity(s, tolerance);
 					double projectInt2 = s.projectedPeakIntensity(cand, tolerance);
 					double libInt = cand.magnitude();
@@ -202,9 +202,9 @@ public class SWATHMSPLITSearch {
 	}
 	
 	public static void targetedIdentification(){
-		String diaFile = "../mixture_linked./msdata/UPS_Ecoli//14342_UPS1-400fm_SWATH_5600.mzXML";
-		String ddaFile = "../mixture_linked/msdata/UPS_Ecoli//14341_UPS1-400fm_IDA_5600.mzXML";
-		String ddaIDs = "../mixture_linked/ACG_swathdevelopment_14341_1pepFDR_allPSMs_msgfdb.txt";
+		String diaFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18488_REP3_40fmol_UPS1_1ug_Ecoli_NewStock2_SWATH_1.mzXML";
+		String ddaFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/IDA_combine/18487_REP3_40fmol_UPS1_1ug_Ecoli_NewStock2_IDA_1.mzXML";
+		String ddaIDs = "../mixture_linked/SWATH/UPS_EcoliREP2_REP3_searches/IDA/UPSEcoli_REP3_newStock2_msgfdb_2_pep.txt";
 		MZXMLReader reader = new MZXMLReader(diaFile);
 		MZXMLReader reader2 = new MZXMLReader(ddaFile);
 		List<String> results = Utils.FileIOUtils.createListFromFile(ddaIDs);
@@ -217,6 +217,9 @@ public class SWATHMSPLITSearch {
 		MSXMLParser parser = reader2.getParser();
 		for(int i = 0; i < results.size(); i++){
 			String result = results.get(i);
+			if(result.startsWith("#")){
+				continue;
+			}
 			String[] tokens = result.split("\\s+");
 			int scan = Integer.parseInt(tokens[1]);
 			Scan s = parser.rap(scan);
@@ -227,6 +230,7 @@ public class SWATHMSPLITSearch {
 				spect.mergePeaks(spect, 0.05);
 				spect.sqrtSpectrum();
 				spect.peptide = tokens[7];
+				spect.charge = Integer.parseInt(tokens[6]);
 				//System.out.println("mappped RT: " + spect.spectrumName + "\t" + spect.peptide + "\t" + SWATHUtils.getRT(s));
 				timeMap.put(SWATHUtils.getRT(s), spect);
 			}
@@ -269,7 +273,8 @@ public class SWATHMSPLITSearch {
 				}
 			}
 			//System.out.println("checked precursor");
-			s.filterPeaksByIntensity(30);
+			s.filterPeaks(1000);
+			//s.filterPeaksByIntensity(30);
 			//s.computePeaksZScore(0.6);
 			//s.filterPeaksByRankScore(200);
 			//s.windowFilterPeaks2(15, 25);
@@ -299,9 +304,9 @@ public class SWATHMSPLITSearch {
 				double projectInt2 = s.projectedPeakIntensity(cand, tolerance);
 				double libInt = cand.magnitude();
 				libInt = libInt*libInt;
-				if(sharePeaks > 10){
+				if(sharePeaks > 5){
 					double[] scores = localSim(cand, s, 5, tolerance);
-					System.out.print(ddaFile + "\t" +  s.scanNumber + "\t" + s.parentMass +"\t" + s.charge +"\t" 
+					System.out.print(diaFile + "\t" +  s.scanNumber + "\t" + s.parentMass +"\t" + s.charge +"\t" 
 							+ cand.peptide + "\t"  + cand.parentMass + "\t" + cand.charge + "\t" + psim 
 							+ "\t" + cand.protein + "\t" + s.getPeaks().size() + "\t" + cand.getPeak().size()
 							+"\t" + sharePeaks + "\t" + projectInt + "\t" + projectInt2 + "\t" + projectInt/maxInt + "\t" + s.upperBound +"\t" + libInt);
@@ -515,9 +520,9 @@ public class SWATHMSPLITSearch {
 	
 	
 	public static void test2DSim(int minScan, int maxScan){
-		String ddaFile = "../mixture_linked/msdata/UPS_Ecoli//40fmol_UPS1_1ugEcoli_SWATH.mzXML";
-		String ssmResult = "../mixture_linked/ACG_swathdevelopment_40fmol_UPS1_1ugEcoli_SWATH_vs_IDAlibrary_projcos_min0.6_top30_nodouble_pep_sorted.txt";
-		String libraryFile = "../mixture_linked/ACG_swathdevelopment_P94_UPS_Ecoli_MSGFDB_IDs_uniqpeps_plusDecoy2_test2.mgf";
+		String ddaFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18488_REP3_40fmol_UPS1_1ug_Ecoli_NewStock2_SWATH_1.mzXML";
+		String ssmResult = "../mixture_linked/SWATH/UPS_EcoliREP2_REP3_searches/SWATH/UPS_Ecoli_REP3withnewstock2_msplit_2_sortedscans.txt";
+		String libraryFile = "../mixture_linked/ACG_swathdevelopment_UPS12Ecoli_IDA_combined_RTlib_plusDecoy2.mgf";
 		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
 		MZXMLReader reader = new MZXMLReader(ddaFile);
 		List<String> results = Utils.FileIOUtils.createListFromFile(ssmResult);
@@ -820,7 +825,7 @@ public class SWATHMSPLITSearch {
 	}
 	
 	public static void main(String[] args){
-		//targetedIdentification();
+		//argetedIdentification();
 		testMSPLITSearch(10, 1000000, args[0], args[1]);
 		//testReverseMSPLITSearch(100, 100000);
 		//testHybridLibrarySearch(10,100000);

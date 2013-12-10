@@ -46,6 +46,11 @@ public class SWATHUtils {
 		return Double.parseDouble(rt.substring(2, rt.length()-1));
 	}
 	
+	/**
+	 * get the corresponding swath ms1 scan
+	 * @param s
+	 * @return
+	 */
 	public static int getSWATHMS1Scan(Spectrum s){
 		return (int)(s.scanNumber / 35.0)*35+1;
 	}
@@ -54,6 +59,10 @@ public class SWATHUtils {
 	public static void getIonLibrary(String spectrumFile){
 		SpectrumLib lib = new SpectrumLib(spectrumFile, "MGF");
 		List<Spectrum> specList = lib.getAllSpectrums();
+		getIonLibrary(specList);
+	}
+	
+	public static void getIonLibrary(List<Spectrum> specList){
 		int counter = 0;
 		int ProteinCounter = 1; //not sure if this is protein group number but in ionlibrary seems unique to each proteins
 		String header = "Q1\tQ3\tRT_detected\tprotein_name\tisotype\trelative_intensity\tstripped_sequence\tmodification_sequence\tprec_z\tfrg_type\tfrg_z\tfrg_nr\tiRT\tuniprot_id\tscore\tdecoy\tprec_y\tconfidence\tshared\tN\tmods\tnterm\tcterm";
@@ -79,6 +88,8 @@ public class SWATHUtils {
 					smallestErr = currDiff < smallestErr ? currDiff : smallestErr;
 				}
 				String[] tokens = s.spectrumName.split("\\s+");
+				//s.rt = Double.parseDouble(tokens[5].substring(2, tokens[5].length()-1));
+
 				int protInd = 1;
 				s.protein = tokens[7];
 				if(proteinMap.containsKey(s.protein)){
@@ -87,7 +98,6 @@ public class SWATHUtils {
 					protInd = ProteinCounter++;
 					proteinMap.put(s.protein, protInd);
 				}
-				s.rt = Double.parseDouble(tokens[5].substring(2, tokens[5].length()-1));
 				if(closestP != null 
 						&& (closestP.getType().equals("b") || closestP.getType().equals("y"))){
 					matchCount++;
@@ -123,15 +133,47 @@ public class SWATHUtils {
 			if(matchCount > 6){
 				System.out.print(outbuffer);
 			}else{
-				//System.out.println("warning less than 10 peaks in libray spectrum");
+				//System.out.println("warning less than 10 peaks in library spectrum");
 			}
 			counter++;
 		}
 	}
 	
+	/**
+	 * Get a subset of library for targeted extraction, used multiplexed ID tool such as msplit 
+	 * for identification, the IDs then is used to do targeted extraction from swath
+	 * @param libFile
+	 * @param SpectrumFile
+	 * @param resultsFile
+	 */
+	public static void getIonLibrary(String libFile, String spectrumFile, String resultsFile){
+		SpectrumLib lib = new SpectrumLib(libFile, "MGF");
+		MZXMLReader reader = new MZXMLReader(spectrumFile);
+		List<String> results = Utils.FileIOUtils.createListFromFile(resultsFile);
+		List<Spectrum> specList = new ArrayList<Spectrum>();
+		int counter = 0;
+		for(Iterator<String> it = results.iterator(); it.hasNext();){
+			String[] result = it.next().split("\\t");
+			if(lib.getSpectra(result[4]+"."+result[6]) != null){
+				Spectrum libSpect = lib.getSpectra(result[4]+"."+result[6]).get(0);
+				Spectrum swathSpect = reader.getSpectrum(Integer.parseInt(result[1]));
+				libSpect.rt = swathSpect.rt;
+				specList.add(libSpect);
+				counter++;
+				if(counter % 1000 == 0){
+					System.out.println("got spec: " + counter);
+				}
+			}
+		}
+		getIonLibrary(specList);
+	}
+	
 	public static void testGenerateIonLibrary(){
-		String specLibFile = "../mixture_linked/UPS_EcoliREP3_newstock2lib.mgf";
-		getIonLibrary(specLibFile);
+		String specLibFile = "../mixture_linked/Swath_allHumanruns_IDA_1pepFDR_msgfdbIds_plusDecoy2.mgf";
+		String spectrumFile = "../mixture_linked/msdata/UPS12_Human/Swath_MEPCEJune7-Biorep1.mzXML";
+		String resultFile = "../mixture_linked/t000";
+		//getIonLibrary(specLibFile);
+		getIonLibrary(specLibFile, spectrumFile, resultFile);
 	}
 	public static void main(String[] args){
 		testGenerateIonLibrary();

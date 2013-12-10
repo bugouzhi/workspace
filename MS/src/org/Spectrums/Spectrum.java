@@ -1346,6 +1346,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		double mz1, mz2; 
 		int i = 0, j = 0;
 		//System.out.println("Matching  " + this.peptide + " with " + s1.peptide);
+		boolean isMatched = false;
 		while(i < this.peaks.size() && j < s1.peaks.size()){
 			mz1 = this.peaks.get(i).getMass();
 			mz2 = s1.peaks.get(j).getMass();
@@ -1356,7 +1357,13 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			}
 			
 			if(mz1 - mz2 > tolerance){
+				if(!isMatched){
+					System.out.println(s1.peptide + "\tmissing\t" + mz2 + "\t" + s1.peaks.get(j).getIntensity() + "\t" + s1.peaks.get(j).getRank());
+				}else{
+					isMatched = false;
+				}
 				j++;
+				
 				continue;
 			}
 			
@@ -1371,9 +1378,11 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				if(currMass - mz2 > tolerance){
 					break;
 				}
-				//System.out.println("matched " + currMass + "\t" + this.peaks.get(p).getIntensity() + "\t" + mz2 + "\t" + s1.peaks.get(j).getIntensity());
+				System.out.println(s1.peptide + "\tmatched\t" + currMass + "\t" + this.peaks.get(p).getIntensity() + "\t" + this.peaks.get(p).getRank() +"\t"
+						+ mz2 + "\t" + s1.peaks.get(j).getIntensity() + "\t" + s1.peaks.get(j).getRank());
 				//bestIntensity = bestIntensity < currInt ? currInt : bestIntensity;
 				localShare=true;
+				isMatched=true;
 				if(this.peaks.get(p).getRank() >= minZ){
 				//if(this.peaks.get(p).getIntensity() > minZ){
 					localBig=true;
@@ -1383,6 +1392,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			if(localShare){
 				shareCount++;
 			}
+			
 			if(localBig) bigCount++;
 			j++;
 		}
@@ -1449,7 +1459,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 	 	//those values that are non-zero in this vector		
 		double mz1, mz2; 
 		int i = 0, j = 0;
-		System.out.println("Matching  " + this.peptide + " with " + s1.peptide);
+		//System.out.println("Matching  " + this.peptide + " with " + s1.peptide);
 		while(i < this.peaks.size() && j < s1.peaks.size()){
 			mz1 = this.peaks.get(i).getMass();
 			mz2 = s1.peaks.get(j).getMass();
@@ -1473,7 +1483,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				if(currMass - mz2 > tolerance){
 					break;
 				}
-				System.out.println("matched " + currMass + "\t" + this.peaks.get(p).getIntensity() + "\t" + mz2 + "\t" + s1.peaks.get(j).getIntensity());
+				//System.out.println("matched " + currMass + "\t" + this.peaks.get(p).getIntensity() + "\t" + mz2 + "\t" + s1.peaks.get(j).getIntensity());
 				//bestIntensity = bestIntensity < currInt ? currInt : bestIntensity;
 				shareIntensity += s1.peaks.get(j).getIntensity()*s1.peaks.get(j).getIntensity();
 				break;
@@ -1859,31 +1869,31 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		for(int i = 0; i < this.peaks.size(); i++){
 			Peak p = this.peaks.get(i);
 			if(Math.abs(p.getMass() - this.parentMass) < tolerance){
-				System.out.println("removing " + p);
+				//System.out.println("removing " + p);
 				toBeRemoved.add(p);
 			}
 			
 			if(Math.abs(p.getMass() - 
 					(this.parentMass - Mass.WATER/this.charge)) < tolerance){
-				System.out.println("removing " + p);
+				//System.out.println("removing " + p);
 				toBeRemoved.add(p);
 			}
 			
 			if(Math.abs(p.getMass() - 
 					(this.parentMass - Mass.NH3/this.charge)) < tolerance){
-				System.out.println("removing " + p);
+				//System.out.println("removing " + p);
 				toBeRemoved.add(p);
 			}
 			
 			if(Math.abs(p.getMass() - 
 					(this.parentMass - 2*Mass.WATER/this.charge)) < tolerance){
-				System.out.println("removing " + p);
+				//System.out.println("removing " + p);
 				toBeRemoved.add(p);
 			}
 			
 			if(Math.abs(p.getMass() - 
 					(this.parentMass - (Mass.WATER+Mass.NH3)/this.charge)) < tolerance){
-				System.out.println("removing " + p);
+				//System.out.println("removing " + p);
 				toBeRemoved.add(p);
 			}
 		}
@@ -2634,7 +2644,11 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			sb.append("TITLE=" + this.spectrumName + "\n");
 			//sb.append("TITLE=NIST spectral library entry: " + this.peptide.split("\\.")[0]  + "\n");
 		//}
-		sb.append("CHARGE=" + charge + "\n");
+		if(charge >= 0){	
+			sb.append("CHARGE=" + charge + "+\n");
+		}else{
+			sb.append("CHARGE=" + charge + "-\n");
+		}
 		sb.append("PEPMASS=" + parentMass + "\n");
 		if(this.peptide.equals("DUMMYSEQ")){
 			//no annotatin to be print

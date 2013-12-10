@@ -37,8 +37,8 @@ public class ProteinIDExtractor {
 	Map<String, List<String>> proteinMap;
 	Map<String, List<Object>> positionMap;
 	
-	private int pepIDIndex = 4;
-	private int pepIDIndex2 = 8;
+	private int pepIDIndex = 1;
+	private int pepIDIndex2 = 1;
 	
 	public ProteinIDExtractor(String dbFile, String result){
 		this.proteinDBFile = dbFile;
@@ -54,12 +54,14 @@ public class ProteinIDExtractor {
 	
 	public ProteinIDExtractor(List<AnnotatedSpectrum> IDs, String dbFile){
 		this.peptideIDs = new HashSet();
+		//System.out.println("Protein fasta: " + dbFile);
 		this.proteinDBFile = dbFile;
 		this.seqDB = new FastaSequence(this.proteinDBFile);
 		this.seqStr = seqDB.getSubsequence(0, seqDB.getSize());
 		System.out.println("resultFile: " + this.searchResultFile);
 		//this.outputFile = searchResultFile.split("\\.txt")[0]+".fasta";
 		//System.out.println("out: " + this.outputFile);
+		//System.out.println("IDs-list size: " + IDs.size());
 		for(int i = 0; i < IDs.size(); i++){
 			Spectrum s = IDs.get(i);
 			String peptide = s.peptide;
@@ -130,6 +132,7 @@ public class ProteinIDExtractor {
 			List<Integer> positions = matches.get(pep);
 			List<String> proteins = new ArrayList<String>();
 			List<Object> pos = new ArrayList<Object>();
+			//System.out.println("Peptide: " + pep +"\tmatches: " + positions.size());
 			for(int i = 0; i < positions.size(); i++){
 				int ind = positions.get(i);
 				String prot = this.seqDB.getAnnotation(ind);
@@ -146,6 +149,9 @@ public class ProteinIDExtractor {
 			}
 			List<String> modSeq = modSeqMap.get(pep);
 			for(int i = 0; i < modSeq.size(); i++){
+				for(int j = 0; j < proteins.size(); j++){
+					this.proteinMap.get(proteins.get(j)).add(modSeq.get(i));
+				}
 				this.peptideMap.put(modSeq.get(i), proteins);
 				this.positionMap.put(modSeq.get(i), pos);
 			}
@@ -159,6 +165,7 @@ public class ProteinIDExtractor {
 	//get a list of peptides not shared by proteins
 	public Set<String> getNonSharedPeps(){
 		Set<String> nonDegenerate = new HashSet<String>();
+		System.out.println("size: " + this.peptideMap.keySet().size() + "\t" + this.peptideIDs.size());
 		for(Iterator<String> it = this.peptideMap.keySet().iterator(); it.hasNext();){
 			String pep = it.next();
 			List<String> protIds = this.peptideMap.get(pep);
@@ -167,6 +174,24 @@ public class ProteinIDExtractor {
 			}
 		}
 		System.out.println("Total non-degenerate " + nonDegenerate.size());
+		return nonDegenerate;
+	}
+	
+	public Set<String> getNonSharedPeps(String prot){
+		Set<String> nonDegenerate = new HashSet<String>();
+		List<String> peps = this.proteinMap.get(prot);
+		if(peps == null){
+			return nonDegenerate;
+		}
+		for(Iterator<String> it = peps.iterator(); it.hasNext();){
+			String pep = it.next();
+			List<String> protIds = this.peptideMap.get(pep);
+			if(protIds.size() == 1){
+				nonDegenerate.add(pep);
+				//System.out.println("Protein " + prot +"\tuniq-pep:\t" + pep);
+			}
+		}
+		//System.out.println("Total non-degenerate " + nonDegenerate.size());
 		return nonDegenerate;
 	}
 	
@@ -311,9 +336,9 @@ public class ProteinIDExtractor {
 	
 	public static void main(String[] args){
 		ProteinIDExtractor IDS = new ProteinIDExtractor("../mixture_linked/database/UPS2.fasta"
-				, "../mixture_linked/SWATH/Swath_Human_searches/Swathmsplit/UPS_Human_REP3withlysateLib_msplit_1_pep.txt");
+				, "../mixture_linked/18476_REP3_400fmol_UPS2_500ugHumanLysate_peakview - Peptides.txt");
 		IDS.getPeptideReport();
-		IDS.getProteinReport();
+		//IDS.getProteinReport();
 		//IDS.printProteins(false);
 		//IDS.getPeptidePairReport();
 		//extractProteinsFromResultFiles("../mixture_linked/");

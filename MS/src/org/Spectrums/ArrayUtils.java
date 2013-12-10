@@ -50,9 +50,13 @@ public class ArrayUtils {
 	}
 	
 	public static String getString(double[] arry){
+		return getString(arry, "%1$.2f"+"\t");
+	}
+	public static String getString(double[] arry, String format){
 		StringBuffer str = new StringBuffer();
 		for(int i = 0; i < arry.length; i++){
-			str.append(String.format("%1$.2f\t", arry[i]));
+			//str.append(String.format("%1$.2f\t", arry[i]));
+			str.append(String.format(format+"\t", arry[i]));
 		}
 		return str.toString();
 	}

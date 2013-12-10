@@ -136,6 +136,7 @@ public class TDAStat{
 		//System.out.println("got reader");
 		try{
 			String result = reader.readLine();
+			result = reader.readLine();
 			int counter = 0;
 			results = new ArrayList<AnnotatedSpectrum>();
 			resultMap = new HashMap<Integer, AnnotatedSpectrum>();
@@ -157,7 +158,7 @@ public class TDAStat{
 					continue;
 				}
 				AnnotatedSpectrum s = new AnnotatedSpectrum();
-				s.scanNumber = Integer.parseInt(tokens[1]);
+				//s.scanNumber = Integer.parseInt(tokens[1]);
 				s.peptide = tokens[pepInd];
 				s.protein = tokens[protInd];
 				s.score = Double.parseDouble(tokens[scoreInd])*sortMode;
@@ -166,16 +167,16 @@ public class TDAStat{
 				}
 				s.spectrumName = ""+counter;
 				results.add(s);
-				String key = s.peptide + "@";// +s.charge;
+				String key = s.peptide;// + "@";// +s.charge;
 				if(peptideMap.containsKey(key)){
 					AnnotatedSpectrum prev = peptideMap.get(key);
 					if(s.score < prev.score){
 						this.peptideMap.put(key, s);
 					}
 				}else{
-					if(!this.isDecoy(s.protein)){
+					//if(!this.isDecoy(s.protein)){
 						this.peptideMap.put(key, s);
-					}
+					//}
 				}
 				//System.out.println("protein: " + s.protein);
 				if(s.protein.contains("PROTEIN")){
@@ -334,12 +335,13 @@ public class TDAStat{
 			AnnotatedSpectrum s = protResults.get(i);
 			//System.out.println("proteins " + s.protein + "\t" + isDecoy(s.protein));
 			if(isDecoy(s.protein)){
+				//System.out.println("Increasing decoy count@@@");
 				decoyCount++;
 			}else{
 				targetCount++;
 			}
-		
 			protFDR = ((double)decoyCount) / targetCount;
+			//System.out.println("Decoy: " + decoyCount + "\t" + "target: " + targetCount + "\t" + protFDR);
 			
 			for(int k = 0; k < this.thresholds.length; k++){
 				if(protFDR < thresholds[k]){

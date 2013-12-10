@@ -112,17 +112,16 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 	
 	//remove from first peptide if we cannot find a potentially better
 	//explanation in the space of second peptides
-	public void removeSharePeaks(Spectrum s, String pep1, String pep2, double[] prm1, double[] prms2){
-		Peptide p1 = new Peptide(pep1);
-		Peptide p2 = new Peptide(pep2);
+	public void removeSharePeaks(Spectrum s, Peptide p1, Peptide p2, double[] prm1, double[] prms2, double tolerance){
+		boolean DEBUG = false;
 //		System.out.println("pep1 " + pep1);
-		TheoreticalSpectrum t = new TheoreticalSpectrum(pep1);
-		TheoreticalSpectrum t2 = new TheoreticalSpectrum(pep2);
+		TheoreticalSpectrum t = new TheoreticalSpectrum(p1);
+		TheoreticalSpectrum t2 = new TheoreticalSpectrum(p2);
 
-		//t.analyzeAnnotation(s, pep1);
-		//t2.analyzeAnnotation(s, pep2);
+		if(DEBUG){t.analyzeAnnotation(s, p1.toString(), tolerance);}
+		if(DEBUG){t2.analyzeAnnotation(s, p2.toString(), tolerance);}
 		
-		SimpleMatchingGraph g = t.getMatchGraph(s, 0.05);
+		SimpleMatchingGraph g = t.getMatchGraph(s, tolerance);
 		Set<Peak> toBeRemoved = new HashSet();
 		Collection<Peak> matched = g.vertexSet(SimpleMatchingGraph.Observed);
 		for(Iterator<Peak> it = matched.iterator(); it.hasNext();){
@@ -136,7 +135,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 				LabelledPeak annot = (LabelledPeak)annotations.get(i);
 				int massInt = (int)(Math.round(this.scaleFactor*getPRMInd(p, annot))); 
 				currScore = currScore > prm1[massInt] ? currScore: prm1[massInt];
-				//System.out.println("peak " +  annot + "\tscore\t" + prm1[massInt] +"\tat\t" + massInt);
+				if(DEBUG){System.out.println("peak " +  annot + "\tscore\t" + prm1[massInt] +"\tat\t" + massInt);};
 			}
 			for(int i = 0; i < t.prefixIons.length; i++){
 				for(int c = 1; c <= 2; c++){
@@ -155,16 +154,23 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 					}
 				}
 			}
-			if(currScore > maxScore2){
-				//System.out.println("Removing " + p + "\t" + currScore + "\t" + maxScore2);
+			if(currScore >= maxScore2){
+				if(DEBUG){System.out.println("Removing " + p + "\t" + currScore + "\t" + maxScore2);};
 				toBeRemoved.add(p);
 			}else{
-				//System.out.println("Keeping " + p + "\t" + currScore + "\t" + maxScore2);
+				if(DEBUG){
+					System.out.println("Keeping " + p + "\t" + currScore + "\t" + maxScore2);
+				}
 			}
 		}
-		//System.out.println("Removed peaks: " + toBeRemoved.size());
 		s.getPeak().removeAll(toBeRemoved);
-		//t2.analyzeAnnotation(s, pep2);
+		if(DEBUG){
+			System.out.println("Removed peaks: " + toBeRemoved.size());
+			//s=s.removeSharePeaks(t, 0.03);
+			s.computePeakRank();
+			t.analyzeAnnotation(s, p1.toString(), tolerance);
+			t2.analyzeAnnotation(s,  p2.toString(), tolerance);
+		}
 	}
 	
 	//get the corresponding PRM mass value for an observed peaks
@@ -211,7 +217,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 
 	public TheoreticalSpectrum getSpectrum(double[][] basemass, Spectrum s, int charge){
 		TheoreticalSpectrum t = new TheoreticalSpectrum();
-		List<Peak> theoPeaks = this.generatePeaks(basemass, this.prefixIons, this.suffixIons, ptmPos, ptmMass, 1, 1);//this.spectrum.charge);
+		List<Peak> theoPeaks = this.generatePeaks(basemass, this.prefixIons, this.suffixIons, ptmPos, ptmMass, 1, this.spectrum.charge);
 		//System.out.println("computed peaks: " + theoPeaks);
 		t.setPeaks(theoPeaks);
 		t.parentMass= s.parentMass;

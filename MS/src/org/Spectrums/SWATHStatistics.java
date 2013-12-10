@@ -288,9 +288,9 @@ public class SWATHStatistics {
 	}
 	
 	public static void getSWATHFiltering(){
-		String queryFile = "../mixture_linked/msdata/UPS_Ecoli/14342_UPS1-400fm_SWATH_5600.mzXML";
-		String libraryFile = "../mixture_linked/ACG_swathdevelopment_P94_UPS_Ecoli_MSGFDB_IDs_uniqpeps_plusDecoy2_test.mgf";
-		String resultFile = "../mixture_linked/t00";
+		String queryFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18488_REP3_40fmol_UPS1_1ug_Ecoli_NewStock2_SWATH_1.mzXML";
+		String libraryFile = "../mixture_linked/ACG_swathdevelopment_UPS12Ecoli_IDA_combined_RTlib_plusDecoy2.mgf";
+		String resultFile = "../mixture_linked/ACG_18488_targetedID.txt";
 		MZXMLReader reader = new MZXMLReader(queryFile);
 		//ConsensusSpectrumReader reader = new ConsensusSpectrumReader(queryFile);
 		//reader.numNeighbors = 0;
@@ -299,26 +299,33 @@ public class SWATHStatistics {
 		List<String> results = Utils.FileIOUtils.createListFromFile(resultFile);
 		for(int i = 0; i < results.size(); i++){
 			String[] tokens = results.get(i).split("\\s+");
-			if(tokens.length < 6  || lib.getSpectra(tokens[4] + "." + tokens[6]) == null){
+			String pepSeq =Utils.StringUtils.getPepSeq(tokens[4]);
+			//System.out.println(pepSeq);
+			if(tokens.length < 7  || lib.getSpectra(pepSeq + "." + tokens[6]) == null){
 				continue; //skipping non-formatted lines
 			}
-			String pepKey = tokens[4] + "." + tokens[6];
+			String pepKey = pepSeq + "." + tokens[6];
 			System.out.println(pepKey);
 			Spectrum libEntry = lib.getSpectra(pepKey).get(0);
 			int swathScan = Integer.parseInt(tokens[1]);
 			Spectrum swathSpec = reader.getSpectrum(swathScan);
 			//System.out.println(swathSpec);
 			libEntry.windowFilterPeaks2(6, 25);
+			libEntry.toRelIntensity();
+			libEntry.computePeakRank();
+			//libEntry.computePeaksZScore(0.5);
 			//swathSpec.filterPeaksByIntensity(50);
 			//swathSpec.toRelIntensity();
 			//swathSpec.filterPeaksByIntensity(0.03);
-			swathSpec.filterPeaks(1000);
+			swathSpec.filterPeaks(1500);
 			//swathSpec.windowFilterPeaks2(15, 25);
 			//swathSpec.filterPeaks(700);
-			swathSpec.computePeaksZScore(0.5);
+			swathSpec.toRelIntensity();
+			swathSpec.computePeakRank();
+			//swathSpec.computePeaksZScore(0.5);
 			//swathSpec.filterPeaksByRankScore(300);
 			double[] shared = swathSpec.projectedShare(libEntry, 0.05, 220);
-			System.out.println("ZPeakStat\t"+tokens[4]+"@"+tokens[6] + "\t" +  tokens[8] + "\t" + tokens[1] + "\t" +  tokens[7] 
+			System.out.println("ZPeakStat\t"+pepSeq+"@"+tokens[6] + "\t" +  tokens[8] + "\t" + tokens[1] + "\t" +  tokens[7] 
 			         + "\t" + swathSpec.getPeak().size() +"\t"
 					+ libEntry.getPeak().size() + "\t"+ shared[0] +"\t" + shared[1]);
 		}
@@ -609,15 +616,15 @@ public class SWATHStatistics {
 				Spectrum entry2 = specList.get(j);
 				entry2.mergePeaks(entry2, 0.05);
 				//System.out.println("number peaks: " + copy.getPeak().size());
-				if(Math.abs(entry.parentMass - entry2.parentMass) < 25){
+				if(Math.abs(entry.parentMass - entry2.parentMass) < 3){
 					double score = entry.projectedCosine(entry2, 0.05);
 					double score2 = entry2.projectedCosine(entry, 0.05);
 					double scoreFull = entry.cosine(entry2, 0.05);
 					double share = entry.sharePeaks(entry2, 0.05);
-					if(scoreFull > 0.5 && share > 10){
+					if(scoreFull > 0.01 && share > 1){
 						System.out.println(entry.peptide +"@" + entry.charge + "\t" + entry2.peptide + "@" + entry2.charge 
 								+ "\t" + entry.spectrumName + "\t" + entry2.spectrumName + "\t" 
-								+ score + "\t" + score2 + "\t" + scoreFull);
+								+ score + "\t" + score2 + "\t" + scoreFull + "\t" + share);
 					}
 				}
 			}
@@ -742,11 +749,70 @@ public class SWATHStatistics {
 		//System.out.println(s);
 	}
 	
+	/**
+	 * Get a list of IDs from SWATH run, divide peptide
+	 * into precuror m/z bin such that each bin has ~ same number of peptides
+	 * use to test idea of variable window width of running SWATH
+	 */
+	public static void getSWATHRangesFromResult(){
+		String resultFile = "../mixture_linked/testAnnotation.txt";
+		String libraryFile = "../";
+		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
+		int bins = 33;
+		List<String> results = Utils.FileIOUtils.createListFromFile(resultFile);
+		SortedMap<Double, String> sortedIDs = new TreeMap<Double, String>();
+		for(Iterator<String> it =results.iterator(); it.hasNext();){
+			String result = it.next();
+			String[] tokens = result.split("\\t");
+			double precursorMz = Double.parseDouble(tokens[5]) + Math.random()*0.00001; //avoid redundancy
+			sortedIDs.put(precursorMz, result);
+		}
+		getSWATHPrecursorRange(sortedIDs, bins);
+		
+	}
+	
+	public static void getSWATHRangesFromLib(){
+		String libraryFile = "../mixture_linked/ACG_swathdevelopment_UPS12Ecoli_IDA_combined_RTlib_plusDecoy2.mgf";
+		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
+		int bins = 99;
+		SortedMap<Double, String> sortedIDs = new TreeMap<Double, String>();
+		for(Iterator<Spectrum> it =lib.getAllSpectrums().iterator(); it.hasNext();){
+			Spectrum s = it.next();
+			if(s.spectrumName.contains("DECOY")){
+				continue;
+			}
+			double precursorMz = s.parentMass + Math.random()*0.00001; //avoid redundancy
+			sortedIDs.put(precursorMz, s.peptide +"@"+s.charge);
+		}
+		getSWATHPrecursorRange(sortedIDs, bins);
+		
+	}
+	
+	public static void getSWATHPrecursorRange(SortedMap<Double, String> sortedIDs, int bins){
+		int perBinCount = (int)((double)sortedIDs.size() / bins);
+		System.out.println("Total IDS: " + sortedIDs.size() + " per bin estimate: " + perBinCount +"\ttotal bins\t:" + bins);
+		int count=0;
+		double left = 400.0;
+		double right = 0;
+		for(Iterator<Double> it = sortedIDs.keySet().iterator(); it.hasNext();){
+			if(count >= perBinCount){
+				System.out.println("Bin: " + left + "\t---\t" + right + "\tSWATH-width\t" + (right-left) + "\tpeps:\t" + count);
+				count=0;
+				left = it.next();
+			}else{
+				right = it.next();
+				count++;
+			}
+		}		
+	}
+	
 	public static void main(String[] args){
 		//simpleCosTest();
 		//testSWATHIntensityVar();
 		//getSWATHFiltering();
-		getSWATHInterference();
+		//getSWATHRangesFromResult();
+		getSWATHRangesFromLib();
+		//getSWATHInterference();
 		//testProjCosine();
 		//testProjCosineOnSpec();
 		//tofSpecStat();

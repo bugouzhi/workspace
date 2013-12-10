@@ -122,6 +122,8 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		pList.add((new Peak(s.parentMass, 10000)));
 		precur.setPeaks(pList);
 		int MS1Scan = this.reader.getPrevScan(specList.get(targetInd).scanNumber, 1);
+		int K = (specList.size()-1)/2;
+		//System.out.println("width: " + K);
 		List<Spectrum> surveyScanList = this.getNeighborScans(MS1Scan, 5, 5);
 
 		
@@ -226,7 +228,7 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 			for(int j = 0; j < s.getPeak().size(); j++){
 				double corr = ArrayUtils.dotProd(projections[i], projections[j]);
 				//corr = corr * sarry[i];
-				if(corr > -10){
+				if(corr > -10 && projections[i][5] > 0 && projections[j][5] > 0){
 					sim+=corr;
 					localSim+=corr;
 					count++;
@@ -298,23 +300,6 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		topPreSim1 /= top;
 		topPreSim2 /= top;
 
-		for(int i = 8; i < topIndex.size(); i++){
-			double additional = 0;
-			for(int j = 0; j < i; j++){
-				double corr = ArrayUtils.dotProd(projections[topIndex.get(i)], projections[topIndex.get(j)]);
-				additional += corr;
-			}
-			additional = additional/i;
-			//System.out.println("additional: " + additional);
-			if(additional > topSim){
-				//System.out.println("adding additonal correlation");
-				//topSim = (topSim+additional)/2;
-			}else{
-				break;
-			}
-			
-		}
-			
 		//compute peak presence
 		double topPresence = 0;
 		double width = 0;
