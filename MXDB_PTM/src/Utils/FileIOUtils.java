@@ -9,6 +9,8 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,8 +44,11 @@ public class FileIOUtils {
 			String[] token = null;
 			String line = bf.readLine();
 			while(line != null){
-				//System.out.println("line is: " + line);
+				// System.out.println("line is: " + line);
 				token = line.split("\\t");
+				if(token.length < 2){
+					continue; //skipp white-space line
+				}
 				table.put(token[index1], token[index2]);
 				line = bf.readLine();
 			}
@@ -127,6 +132,49 @@ public class FileIOUtils {
 		}
 		//System.out.println(" in " + lines.size() + " lines");
 	}
+	
+	
+	public static BufferedWriter initOutputStream(String outFile){
+		BufferedWriter bw=null;
+		if(outFile != null){
+			try{
+				bw = new BufferedWriter(new FileWriter(outFile));
+				//System.out.println("File name is: " + outFile);
+			}catch(IOException ioe){
+				System.err.println(ioe.getMessage());
+				ioe.printStackTrace();
+			}
+		}else{
+			bw = new BufferedWriter(new OutputStreamWriter(System.out));
+		}
+		return bw;
+	}
+	
+	public static void finishOutput(Writer out){
+		try{
+			out.flush();
+			out.close();
+		}catch(IOException ioe){
+			System.err.println(ioe.getMessage());
+			ioe.printStackTrace();
+		}
+	}
+	
+	public static BufferedReader createReaderFromFile(String file){
+		try{
+			BufferedReader bf = new BufferedReader(new FileReader(file));
+			return bf;
+		}catch(IOException ioe){
+			System.out.println(ioe.getMessage());
+		}catch(NullPointerException e){
+			System.out.println("Error reading in file: " + file);
+			System.out.println(e.getMessage());
+			System.out.println(e.getStackTrace());
+		}
+		return null;
+		//System.out.println("readed in " + lines.size() + " lines");
+	}
+	
 	
 //	public static HashRichSequenceDB  readAlnFile(String file){
 //        HashRichSequenceDB db = new HashRichSequenceDB();

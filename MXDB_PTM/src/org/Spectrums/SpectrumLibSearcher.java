@@ -33,6 +33,7 @@ public class SpectrumLibSearcher {
 	public static BufferedWriter defaultout=initOut();
 	public int fragmentMode = 0;
 	public double matchTolerance = 0.5;
+	public String queryFile;
 	public SpectrumComparator getSingleScorer() {
 		return singleScorer;
 	}
@@ -246,7 +247,7 @@ public class SpectrumLibSearcher {
 		
 		return topSpectra;
 	}
-	
+	 
 	
 	public Spectrum[] topArrayCandidates(Spectrum query, int topN){
 		return topArrayCandidates(query, topN, true);
@@ -271,7 +272,13 @@ public class SpectrumLibSearcher {
 		}
 		
 		int i = 0;
-		while(!bestList.isEmpty()){
+		String[] peps = query.getPeptide().split("--");
+		if(peps.length == 2){
+			peps[0] = peps[0].replaceAll("[0-9\\.\\+\\-]", "");
+			peps[1] = peps[1].replaceAll("[0-9\\.\\+\\-]", "");
+		}
+		int rank1 = -1, rank2 = -1;
+		while(!bestList.isEmpty()){ 
 			Map.Entry<Double, Spectrum> bestEntry = bestList.pollLastEntry();
 			Spectrum currbest = bestEntry.getValue();
 			SpectrumScorePair currpair = new SpectrumScorePair(currbest);
@@ -279,11 +286,23 @@ public class SpectrumLibSearcher {
 			if(print){
 				printTopLinkedCandidateInfo(query, currpair);
 			}
-			System.out.println("Query " + query.spectrumName + "\t" + query.peptide +  " with top answer is: " 
+			if(peps.length == 2){
+				String pepseq = currbest.getPeptide().split("\\.")[0];
+				if(pepseq.equals(peps[0]) && rank1 < 0){
+					rank1 = i+1;
+				}
+				if(pepseq.equals(peps[1]) && rank1 < 0){
+					rank2 = i+1;
+				}
+				System.out.println("Query " + query.spectrumName + "\t" + query.peptide +  " with top answer is: " 
 					+ currbest.getPeptide()+ "\t" + currbest.charge +" " 
 					+ " score: " + bestEntry.getKey());
+			}
 			bestCands[i] = currbest;
 			i++;
+		}
+		if(peps.length == 2){
+			System.out.println("linked-peps ranks " + rank1 + "\t" + rank2);
 		}
 		
 		//System.out.println("best has size: " + bestList.size());
@@ -573,8 +592,12 @@ public class SpectrumLibSearcher {
 		//System.out.println();
 	}
 	
-	
-	private void printTopLinkedCandidateInfo(Spectrum query, SpectrumScorePair match){
+	/**
+	 * Old print result method, print more information
+	 * @param query
+	 * @param match
+	 */
+	private void printTopLinkedCandidateInfoOld(Spectrum query, SpectrumScorePair match){
 			TheoreticalSpectrum th = (TheoreticalSpectrum)match.s;
 			if(th instanceof LazyEvaluateLinkedSpectrum){
 				((LazyEvaluateLinkedSpectrum) th).createSpectrum();
@@ -588,7 +611,7 @@ public class SpectrumLibSearcher {
 			if(t1.peptide.equals(t2.peptide)){ //we do not allow same peptides 
 				return;
 			}
-			double[] stat = th.analyzeMixtureAnnotation(query, t1.peptide, t2.peptide, this.matchTolerance);
+			double[] stat = th.analyzeMixtureAnnotation(query, t1.peptide, t2.peptide, this.matchTolerance, false);
 			String bestpeptide = th.peptide;
 			String peptide1 = peptides[0].replaceAll("[\\.\\+0-9]", "");
 			String peptide2 = peptides[1].replaceAll("[\\.\\+0-9]", "");
@@ -603,6 +626,46 @@ public class SpectrumLibSearcher {
 			System.out.println();
 	}
 	
+	/**
+	 * Print results for top candidates. Various mathc statistics are printed
+	 * @param query
+	 * @param match
+	 */
+	private void printTopLinkedCandidateInfo(Spectrum query, SpectrumScorePair match){
+		TheoreticalSpectrum th = (TheoreticalSpectrum)match.s;
+		if(th instanceof LazyEvaluateLinkedSpectrum){
+			((LazyEvaluateLinkedSpectrum) th).createSpectrum();
+		}
+		String[] peptides = th.peptide.split(" & ");
+		LinkedPeptide lp = (LinkedPeptide)th.p;
+		TheoreticalSpectrum t1 = new TheoreticalSpectrum(lp.peptides[0], lp.peptides[0].getCharge());
+		TheoreticalSpectrum t2 = new TheoreticalSpectrum(lp.peptides[1], lp.peptides[1].getCharge());
+		double score1 = this.singleScorer.compare(t1, query);
+		double score2 = this.singleScorer.compare(t2, query);
+		if(t1.peptide.equals(t2.peptide)){ //we do not allow same peptides 
+			return;
+		}
+		double[] stat = th.analyzeMixtureAnnotation(query, t1.peptide, t2.peptide, this.matchTolerance, false);
+		String bestpeptide = th.peptide;
+		String peptide1 = peptides[0].replaceAll("[\\.\\+0-9]", "");
+		String peptide2 = peptides[1].replaceAll("[\\.\\+0-9]", "");
+		String prot = lp.peptides[0].getFastaseq().getAnnotation(lp.peptides[0].getBeginIndex());
+		try{
+			bw.write(this.queryFile + "\t"  + query.scanNumber+ "\t" + query.parentMass +"\t" + query.charge +
+				"\t"+  bestpeptide + "\t" + prot + "\t" + match.s.parentMass + "\t" + match.score + "\t"  
+				+ score1 + "\t" + score2 + "\t" + score1/peptide1.length() + "\t" + score2/peptide2.length()
+				+ "\t" + stat[0] + "\t" + stat[1] + "\t"
+				+ stat[2] + "\t" + stat[3] + "\t" + stat[4] + "\t" 
+				//+ stat[5] + "\t" + stat[6] + "\t" + stat[7] + "\t" + stat[8] + "\t" 
+				+ stat[13] + "\t" + stat[14] + "\t" + stat[15] + "\t" + stat[16] + "\t"
+				+ stat[9] + "\t" + stat[10] + "\t" + stat[11] + "\t" + stat[12] +"\n");
+				bw.flush();
+			//System.out.println("\t" + checkPeptidepair(bestpeptide, query.peptide));	
+		}catch(IOException ioe){
+			System.err.println(ioe.getMessage());
+			ioe.printStackTrace();
+		}
+	}	
 	private void insertBestPair(List<Spectrum> candidate, double score, TreeMap<Double, List<Spectrum>> bestPairs, int numKept){
 		if(bestPairs.containsKey(score)){
 			//score = score + 0.00000001;  //avoid duplicate scores   @TODO maybe should add check to make sure the canddiate pairs are not the same

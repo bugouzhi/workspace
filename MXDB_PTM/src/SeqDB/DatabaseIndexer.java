@@ -14,7 +14,11 @@ import java.util.List;
 import java.util.HashMap;
 import sequences.*;
 /**
- * A simple database indexer for protein sequences, index all peptides
+ * A simple database indexer for protein sequences, index peptides by parentmass
+ * Several parameters determine possible peptides from proteins
+ * 1) length of peptides
+ * 2) enzyme specificity
+ * 3) number of mis-cleavages
  * @author Jian Wang
  *
  */
@@ -24,10 +28,10 @@ public class DatabaseIndexer {
 	private String dbPath;
 	private char[] ntermcut; //enzyme specificity, only allow simple rule, cut at specified residues
 	private char[] ctermcut;
-	private int numMissCut;
 	private boolean ntermNonEnzy=false; //allow terminus to be non-enzymatic
 	private boolean ctermNonEnzy=false;
 	public double resolution=1.0; //this field should be set only during construction, ohterwise will mess up the key mapping	
+	private int numMissCut = 3;
 	public static final char WILDCARD = '*';
 	FastaSequence seq;
 	LargeHashMap peptidesIndex;
@@ -35,13 +39,28 @@ public class DatabaseIndexer {
 	
 	
 	public DatabaseIndexer(String dbPath){
-		this(dbPath, new char[]{'R', 'K', '_'}, new char[]{'R', 'K'});
-		indexDatabase();
+		this(dbPath, new char[]{'R', 'K', '_'}, new char[]{'R', 'K'});   
 	}
 	
 	public DatabaseIndexer(String dbPath, double resolution){
-		this(dbPath, new char[]{'R', 'K', '_'}, new char[]{'R', 'K'});
-		//this(dbPath, new char[]{'F', 'Y', 'W', 'L', '_'}, new char[]{'F', 'Y', 'W', 'L'});
+		this(dbPath, new char[]{'R', 'K', '_'}, new char[]{'R', 'K'}, 3, resolution);
+		//this(dbPath, new char[]{'R', 'K'}, new char[]{'R', 'K'});
+		//this(dbPath, new char[]{'F', 'Y', 'W', 'L', 'K', 'R', 'A', 'E', '_'}, new char[]{'F', 'Y', 'W', 'L'});
+		//this.resolution = resolution;
+		//indexDatabase();
+	}
+	
+	public DatabaseIndexer(String dbPath, String[] ntermcut, String[] ctermcut, int misses, double resolution){
+		this.dbPath = dbPath;
+		this.ntermcut = new char[ntermcut.length];
+		this.ctermcut = new char[ctermcut.length];
+		for(int i = 0; i < ntermcut.length; i++){
+			this.ntermcut[i] = ntermcut[i].charAt(0);
+		}
+		for(int i = 0; i < ctermcut.length; i++){
+			this.ctermcut[i] = ctermcut[i].charAt(0);
+		}
+		this.numMissCut = misses;
 		this.resolution = resolution;
 		indexDatabase();
 	}
@@ -50,6 +69,16 @@ public class DatabaseIndexer {
 		this.dbPath = dbPath;
 		this.ntermcut = ntermcut;
 		this.ctermcut = ctermcut;
+		indexDatabase();
+	}
+	
+	public DatabaseIndexer(String dbPath, char[] ntermcut, char[] ctermcut, int numMisses, double resolution){
+		this.dbPath = dbPath;
+		this.ntermcut = ntermcut;
+		this.ctermcut = ctermcut;
+		this.numMissCut = numMisses;
+		this.resolution = resolution;
+		indexDatabase();
 	}
 	
 	private boolean isIndexed(String dbPath){
@@ -70,86 +99,92 @@ public class DatabaseIndexer {
 	 */
 	private String getIndexFileName(String dbPath){
 		StringBuffer indexFile = new StringBuffer(dbPath);
-		indexFile.append("_len" + this.MINPEPLENGTH +"_" + this.MAXPEPLENGTH+"_spec_");
+		indexFile.append(+ this.MINPEPLENGTH + this.MAXPEPLENGTH+"mis"+this.numMissCut);
 		for(int i = 0; i < this.ntermcut.length; i++){
-			indexFile.append(this.ntermcut[i]);
+			if(this.ntermcut[i] == WILDCARD){
+				indexFile.append("All");
+			}else{
+				indexFile.append(this.ntermcut[i]);
+			}
 		}
-		indexFile.append("_");
-		for(int i = 0; i < this.ntermcut.length; i++){
-			indexFile.append(this.ntermcut[i]);
+		for(int i = 0; i < this.ctermcut.length; i++){
+			if(this.ctermcut[i] == WILDCARD){
+				indexFile.append("All");
+			}else{
+				indexFile.append(this.ctermcut[i]);
+			}
 		}
-		indexFile.append("_resolu_" + (int)(1000/this.resolution) + ".map");
+		indexFile.append("res" + (int)(1000/this.resolution) + ".map");
 		return indexFile.toString();
 	}
 	
+	/**
+	 * 
+	 */
 	public void indexDatabase(){
-		this.seq = new FastaSequence(this.dbPath);
-		if(isIndexed(this.dbPath)){
-			this.peptidesIndex = new LargeHashMap(getIndexFileName(this.dbPath));
-			this.peptidesIndex.loadLibraryFromFile(getIndexFileName(this.dbPath));
-			System.out.println("Index existed already, reading indexes");
-			return;
-		}
+		this.seq = new FastaSequence(this.dbPath);		
 		Map<Integer, List<PeptideLite>> table = new HashMap();
-		//Map<Integer, List<int[]>> table = new HashMap();
 		long beginIndex = 1;
 		double currentMass = 0.0;
 		int count = 0;
+		String indexPath = getIndexFileName(this.dbPath);
+		File index = new File(indexPath);
+		System.out.println("Database used: " + indexPath);
+		System.out.println(index.getAbsolutePath());
+		if(index.exists()){
+			this.peptidesIndex = new LargeHashMap(indexPath);
+			this.peptidesIndex.loadLibraryFromFile(this.peptidesIndex.getLibraryObjectFile());
+			return;
+		}
+		System.out.println("Start indexing database file");
 		for(long size = this.seq.getSize(); beginIndex < size-MAXPEPLENGTH;){
 			//System.out.println(beginIndex);
 			currentMass = 0.0;
 			//System.out.println("first cut: " + seq.getCharAt(beginIndex-1));
-			for(long j = 0; j < MAXPEPLENGTH; j++){
+			int misscount = 0;
+			for(long j = 0; j < MAXPEPLENGTH && misscount <= this.numMissCut; j++){
 				char c = seq.getCharAt(beginIndex+j);
 				//System.out.println("current char: " + c);
-				//System.out.println("current seq: " + this.seq.getSubsequence(beginIndex, beginIndex+j));
 				currentMass += Mass.getAAMass(c);
 				if(seq.isTerminator(beginIndex+j)){
 					currentMass -= Mass.getAAMass(c);
 					int key = getKey(currentMass);
 					List<PeptideLite> candList;
-					//List<int[]> candList;
 					if(table.containsKey(key)){
 						candList=table.get(key);
 					}else{
 						candList = new ArrayList();
 					}
 					//System.out.println("end: " + this.seq.getSubsequence(beginIndex, beginIndex+j) + "\t" + currentMass);
-					if(j >= MINPEPLENGTH){
-						candList.add(new PeptideLite((int)beginIndex, (int)(beginIndex+j-1)));
-						//candList.add(new int[]{(int)beginIndex, (int)(beginIndex+j-1)});
-						table.put(key, candList);
-						count++;
-					}
+					candList.add(new PeptideLite((int)beginIndex, (int)(beginIndex+j-1)));
+					table.put(key, candList);
+					count++;
 					break;
 				}
 				
-				if(j < MINPEPLENGTH-1 || currentMass > 10000){
-					continue;
-				}
-				
 				if(checkCterm(c)){
-					//System.out.println("second cut: " + seq.getCharAt(beginIndex+j));
-					int key = getKey(currentMass);
-					List<PeptideLite> candList;
-					//List<int[]> candList;
-					if(table.containsKey(key)){
-						candList=table.get(key);
-					}else{
-						candList = new ArrayList();
+					misscount++;
+					if(j >= MINPEPLENGTH-1 && currentMass < 100000){
+						//System.out.println("second cut: " + seq.getCharAt(beginIndex+j));
+						int key = getKey(currentMass);
+						List<PeptideLite> candList;
+						if(table.containsKey(key)){
+							candList=table.get(key);
+						}else{
+							candList = new ArrayList();
+						}
+						//System.out.println(this.seq.getSubsequence(beginIndex, beginIndex+j+1) + "\t" + currentMass + "\t" + misscount);
+						//System.out.println("current mass is: " + currentMass);
+						candList.add(new PeptideLite((int)beginIndex, (int)(beginIndex+j)));
+						table.put(key, candList);
+						count++;
 					}
-					//System.out.println(this.seq.getSubsequence(beginIndex, beginIndex+j+1) + "\t" + currentMass);
-					//System.out.println("current mass is: " + currentMass);
-					candList.add(new PeptideLite((int)beginIndex, (int)(beginIndex+j)));
-					//candList.add(new int[]{(int)beginIndex, (int)(beginIndex+j-1)});
-					table.put(key, candList);
-					count++;
 				}
 			}
 			beginIndex = nextBeginIndex(beginIndex);
 		}
 		System.out.println("Done indexing, indexed peptides: " + count);
-		this.peptidesIndex = new LargeHashMap(getIndexFileName(this.dbPath));
+		this.peptidesIndex = new LargeHashMap(indexPath);
 		this.peptidesIndex.buildTable(table);
 		this.peptidesIndex.loadLibraryFromFile(this.peptidesIndex.getLibraryObjectFile());
 	}
@@ -211,7 +246,8 @@ public class DatabaseIndexer {
 	private long nextBeginIndex(long start){
 		for(long i = start, size = this.seq.getSize(); i < size; i++){
 			for(int j = 0; j < ntermcut.length; j++){
-				if(this.seq.getCharAt(i) == ntermcut[j]){
+				if(this.seq.getCharAt(i) == ntermcut[j] 
+						|| this.seq.isTerminator(i)){
 					return i+1;
 				}
 			}

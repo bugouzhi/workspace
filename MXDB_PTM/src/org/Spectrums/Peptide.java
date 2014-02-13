@@ -5,6 +5,8 @@ import java.util.ArrayList;
 
 import org.apache.commons.collections.MultiMap;
 
+import sequences.FastaSequence;
+
 /**
  * Represent a peptide 
  * @author jian wang
@@ -22,6 +24,9 @@ public class Peptide implements Serializable{
 	private double parentmass;
 	private boolean isDecoy = false;
 	private int linkedPos = -1; //-1 can mean it has not been setted yet
+	private int beginIndex;
+	private int endIndex;
+	private FastaSequence fastaseq;
 	
 	public int getLinkedPos() {
 		return linkedPos;
@@ -50,6 +55,30 @@ public class Peptide implements Serializable{
 		this.parentmass = parentmass;
 	}
 	
+	public int getBeginIndex() {
+		return beginIndex;
+	}
+
+	public void setBeginIndex(int beginIndex) {
+		this.beginIndex = beginIndex;
+	}
+
+	public int getEndIndex() {
+		return endIndex;
+	}
+
+	public void setEndIndex(int endIndex) {
+		this.endIndex = endIndex;
+	}
+	
+	public FastaSequence getFastaseq() {
+		return fastaseq;
+	}
+
+	public void setFastaseq(FastaSequence fastaseq) {
+		this.fastaseq = fastaseq;
+	}
+
 	public Peptide(){
 		
 	}
@@ -86,6 +115,9 @@ public class Peptide implements Serializable{
 		this.pos = new int[p.pos.length];
 		this.ptmmasses =  new double[p.ptmmasses.length];
 		this.linkedPos = p.linkedPos;
+		this.beginIndex = p.getBeginIndex();
+		this.endIndex = p.getEndIndex();
+		this.fastaseq = p.getFastaseq();
 		for(int i = 0; i < p.pos.length; i++){
 			this.pos[i] = p.pos[i];
 		}

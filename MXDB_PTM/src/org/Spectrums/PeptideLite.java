@@ -75,7 +75,7 @@ public class PeptideLite implements Serializable{
 	public PeptideLite(int beginInd, int endInd){
 		this(beginInd, endInd, "", 1);
 	}
-	
+
 	public String getPep(){
 		return this.protein.substring((int)beginInd, (int)endInd);
 	}

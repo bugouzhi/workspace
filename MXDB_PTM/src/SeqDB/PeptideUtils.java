@@ -45,6 +45,9 @@ public class PeptideUtils {
 			if(!strs.contains(s)){
 				Peptide p = new Peptide(s+"."+1);
 				double parentMass = p.getParentmass();
+				p.setBeginIndex(pep.getBeginInd());
+				p.setEndIndex(pep.getEndInd());
+				p.setFastaseq(seq);
 				for(int c = 0; c <= C13; c++){
 					double fromMassIso = fromMass - c*offset;
 					double toMassIso = toMass - c*offset;

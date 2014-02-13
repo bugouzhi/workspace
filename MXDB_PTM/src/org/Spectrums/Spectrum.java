@@ -1620,31 +1620,31 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		for(int i = 0; i < this.peaks.size(); i++){
 			Peak p = this.peaks.get(i);
 			if(Math.abs(p.getMass() - this.parentMass) < tolerance){
-				System.out.println("removing " + p);
+				//System.out.println("removing " + p);
 				toBeRemoved.add(p);
 			}
 			
 			if(Math.abs(p.getMass() - 
 					(this.parentMass - Mass.WATER/this.charge)) < tolerance){
-				System.out.println("removing " + p);
+				//System.out.println("removing " + p);
 				toBeRemoved.add(p);
 			}
 			
 			if(Math.abs(p.getMass() - 
 					(this.parentMass - Mass.NH3/this.charge)) < tolerance){
-				System.out.println("removing " + p);
+				//System.out.println("removing " + p);
 				toBeRemoved.add(p);
 			}
 			
 			if(Math.abs(p.getMass() - 
 					(this.parentMass - 2*Mass.WATER/this.charge)) < tolerance){
-				System.out.println("removing " + p);
+				//System.out.println("removing " + p);
 				toBeRemoved.add(p);
 			}
 			
 			if(Math.abs(p.getMass() - 
 					(this.parentMass - (Mass.WATER+Mass.NH3)/this.charge)) < tolerance){
-				System.out.println("removing " + p);
+				//System.out.println("removing " + p);
 				toBeRemoved.add(p);
 			}
 		}

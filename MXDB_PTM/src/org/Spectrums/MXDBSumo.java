@@ -1,12 +1,12 @@
 package org.Spectrums;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import mixdb.ArraySpectrumComparator;
 import mixdb.LinkedScorerAdapter;
@@ -33,8 +33,11 @@ public class MXDBSumo {
 	public String mixtureTraining = "";
 	public int minScan = 0;
 	public int maxScan = 0;
+	public String outFile = "";
 	public String[] ptms = new String[]{"Z", "QQQTGG", "Q-17.027QQTGG"};
-	
+	public String[] Ncuts=new String[]{"K", "R"};
+	public String[] Ccuts=new String[]{"K", "R"};
+	public int miscleaves=1;
 	
 	public MXDBSumo(){
 		
@@ -49,10 +52,11 @@ public class MXDBSumo {
 			iter = new MZXMLReader(queryFile);
 		}
     	LookUpSpectrumLibXX lookup = new LookUpSpectrumLibXX();
-
-    	peptideFile = "../mixture_linked/database/lib_sumo_peptides_plusHuman_plusDecoy.fasta";
-    	DatabaseIndexer db = new DatabaseIndexer(peptideFile, 0.01);
-    	
+    	//peptideFile = "../mixture_linked/database/lib_sumo_peptides_plusHuman_plusDecoy.fasta";
+    	DatabaseIndexer db = new DatabaseIndexer(peptideFile, this.Ncuts, this.Ccuts, this.miscleaves, 0.01);
+    	//DatabaseIndexer db = new DatabaseIndexer(peptideFile, 0.01);
+    	this.queryFile = queryFile;
+    	BufferedWriter bw = Utils.FileIOUtils.initOutputStream(this.outFile);
     	lookup.setParentMassTolerance(this.parentMassTolerance);
     	lookup.setMinMatchedPeak(-1);
     	lookup.setMinContinuousMatch(-1);
@@ -60,7 +64,7 @@ public class MXDBSumo {
     	lookup.setMaxCharge(1);
     	lookup.loadPeptidesFromFileLite(peptideFile);
     	lookup.setToleranceMode(this.mode);
-    	System.out.println("start searching");
+    	System.out.println("start searching2");
     	long start = (new GregorianCalendar()).getTimeInMillis();
     	SimpleProbabilisticScorer scorer1 = (SimpleProbabilisticScorer)SpectrumUtil.getLPeakRankBaseScorer(training);
     	scorer1.matchToleranceMode = this.fragmentMode;
@@ -178,8 +182,17 @@ public class MXDBSumo {
 				searcher.matchTolerance = this.fragmentMassTolerance/1000;
 			}
 			//searcher.topLinkedSpectra(s, 10);
+			searcher.queryFile = this.queryFile;
+			searcher.bw = bw;
 			searcher.topArrayCandidates(s, 10);
+			try{
+				bw.flush();
+			}catch(IOException ioe){
+				
+			}
+		System.out.println("change something....");
     	}
+		Utils.FileIOUtils.finishOutput(bw);
  	}
 	
 	public static void testMXDBSUMO(String inFile){
@@ -191,6 +204,9 @@ public class MXDBSumo {
 		TheoreticalSpectrum.suffixIons = suffixes;
 		String[] ptms = arguments.get("PTMTag").split(",");
 		mxdb.ptms = ptms;
+		mxdb.Ncuts = arguments.get("NtermCut").split(",");
+		mxdb.Ccuts = arguments.get("CtermCut").split(",");
+		mxdb.miscleaves = Integer.parseInt(arguments.get("Miscleaves"));
 		mxdb.mixtureTraining = arguments.get("MixtureTraining");
 		mxdb.training = arguments.get("Training");
 		mxdb.parentMassTolerance = Double.parseDouble(arguments.get("ParentMassTolerance"));
@@ -203,6 +219,7 @@ public class MXDBSumo {
 		mxdb.fragmentMode = Integer.parseInt(arguments.get("FragmentMode"));
 		mxdb.minScan = Integer.parseInt(arguments.get("MinScan"));
 		mxdb.maxScan = Integer.parseInt(arguments.get("MaxScan"));
+		mxdb.outFile = arguments.get("OutputFile");
 		mxdb.search(queryFile, peptideFile);
 	}
 	
