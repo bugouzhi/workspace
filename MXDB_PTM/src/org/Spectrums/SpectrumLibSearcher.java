@@ -264,7 +264,7 @@ public class SpectrumLibSearcher {
 			currScore = this.comparator.compare(curr, aSpect);
 			if(currScore > bestScore){
 				bestList.put(currScore, this.specList.get(i));
-				if(bestList.size() >= topN){
+				if(bestList.size() >= topN && bestList.size() > 1){
 					bestList.pollFirstEntry();
 					bestScore = bestList.firstKey().doubleValue();
 				}
@@ -286,24 +286,24 @@ public class SpectrumLibSearcher {
 			if(print){
 				printTopLinkedCandidateInfo(query, currpair);
 			}
-			if(peps.length == 2){
-				String pepseq = currbest.getPeptide().split("\\.")[0];
-				if(pepseq.equals(peps[0]) && rank1 < 0){
-					rank1 = i+1;
-				}
-				if(pepseq.equals(peps[1]) && rank1 < 0){
-					rank2 = i+1;
-				}
-				System.out.println("Query " + query.spectrumName + "\t" + query.peptide +  " with top answer is: " 
-					+ currbest.getPeptide()+ "\t" + currbest.charge +" " 
-					+ " score: " + bestEntry.getKey());
-			}
+//			if(peps.length == 2){
+//				String pepseq = currbest.getPeptide().split("\\.")[0];
+//				if(pepseq.equals(peps[0]) && rank1 < 0){
+//					rank1 = i+1;
+//				}
+//				if(pepseq.equals(peps[1]) && rank1 < 0){
+//					rank2 = i+1;
+//				}
+//				System.out.println("Query " + query.spectrumName + "\t" + query.peptide +  " with top answer is: " 
+//					+ currbest.getPeptide()+ "\t" + currbest.charge +" " 
+//					+ " score: " + bestEntry.getKey());
+//			}
 			bestCands[i] = currbest;
 			i++;
 		}
-		if(peps.length == 2){
-			System.out.println("linked-peps ranks " + rank1 + "\t" + rank2);
-		}
+//		if(peps.length == 2){
+//			System.out.println("linked-peps ranks " + rank1 + "\t" + rank2);
+//		}
 		
 		//System.out.println("best has size: " + bestList.size());
 		//printTopCandidatesInfo(query, bestList);

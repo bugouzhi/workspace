@@ -20,6 +20,7 @@ public class Mass {
 	public static double DEUTERIUM = 2.0136;
 	public static double C13 = 13.00335;
 	public static double C12 = 12.0000;
+	public static double IsoDiff = C13 - C12;
 	public static double WATER = 18.0106;
 	public static double NH3 = 17.0265;
 	public int AA_ALPHABET_SIZE = 30;
@@ -31,7 +32,8 @@ public class Mass {
 	public static String[] standardSuffixes = {	"y", "y-H20", "y-NH3","y-H20-H20", "y-H20-NH3", "y(iso)"};
 	public static String[] standardPrefixesX = {"b",  "b(iso)", "b(X)", "b(Xiso)", "b-H20", "b-NH3","b-H20-H20", "b-H20-NH3"}; //with isotop-coded xlinker
 	public static String[] standardSuffixesX = {"y", "y(iso)", "y(X)", "y(Xiso)", "y-H20", "y-NH3","y-H20-H20", "y-H20-NH3"};
-
+	public static final int DIFF_DA = 1;
+	public static final int DIFF_PPM = 2;
 	public static double maxAAMass = 200;	
 	public static HashMap initialize(){
 		String file = "/Resources/IonsMod.txt";
@@ -126,6 +128,48 @@ public class Mass {
 		}
 		return false;
 	}
+	
+	/**
+	 * Check whether mass1 and mass2 is within certain mass tolerance
+	 * @param mass1
+	 * @param mass2
+	 * @param tolerance
+	 * @param mode - unit of mass difference, can be dalton: Mass.DIFF_DA or PPM: Mass.DIFF_PPM
+	 * @return
+	 */
+	public static boolean checkMass(double mass1, double mass2, double tolerance, int mode){
+		 double diff = mass1 - mass2;
+		 diff = Math.abs(diff);
+		//System.out.println("diff: " + diff + "\t" + diff*1000000/precursor +"\t" + tolerance + "\t" + (diff < tolerance));
+		 if(mode == DIFF_DA){
+			 return diff < tolerance;
+		 }
+		 if(mode == DIFF_PPM){
+			 return diff*1000000/mass1 < tolerance;
+		 }
+		 return false;
+	}
+
+	/**
+	 * Check whether mass1 is same as mass2 is within certain mass tolerance
+	 * or whether mass1 is within kth isotopes of mass2
+	 * @param mass1
+	 * @param mass2
+	 * @param tolerance
+	 * @param charge
+	 * @param numC13 - number of isotopes to consider
+	 * @param mode
+	 * @return
+	 */
+	public static boolean checkMassWithIso(double mass1, double mass2, double tolerance, int charge , int numC13, int mode){
+		for(int i = 0; i <= numC13; i++){
+			if(checkMass(mass1, mass2+i*Mass.IsoDiff/charge, tolerance, mode)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	
 	public static void main(String[] args){
 		System.out.println("hihi");

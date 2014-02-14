@@ -55,7 +55,8 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		this.peaks =new ArrayList<Peak>();
 		this.spectrumName = s.spectrumName;
 		this.peptide = s.peptide;
-	    this.modMass = s.modMass;
+	    this.protein = s.protein;
+		this.modMass = s.modMass;
 		this.modPos = s.modPos;
 		this.charge = s.charge;
 		this.parentMass = s.parentMass;

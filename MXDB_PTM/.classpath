@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="org/Spectrums/MZMLReader.java|org/Spectrums/ProteinDigester.java" kind="src" path="src"/>
+	<classpathentry excluding="org/Spectrums/MZMLReader.java|org/Spectrums/ProteinDigester.java|mixdb/SuffArrayTest.java|msgf/BacktrackTable.java|msgf/GeneratingFunction.java|msgf/ToolLauncher.java|msgf/AAFrequencyCounter.java|msgf/AminoAcidGraph.java|msgf/BacktrackPointer.java|msgf/DeNovoSequencer.java|msgf/FlexAminoAcidGraph.java|msgf/GeneratingFunctionGroup.java|msgf/GenericDeNovoGraph.java|msgf/GF.java|msgf/Histogram.java|msgf/IntHistogram.java|msgf/LengthPredictor.java|msgf/MSGFDBResultGenerator.java|msgf/MSGFResult.java|msgf/ProfileGF.java" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Graph"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/MixDB"/>
 	<classpathentry kind="lib" path="C:/Users/Jian/workspace/external_lib/biojava3-alignment-3.0.4.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Jian/workspace/external_lib/biojava3-core-3.0.4.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Jian/workspace/external_lib/biojava3-structure-3.0.4.jar"/>

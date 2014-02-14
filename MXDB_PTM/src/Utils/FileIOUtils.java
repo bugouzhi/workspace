@@ -47,10 +47,13 @@ public class FileIOUtils {
 				// System.out.println("line is: " + line);
 				token = line.split("\\t");
 				if(token.length < 2){
+					line = bf.readLine();
 					continue; //skipp white-space line
 				}
 				table.put(token[index1], token[index2]);
 				line = bf.readLine();
+				//System.out.println(line);
+				
 			}
 			bf.close();
 			System.out.println("reading in " + table.keySet().size() + " lines from file");
@@ -80,7 +83,7 @@ public class FileIOUtils {
 		}catch(NullPointerException e){
 			System.out.println("Error reading in file: " + file);
 			System.out.println(e.getMessage());
-			System.out.println(e.getStackTrace());
+			e.printStackTrace();
 		}
 		//System.out.println("readed in " + lines.size() + " lines");
 		return lines;

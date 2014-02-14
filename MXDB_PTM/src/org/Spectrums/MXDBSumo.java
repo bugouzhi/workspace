@@ -184,13 +184,12 @@ public class MXDBSumo {
 			//searcher.topLinkedSpectra(s, 10);
 			searcher.queryFile = this.queryFile;
 			searcher.bw = bw;
-			searcher.topArrayCandidates(s, 10);
+			searcher.topArrayCandidates(s, 1);
 			try{
 				bw.flush();
 			}catch(IOException ioe){
 				
 			}
-		System.out.println("change something....");
     	}
 		Utils.FileIOUtils.finishOutput(bw);
  	}
@@ -207,8 +206,8 @@ public class MXDBSumo {
 		mxdb.Ncuts = arguments.get("NtermCut").split(",");
 		mxdb.Ccuts = arguments.get("CtermCut").split(",");
 		mxdb.miscleaves = Integer.parseInt(arguments.get("Miscleaves"));
-		mxdb.mixtureTraining = arguments.get("MixtureTraining");
-		mxdb.training = arguments.get("Training");
+		mxdb.mixtureTraining = arguments.get("MixtureModel");
+		mxdb.training = arguments.get("SingleModel");
 		mxdb.parentMassTolerance = Double.parseDouble(arguments.get("ParentMassTolerance"));
 		mxdb.fragmentMassTolerance = Double.parseDouble(arguments.get("FragmentMassTolerance"));
 		mxdb.topPeaksKept = Integer.parseInt(arguments.get("TopPeaksKept"));
