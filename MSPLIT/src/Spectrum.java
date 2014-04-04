@@ -534,13 +534,19 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 					
 				}else if(line.startsWith("PEPSEQ") || line.startsWith("SEQ")){
 					this.peptide = (line.split("="))[1];
+					//when peptide is of the form *.XXXXXXXX.*, we just extract the peptide
+					//if(this.peptide.charAt(1) == '.' 
+					//		&& this.peptide.charAt(this.peptide.length()-2) == '.'){
+					//	this.peptide = this.peptide.substring(2, this.peptide.length()-2);
+						//System.out.println("Readed peptide: " + this.peptide);
+					//}
 					//this.peptide = this.peptide + "." + this.charge;
 				}else if(line.startsWith("PROTEIN")){
 					this.protein = (line.split("="))[1];
 				}else if(line.startsWith("TITLE")){
 					String[] tokens = line.split("=");
 					if(tokens.length > 1){
-						this.peptide = (line.split("="))[1];
+						//this.peptide = (line.split("="))[1];
 						//this.peptide = this.peptide + "." + this.charge;
 						this.spectrumName = (line.split("="))[1];
 						if(this.spectrumName.contains("Scan Number:")){

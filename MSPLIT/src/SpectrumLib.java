@@ -104,6 +104,7 @@ public class SpectrumLib implements Iterable, Serializable{
 			Vector v;
 			int count = 1;
 			while(success){
+				//System.out.println(s.spectrumName + "\t" + s.peptide);
 				if(spectrumLibrary.containsKey(s.peptide)){
 					v = (Vector)spectrumLibrary.get(s.peptide);
 				}else{
@@ -1324,8 +1325,10 @@ public class SpectrumLib implements Iterable, Serializable{
 			counts=1;
 		}
 		try{
-			String peptide1 = new Peptide(best1.peptide+"."+best1.charge).toString();
-			String peptide2 = new Peptide(best2.peptide+"."+best2.charge).toString();	
+			//String peptide1 = new Peptide(best1.peptide+"."+best1.charge).toString();
+			//String peptide2 = new Peptide(best2.peptide+"."+best2.charge).toString();	
+			String peptide1 = best1.peptide;
+			String peptide2 = best2.peptide;
 			//protein field in NIST and sptxt format has extra " in the beginning
 			//don't want to output them
 			if(best1.protein.contains("\"")){
@@ -2022,6 +2025,11 @@ public Spectrum filterAndSearch(Spectrum mix) {
 				if(mixture.scanNumber != 24120){
 					//continue;
 				}
+				//if spectrum has too few peaks, we skip it as it has
+				//small chance of finding any significant identification
+				if(mixture.getPeak().size() < 5){
+					continue; 
+				}
 				mixture.scaleMass(0.9995);
 				mixture.windowFilterPeaks(10, 25);
 				mixture = mixture.toNormVector(massTolerance*2, massTolerance, 2000);
@@ -2090,10 +2098,10 @@ public Spectrum filterAndSearch(Spectrum mix) {
 			throw new IllegalArgumentException("java -jar MSPLIT.jar <library file> <query spectrum file> <precursor mass tolerance> <outputfile>");
 			
 		}else{
-			//args[0]= "../mixture_linked/ACG_swathdevelopment_P94_UPS_Ecoli_MSGFDB_IDs_uniqpeps_plusDecoy2_test.mgf";
-			//args[1]= "../mixture_linked/msdata/MSPLIT_test_data/20131002_MPit1_Ex1_702_0h.mgf";
+			//args[0]= "../mixture_linked/spectral_library/yeast_sigma/librarySTRIPPED_combined.mgf";
+			//args[1]= "../mixture_linked/yeast_data/klc_010908p_yeast-digest.mzXML";
 			//args[2] = "3";
-			///args[3] = "../mixture_linked/out.txt";
+			//args[3] = "../mixture_linked/out.txt";
  			String filename = args[0];
 			String fileMix = args[1];
 			String fileout = args[3];
