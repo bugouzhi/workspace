@@ -18,6 +18,8 @@ public class PeptideLite implements Serializable{
 	private int endInd;
 	private int charge;
 	private String protein;
+	private FastaSequence fastaseq;
+	
 	public String getProtein() {
 		return protein;
 	}
@@ -25,8 +27,6 @@ public class PeptideLite implements Serializable{
 	public void setProtein(String protein) {
 		this.protein = protein;
 	}
-
-	private FastaSequence fastaseq;
 	
 	public PeptideLite(int beginInd, int endInd, String proteins, int charge){
 		this.beginInd= beginInd;

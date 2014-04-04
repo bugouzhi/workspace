@@ -344,7 +344,7 @@ public class FastaSequence implements Sequence, Serializable{
 	public FastaSequence(String filepath, String alphabet, String seqExtension) {
 
 		this.seqExtension = seqExtension;
-
+		//System.out.println(filepath);
 		String[] tokens = filepath.split("\\.");
 		String extension = tokens[tokens.length-1];
 		String basepath = filepath.substring(0, filepath.length()-extension.length()-1);

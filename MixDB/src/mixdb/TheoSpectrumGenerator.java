@@ -53,6 +53,7 @@ public class TheoSpectrumGenerator {
 	
 	public Collection<Spectrum> getCandidates(Spectrum s, double parentMassTolerance){
 		List<Spectrum> theoCands = new ArrayList();
+		//DEBUG = true;
 		for(int c = minCharge; c <= maxCharge; c++){
 			double pm = s.parentMass*c-Mass.WATER-c*Mass.PROTON_MASS;
 			double tolerance = parentMassTolerance*c;
@@ -79,7 +80,7 @@ public class TheoSpectrumGenerator {
 			current = (Spectrum)iter.next();
 			//if(Math.abs(s.parentMass - current.parentMass) > parentMassTolerance 
 			//		|| (matchCharge && s.charge != current.charge)){
-			if(current.parentMass - s.parentMass < -4 && current.parentMass - s.parentMass > 25){
+			if(current.parentMass - s.parentMass < -25 || current.parentMass - s.parentMass > 25){
 				iter.remove();
 			}
 		}

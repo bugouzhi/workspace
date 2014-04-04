@@ -448,7 +448,7 @@ public class SpectrumLibSearcher {
 		TreeMap<Double, List<Spectrum>> bestList = new TreeMap();
 		double bestScore = -1000000.0, currScore = 0.0;
 		int maxIndex = this.spectrumScorePairs.size()-1;
-		int topK = 5, topK2 = 2000;
+		int topK = 20, topK2 = 2000;
 		int firstIndex = maxIndex - 20, secondIndex = maxIndex - 500;
 		int count = 0;
 		firstIndex = firstIndex < 0 ? 0 : firstIndex;	
@@ -458,6 +458,7 @@ public class SpectrumLibSearcher {
 			List<Spectrum> cand = new ArrayList();
 			cand.add(this.spectrumScorePairs.get(maxIndex-i).s);
 			SpectrumScorePair curr = this.spectrumScorePairs.get(maxIndex-i);
+			System.out.println(((ArrayTheoreticalSpectrum)curr.s).getPeplite() +  "\t" + curr.s.parentMass + "\t score is: " + curr.score);
 			insertBestPair(cand, curr.score, bestListPrev, topK);
 		}
 
@@ -471,6 +472,7 @@ public class SpectrumLibSearcher {
 					Spectrum mix = MixTheoSpectrumFactory.getMixTheoSpectrum((ArrayTheoreticalSpectrum)s, (ArrayTheoreticalSpectrum)s2, m);
 					count++;
 					currScore = this.comparator.compare(mix, mixturequery);
+					System.out.println(mix.peptide + "\t" + currScore);
 					if(currScore > bestScore){
 						List<Spectrum> cand = new ArrayList();
 						cand.add(mix);
@@ -681,11 +683,10 @@ public class SpectrumLibSearcher {
 	}
 	
 	private void sortSpecListByScore(Spectrum query){
-		//System.out.println("Scan: " + query.scanNumber +  "\tlibrary has size: " + this.specList.size());
+		System.out.println("Scan: " + query.scanNumber +  "\tlibrary has size: " + this.specList.size());
 		for(Iterator<SpectrumScorePair> it = spectrumScorePairs.iterator(); it.hasNext();){
 			SpectrumScorePair curr = it.next();
 			curr.score = this.filter.compare(curr.s, query);
-			//System.out.println(((ArrayTheoreticalSpectrum)curr.s).getPeplite() +  "\t" + curr.s.parentMass + "\t score is: " + curr.score);
 		}
 		Collections.sort(this.spectrumScorePairs);
 	}

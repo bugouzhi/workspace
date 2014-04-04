@@ -156,12 +156,13 @@ public class MixDBSearcher extends SimpleDBSearcher{
 //			System.out.println(s.scanNumber + "\t" + s.spectrumName + "\t" + p1 + "\t" + p2 + "\t" + p1.getParentmass() + "\t" + p2.getParentmass());
 			ArraySpectrum a = ArraySpectrum.getRankSpectrum(s);
 			List<Spectrum> cands = new ArrayList();
+			minCharge = 1; maxCharge = 1;
 			for(int c = minCharge; c <= maxCharge; c++){
 				double pm = s.parentMass*c-Mass.WATER-c*Mass.PROTON_MASS;
 				double tolerance = this.parentTolerance*c;
 				cands.addAll(this.theoDB.getCandidates(s, this.parentTolerance));
 			}
-			System.out.println("Number of candidates: " + cands.size());
+			System.out.println(s.spectrumName + "\t" +  s.parentMass + "\t" + s.charge + "\tNumber of candidates: " + cands.size());
 			SpectrumLibSearcher searcher = new SpectrumLibSearcher(cands, this.comp, this.mixScorer);
 			searcher.spectrumFile = this.spectrumFile;
 			searcher.bw = out;
@@ -278,7 +279,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 				continue;
 			}
 			if(s.scanNumber != 9552){
-				continue;
+				//continue;
 			}
 			//s.windowFilterPeaks(topPeakKept, windowWidth);
 			s.windowFilterPeaks(10, 25);
@@ -445,17 +446,18 @@ public class MixDBSearcher extends SimpleDBSearcher{
 	
 	public static void main(String[] args){
 		args[0] = "../mixture_linked/database/UPS_plusEcoli_plusDecoy.fasta";
-		args[1] = "../mixture_linked/msdata/UPS_Ecoli/14344_UPS1_400fm_Ecolilysate_SWATH_5600.mzXML";
-		args[2] = "25.0";
+		args[1] = "../mixture_linked/2Mixtures.mgf";
+		args[2] = "3.0";
 		args[3] = "0.03";
 		args[4] = "../mixture_linked/ACG_14344_hardklorPrecursorsListmin07.txt";
 		//args[5] = "../mixture_linked/Mod_mixdb.txt";
 		args[5] ="../mixture_linked/testmixdb.txt";
-		args[6] = "1003";
+		args[6] = "1";
 		args[7] ="75000";
-		args[8] = "mixtures_TOF_alpha01-10_models.o";
+		args[8] = "mixtures_alpha_generic_TOFmodels.o";
 		if(args.length < 6 || args.length > 9){
-			System.out.println("usage: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <modification file> <outfile>");
+			System.out.println("usage: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <outfile>");
+			System.out.println("   or: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <modification file> <outfile>");
 			System.out.println("   or: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <precursor list> <modification file> <outfile>");
 			return;
 		}
@@ -480,7 +482,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 		//searcher.ptmFile = args[5];
 		System.out.println("Start running");
 		try{
-			if(args.length == 6){
+			if(args.length == 5){
 				//searcher.searchWithMultiPrecursors();
 				searcher.searchDB();
 			}else if(args.length == 7){
@@ -489,7 +491,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 				searcher.searchWithMultiPrecursors();
 			}else if(args.length == 9){
 				//searcher.searchWithMultiPrecursors();
-				searcher.searchDB(5);
+				searcher.searchDB(2);
 			}
 		}catch(Exception e){
 			System.err.println(e.getMessage());
