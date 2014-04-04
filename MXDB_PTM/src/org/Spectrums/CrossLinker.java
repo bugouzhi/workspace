@@ -20,8 +20,8 @@ public class CrossLinker {
 	private static int MONOFUNCTIONAL = 1;
 	private static int BIFUNCTIONAL = 2;
 	private int type; //type of cross-linker, bi-functional or mono-functional so-far, can add more later
-	private double linkerMass = 0.0;
-	private double linkerMassOffSet = 0.0;
+	private double[] linkerMass = new double[]{0.0}; //mass of the cross-linker
+	private double[] linkerMassOffSets = new double[]{0.0}; //mass offset added to linked peptides
 	private int[] targetedPos1 = new int[0]; //targeted position
 	private int[] targetedPos2 = new int[0];
 	private char[] targetedRes1 = new char[0];
@@ -34,7 +34,16 @@ public class CrossLinker {
 
 	//homobifunctional crosslinkers
 	public CrossLinker(double linkerMass, char[] targetedPositions){
-		this.linkerMass = linkerMass;
+		this.linkerMassOffSets = new double[]{linkerMass};
+		this.targetedPos1 = new int[]{CrossLinker.ANYPOSITION};
+		this.targetedPos2 = new int[]{CrossLinker.ANYPOSITION};		
+		this.targetedRes1 = targetedPositions;
+		this.targetedRes2 = targetedPositions;
+	}
+	
+	
+	public CrossLinker(double[] linkerMasses, char[] targetedPositions){
+		this.linkerMassOffSets = linkerMasses;
 		this.targetedPos1 = new int[]{CrossLinker.ANYPOSITION};
 		this.targetedPos2 = new int[]{CrossLinker.ANYPOSITION};		
 		this.targetedRes1 = targetedPositions;
@@ -43,7 +52,7 @@ public class CrossLinker {
 	
 	public CrossLinker(double linkerMass, int[] targetPos1, int[] targetPos2, 
 			char[] targetRes1, char[] targetRes2){
-		this.linkerMass = linkerMass;
+		this.linkerMassOffSets = new double[]{linkerMass};
 		this.targetedPos1 = targetPos1;
 		this.targetedPos2 = targetPos2;
 		this.targetedRes1 = targetRes1;
@@ -51,8 +60,13 @@ public class CrossLinker {
 	}
 	
 	public double getLinkerMassOffSet(){
-		return this.linkerMass;
+		return this.linkerMassOffSets[0];
 	}
+	
+	public double[] getLinkerMassOffSets(){
+		return this.linkerMassOffSets;
+	}
+	
 	
 	//to be implemented
 	//the mass of linker only linked one-side

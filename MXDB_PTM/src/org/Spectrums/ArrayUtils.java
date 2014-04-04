@@ -48,6 +48,13 @@ public class ArrayUtils {
 		return total;
 	}
 	
+	public static double[] shift(double[] arry, double shift){
+		for(int i = 0; i < arry.length; i++){
+			arry[i] += shift;
+		}
+		return arry;
+	}
+	
 	//added a very small number to avoid div-by-zero errors
 	public static void addPseudoCounts(double[][] counts){
 		for(int i = 0; i < counts.length; i++){

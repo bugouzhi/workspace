@@ -42,6 +42,7 @@ public class PeptideMassAnalysis {
 	
 	public static double computeMbyZ(Peptide pep, int charge){
 		double mass = 0;
+		//System.out.println("peptide is: " + pep);
 		if(pep.getPeptide().equals("Z")){
 			mass = Mass.WATER;
 		}else{

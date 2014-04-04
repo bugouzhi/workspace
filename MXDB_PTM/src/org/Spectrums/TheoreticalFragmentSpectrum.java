@@ -100,7 +100,7 @@ public class TheoreticalFragmentSpectrum {
 		full.setPtmmasses(new double[]{sub.getParentmass()});
 		TheoreticalSpectrum t1 = getLinkedSubPeptideSpectrum(sub, matchedPeak, p.getCharge());
 		TheoreticalSpectrum t2 = new TheoreticalSpectrum(full, matchedPeak.getPep().getCharge());
-		TheoreticalSpectrum linked = new TheoreticalSpectrum(full, sub, p.getCharge(), false);
+		TheoreticalSpectrum linked = new TheoreticalSpectrum(full, sub, p.getCharge(), false, Mass.DSSLINKER_MASS);
 		return linked;
 	}
 	

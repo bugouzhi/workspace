@@ -348,7 +348,7 @@ public class LookUpSpectrumLib{
 			//s.computePeakRank();
 			TheoreticalSpectrum t2 
 				= TheoreticalSpectrum.getLinkedTheoreticalSpectrum(peps[0], peps[1], 
-						(short)s.charge, 4, 4);
+						(short)s.charge, 4, 4, Mass.DSSLINKER_MASS);
 			//t2.analyzeAnnotation(s, peps[1]);
 			t2.analyzeMixtureAnnotation(s, peps[0], peps[1]);
 		}

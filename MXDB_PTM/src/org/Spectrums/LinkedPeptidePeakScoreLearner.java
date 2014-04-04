@@ -443,7 +443,7 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 			System.out.println("peptide1 is: " + linked.peptides[0]);
 			System.out.println("peptide2 is: " + linked.peptides[1]);
 			//LinkedPeptide linked = new LinkedPeptide(peptides[0]+"--Z", s.charge, position1, 1);
-			TheoreticalSpectrum t = new TheoreticalSpectrum(linked.peptides[0], linked.peptides[1], (short)s.charge, false);
+			TheoreticalSpectrum t = new TheoreticalSpectrum(linked.peptides[0], linked.peptides[1], (short)s.charge, false, Mass.DSSDANGLE_MASS);
 			SimpleMatchingGraph matchingG = t.getMatchGraph(s, 0.5);
 			//removeSUMO(matchingG, s);
 			//matchingG = t.getMatchGraph(s, 0.05);

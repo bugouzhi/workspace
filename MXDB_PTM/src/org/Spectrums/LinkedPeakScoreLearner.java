@@ -214,41 +214,6 @@ public class LinkedPeakScoreLearner implements PeakComparator{
 		return peptides;
 	}
 	
-	public static List<Peptide> generateLinkedPeptides(List<Peptide> pepList, Spectrum linkedquery){
-		return generateLinkedPeptides(pepList, linkedquery, 'K');
-	}
-	public static List<Peptide> generateLinkedPeptides(List<Peptide> pepList, Spectrum linkedquery, char linkRes){
-		List<Peptide> peptides = new ArrayList<Peptide>();
-		for(Iterator<Peptide> it = pepList.iterator(); it.hasNext();){
-			Peptide p = it.next();
-			String pep = p.getPeptide();
-			//System.out.println(p);
-			double parentmass = linkedquery.parentMass*linkedquery.charge;
-			if(parentmass - p.getParentmass() < 200){
-				continue;
-			}
-			double offset = LookUpSpectrumLibX.getLinkedOffSet(p, linkedquery);
-			int pos = pep.indexOf(linkRes);
-			while(pos >= 0 && pos < pep.length()-1){ //disallow c-term linking
-				Peptide copy = new Peptide(p);
-				//copy.setCharge((short)linkedquery.charge);
-				copy.insertPTM(pos+1, offset);
-				copy.setLinkedPos(pos+1);
-				peptides.add(copy);
-				pos = pep.indexOf(linkRes, pos+1);
-			}			
-//			pos = pep.indexOf('G');
-//			while(pos >= 0){
-//				Peptide copy = new Peptide(p);
-//				copy.insertPTM(pos+1, offset);
-//				copy.setLinkedPos(pos+1);
-//				peptides.add(copy);
-//				pos = pep.indexOf('G', pos+1);
-//			}
-		}
-		return peptides;
-	}
-	
 	public static List<Spectrum> generateSpectra3(List<Peptide> pepList, Spectrum linkedquery){
 		List<Spectrum> specList = new ArrayList<Spectrum>();
 		for(Iterator<Peptide> it = pepList.iterator(); it.hasNext();){
@@ -369,7 +334,7 @@ public class LinkedPeakScoreLearner implements PeakComparator{
 						copy.setPos(new int[]{pos+1});
 						Peptide o = ((TheoreticalSpectrum)topSpectra[j]).p;
 						o.setCharge((short)2); //artifact from making linked peptide need to fix
-						TheoreticalSpectrum th = new LazyEvaluateLinkedSpectrum(o, copy, (short)s.charge);
+						TheoreticalSpectrum th = new LazyEvaluateLinkedSpectrum(o, copy, (short)s.charge, CrossLinker.DSS.getLinkerMassOffSet());
 						//TheoreticalSpectrum th = new TheoreticalSpectrum(p);
 						candidatePairs.add(th);
 						pos = pep2.indexOf('K', pos+1);

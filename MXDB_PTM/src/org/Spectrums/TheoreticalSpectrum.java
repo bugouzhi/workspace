@@ -241,6 +241,7 @@ public class TheoreticalSpectrum extends Spectrum{
 	
 	public TheoreticalSpectrum(Peptide p1, int linkedCharge, String[] prefix, String[] suffix){
 		this.peptide = p1.getPeptide()+"." + linkedCharge;
+		//System.out.println(p1);
 		p1.setCharge((short)linkedCharge);
 		List theoPeaks = this.generatePeaks(p1.getPeptide(), prefix, suffix, p1.getPos(), p1.getPtmmasses(), p1.getCharge());
 		//p1.setCharge((short)1);
@@ -296,11 +297,12 @@ public class TheoreticalSpectrum extends Spectrum{
 		this.charge = charge;
 	}
 	
-	public TheoreticalSpectrum(Peptide p1, Peptide p2, short charge, boolean dummy){
+	public TheoreticalSpectrum(Peptide p1, Peptide p2, short charge, boolean dummy, double linkerOffset){
 		super();
 		this.peptide = p1 + " & " + p2;
 		//System.out.println("p1: " + p1 + "\tp2: " + p2);
-		this.p = new LinkedPeptide(p1, p2, charge);
+		this.p = new LinkedPeptide(p1, p2, charge, linkerOffset);
+		
 //		System.out.println("Peptide pairs are: " + p1 + "\t" + p1.getCharge() + "\t" + p1.getParentmass() + "\t" + p1.getLinkedPos() + "\t"
 //				+ p2 + "\t" + p2.getCharge() + "\t" + p2.getParentmass() + "\t" + p2.getLinkedPos());
 		TheoreticalSpectrum th1 = new TheoreticalSpectrum(p1, charge, this.prefixIons, this.suffixIons);
@@ -435,7 +437,7 @@ public class TheoreticalSpectrum extends Spectrum{
 		this.parentMass= t1.parentMass;
 		this.charge = charge;
 	}
-	public static TheoreticalSpectrum getLinkedTheoreticalSpectrum(String pep1, String pep2, short charge, int linkedPosition1, int linkedPosition2){
+	public static TheoreticalSpectrum getLinkedTheoreticalSpectrum(String pep1, String pep2, short charge, int linkedPosition1, int linkedPosition2, double linkerMassOffset){
 		Peptide p1 = new Peptide(pep1, 1);
 		Peptide p2 = new Peptide(pep2, 1);
 		double mass = (p1.getParentmass() + p2.getParentmass()
@@ -443,10 +445,10 @@ public class TheoreticalSpectrum extends Spectrum{
 				+ Mass.PROTON_MASS*(charge-2))/charge;	
 		double massShift1 = p1.getParentmass();
 		double massShift2 = p2.getParentmass();
- 		p1.insertPTM(p1.getPeptide().indexOf('K')+1, massShift2+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
-		p2.insertPTM(p2.getPeptide().indexOf('K')+1, massShift1+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+ 		p1.insertPTM(p1.getPeptide().indexOf('K')+1, massShift2+linkerMassOffset-Mass.PROTON_MASS);
+		p2.insertPTM(p2.getPeptide().indexOf('K')+1, massShift1+linkerMassOffset-Mass.PROTON_MASS);
 		
-		return new TheoreticalSpectrum(p1, p2, charge, true);
+		return new TheoreticalSpectrum(p1, p2, charge, true, linkerMassOffset);
 	}
 	
 	protected void setPeptide(List peaks, Peptide p){
@@ -2079,7 +2081,7 @@ public class TheoreticalSpectrum extends Spectrum{
 		System.out.println("ptm2 is: " + p2.getPtmmasses()[0]);
 		//TheoreticalSpectrum t1 = new TheoreticalSpectrum(p1, linkedCharge, prefixIons, suffixIons);
 		//TheoreticalSpectrum t2 = new TheoreticalSpectrum(p2, linkedCharge, prefixIons, suffixIons);
-		TheoreticalSpectrum linkedT12 = new TheoreticalSpectrum(p1, p2, (short)linkedCharge, true);
+		TheoreticalSpectrum linkedT12 = new TheoreticalSpectrum(p1, p2, (short)linkedCharge, true, Mass.DSSLINKER_MASS);
 		List<Peak> linkedT12PList = linkedT12.getPeak();
 		for(int i = 0; i < linkedT12PList.size(); i++){
 			System.out.println(linkedT12PList.get(i));

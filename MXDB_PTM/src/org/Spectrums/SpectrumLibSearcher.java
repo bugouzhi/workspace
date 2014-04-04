@@ -34,6 +34,7 @@ public class SpectrumLibSearcher {
 	public int fragmentMode = 0;
 	public double matchTolerance = 0.5;
 	public String queryFile;
+	public boolean adjustPrintOrder=false;
 	public SpectrumComparator getSingleScorer() {
 		return singleScorer;
 	}
@@ -236,10 +237,10 @@ public class SpectrumLibSearcher {
 		SpectrumScorePair prev = this.spectrumScorePairs.get(i);
 		while(i >= 0 && count < topN && prev.score > -1000){
 			SpectrumScorePair current = this.spectrumScorePairs.get(i);
-			printTopLinkedCandidateInfo(query, prev);
-			if(Math.abs(current.score - prevScore) > 0.001){  //consider same score within resonable precision
+			printTopLinkedCandidateInfo(query, prev, this.adjustPrintOrder);
+			//if(Math.abs(current.score - prevScore) > 0.001){  //consider same score within resonable precision
 				count++;
-			}
+			//}
 			prevScore = current.score;
 			prev = current;
 			i--;
@@ -284,7 +285,7 @@ public class SpectrumLibSearcher {
 			SpectrumScorePair currpair = new SpectrumScorePair(currbest);
 			currpair.score = bestEntry.getKey();
 			if(print){
-				printTopLinkedCandidateInfo(query, currpair);
+				printTopLinkedCandidateInfo(query, currpair, this.adjustPrintOrder);
 			}
 //			if(peps.length == 2){
 //				String pepseq = currbest.getPeptide().split("\\.")[0];
@@ -295,7 +296,7 @@ public class SpectrumLibSearcher {
 //					rank2 = i+1;
 //				}
 //				System.out.println("Query " + query.spectrumName + "\t" + query.peptide +  " with top answer is: " 
-//					+ currbest.getPeptide()+ "\t" + currbest.charge +" " 
+//					+ currbest.getPeptide() + "\t" + currbest.charge +" " 
 //					+ " score: " + bestEntry.getKey());
 //			}
 			bestCands[i] = currbest;
@@ -631,25 +632,53 @@ public class SpectrumLibSearcher {
 	 * @param query
 	 * @param match
 	 */
-	private void printTopLinkedCandidateInfo(Spectrum query, SpectrumScorePair match){
+	
+	private void printTopLinkedCandidateInfo(Spectrum query, SpectrumScorePair match, boolean adjustOrder){
 		TheoreticalSpectrum th = (TheoreticalSpectrum)match.s;
+		//System.out.println(th.peptide);
 		if(th instanceof LazyEvaluateLinkedSpectrum){
 			((LazyEvaluateLinkedSpectrum) th).createSpectrum();
 		}
 		String[] peptides = th.peptide.split(" & ");
 		LinkedPeptide lp = (LinkedPeptide)th.p;
+		//System.out.println(lp);
 		TheoreticalSpectrum t1 = new TheoreticalSpectrum(lp.peptides[0], lp.peptides[0].getCharge());
 		TheoreticalSpectrum t2 = new TheoreticalSpectrum(lp.peptides[1], lp.peptides[1].getCharge());
+
 		double score1 = this.singleScorer.compare(t1, query);
 		double score2 = this.singleScorer.compare(t2, query);
-		if(t1.peptide.equals(t2.peptide)){ //we do not allow same peptides 
-			return;
-		}
-		double[] stat = th.analyzeMixtureAnnotation(query, t1.peptide, t2.peptide, this.matchTolerance, false);
-		String bestpeptide = th.peptide;
 		String peptide1 = peptides[0].replaceAll("[\\.\\+0-9]", "");
 		String peptide2 = peptides[1].replaceAll("[\\.\\+0-9]", "");
 		String prot = lp.peptides[0].getFastaseq().getAnnotation(lp.peptides[0].getBeginIndex());
+		if(lp.peptides[1].getFastaseq() != null){
+			prot = prot + " & " + lp.peptides[1].getFastaseq().getAnnotation(lp.peptides[1].getBeginIndex());
+		}
+		String bestpeptide = lp.peptides[0] + " & " + lp.peptides[1];
+		
+		if(adjustOrder){
+			if(score1 <= score2){
+				TheoreticalSpectrum temp = t1;
+				t1=t2;
+				t2=temp;
+				double score = score1;
+				score1 = score2;
+				score2 = score;
+				String peptide = peptide1;
+				peptide1=peptide2;
+				peptide2=peptide;
+				prot = lp.peptides[1].getFastaseq().getAnnotation(lp.peptides[1].getBeginIndex()) 
+						+ " & " + lp.peptides[0].getFastaseq().getAnnotation(lp.peptides[0].getBeginIndex());
+				bestpeptide = lp.peptides[1] + " & " + lp.peptides[0];
+				th.peptide = bestpeptide; //check to see if this is all right, seem modifying peptide but not actual structure may not be optimal solution
+			}
+		}
+		//if(t1.peptide.equals(t2.peptide)){ //we do not allow same peptides 
+		//	return;
+		//}
+		double[] stat = th.analyzeMixtureAnnotation(query, t1.peptide, t2.peptide, this.matchTolerance, false);
+		
+		//System.out.println(lp.peptides[0] + "\t" + lp.peptides[1] + "\t" + lp.peptides[0].getFastaseq() + "\t" + lp.peptides[1].getFastaseq());
+		
 		try{
 			bw.write(this.queryFile + "\t"  + query.scanNumber+ "\t" + query.parentMass +"\t" + query.charge +
 				"\t"+  bestpeptide + "\t" + prot + "\t" + match.s.parentMass + "\t" + match.score + "\t"  
@@ -693,7 +722,7 @@ public class SpectrumLibSearcher {
 			for(int j = i-1; j > (secondIndex > 0 ? secondIndex : -1); j--){
 				TheoreticalSpectrum s2 = (TheoreticalSpectrum)this.spectrumScorePairs.get(j).s;
 				if(Math.abs(s1.parentMass - s2.parentMass) < 0.05){							
-					TheoreticalSpectrum mix = new TheoreticalSpectrum(s1.p,  s2.p, (short)mixturequery.charge, true);
+					TheoreticalSpectrum mix = new TheoreticalSpectrum(s1.p,  s2.p, (short)mixturequery.charge, true, 0);
 					currScore = this.comparator.compare(mix, mixturequery);
 					//System.out.println(mix.getPeptide() + " score: " + currScore);
 					best = currScore > bestScore ? mix : best;

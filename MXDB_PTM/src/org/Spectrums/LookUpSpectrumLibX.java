@@ -450,13 +450,16 @@ public class LookUpSpectrumLibX{
 		
 	}
 	
-	public static double getLinkedPartnerParentmass(Peptide peptide, Spectrum linkedquery, CrossLinker l){
+	public static double[] getLinkedPartnerParentmass(Peptide peptide, Spectrum linkedquery, CrossLinker l){
+		double[] masses = new double[l.getLinkerMassOffSets().length];
 		for(int i = 0; i < peptide.getPos().length; i++){
 			if(peptide.getPos()[i] == peptide.getLinkedPos()){
-				return peptide.getPtmmasses()[i]-l.getLinkerMassOffSet();
+				for(int j = 0; j < l.getLinkerMassOffSets().length; j++){
+					masses[j] = peptide.getPtmmasses()[i]-l.getLinkerMassOffSets()[j];
+				}
 			}
 		}
-		return -1;
+		return masses;
 	}
 	
 	public static boolean checkPassFilter(String peptide, List<String> filtered){

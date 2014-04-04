@@ -1,12 +1,15 @@
 package org.Spectrums;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class LinkedPeptide extends Peptide{
 	//private String crossLinker = null;
 	//private double crossLinkerMass = 0;
 	Peptide[] peptides; //treated linked peptide as two peptide with PTM
-
+	private CrossLinker linker;
+	
 	public LinkedPeptide(){
 		
 	}
@@ -15,17 +18,28 @@ public class LinkedPeptide extends Peptide{
 		String[] peps = pep.split("--");
 		int pos1 = peps[0].indexOf('K')+1;
 		int pos2 = peps[1].indexOf('K')+1;
-		createLinkedPeptide(pep, charge, pos1, pos2);
+		createLinkedPeptide(pep, charge, pos1, pos2, Mass.DSSLINKER_MASS);
 	}
 	
 	public LinkedPeptide(String pep, int charge, int position1, int position2){
-		createLinkedPeptide(pep, charge, position1, position2);
+		createLinkedPeptide(pep, charge, position1, position2, Mass.DSSLINKER_MASS);
 	}
 	
 	public Peptide[] getPeptides(){
 		return this.peptides;
 	}
-	private void createLinkedPeptide(String pep, int charge, int position1, int position2){
+	
+	public CrossLinker getLinker(){
+		return this.linker;
+	}
+	
+	
+	public void setLinker(CrossLinker linker){
+		this.linker = linker;
+	}
+	
+	private void createLinkedPeptide(String pep, int charge, int position1, int position2, double linkerOffset){
+		//System.out.println("peptides : " + pep);
 		String[] peps = pep.split("--");
 		Peptide p1 = new Peptide(peps[0], 1);
 		Peptide p2 = new Peptide(peps[1], 1);
@@ -38,8 +52,8 @@ public class LinkedPeptide extends Peptide{
 				+ Mass.PROTON_MASS*(charge-2))/charge;	
 		double massShift1 = p1.getParentmass();
 		double massShift2 = p2.getParentmass();
-		p1.insertPTM(position1, massShift2+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
-		p2.insertPTM(position2, massShift1+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+		p1.insertPTM(position1, massShift2+linkerOffset-Mass.PROTON_MASS);
+		p2.insertPTM(position2, massShift1+linkerOffset-Mass.PROTON_MASS);
 		p1.setLinkedPos(position1);
 		p2.setLinkedPos(position2);
 //		System.out.println("we have ptms: " + p1.getPos().length);
@@ -76,12 +90,17 @@ public class LinkedPeptide extends Peptide{
 		this.setParentmass(mass);
 	}
 	
-	
-	public LinkedPeptide(Peptide p1, Peptide p2, int charge){
+	/**
+	 * 
+	 * @param p1
+	 * @param p2
+	 * @param charge
+	 */
+	public LinkedPeptide(Peptide p1, Peptide p2, int charge, double linkerOffset){
 		this.peptides = new Peptide[2];
 		this.peptides[0] = p1;
 		this.peptides[1] = p2;
-		
+		//System.out.println(p1 + "\t" + p2);
 		double mass1 = p1.getParentmass()*p1.getCharge() - Mass.PROTON_MASS*p1.getCharge();
 		double mass2 = p2.getParentmass()*p2.getCharge() - Mass.PROTON_MASS*p2.getCharge();	
 		
@@ -107,17 +126,23 @@ public class LinkedPeptide extends Peptide{
 				index2 = i;
 			}
 		}
-		ptmMasses1[index1]=pMass2+Mass.DSSLINKER_MASS;
-		ptmMasses2[index2]=pMass1+Mass.DSSLINKER_MASS;
+		//System.out.println(pMass1 + "\t" + pMass2);
+		//double linkerOffset = mass1 - pMass1 - pMass2;
+		//double linkerOffset2 = mass2 - pMass1 - pMass2;
+		//System.out.println("linker offset "  + linkerOffset + "\t" + linkerOffset2);
+		ptmMasses1[index1]=pMass2+linkerOffset;
+		ptmMasses2[index2]=pMass1+linkerOffset;
 		p1.setPtmmasses(ptmMasses1);
 		p2.setPtmmasses(ptmMasses2);
 		double mass = (pMass1 + pMass2
-				+ Mass.DSSLINKER_MASS 
+				+ linkerOffset 
 				+ Mass.PROTON_MASS*(charge))/charge;
-//		//System.out.println("we have ptms: " + p1.getPos().length);
-//		//System.out.println("we have ptms: " + p2.getPos().length);
+		//System.out.println("we have ptms: " + p1.getPos().length);
+		//System.out.println("we have ptms: " + p2.getPos().length);
+		//System.out.println()
 		this.setCharge((short)charge);
 		this.setPeptide(p1.getPeptide() + "--" + p2.getPeptide());	
+		//System.out.println("parent: " + mass + p1 + "\t" + p2);
 		this.setParentmass(mass);
 	}
 
@@ -176,6 +201,66 @@ public class LinkedPeptide extends Peptide{
 	public String toString(){
 		return peptides[0] + "--" + peptides[1];
 	}
+	
+	public static List<Peptide> generateLinkedPeptides(List<Peptide> pepList, Spectrum linkedquery){
+		return generateLinkedPeptides(pepList, linkedquery, 'K');
+	}
+	/**
+	 * Generate "half-linked" peptides base on a candidate peptides
+	 * the peptide is half-linked because the identity of the other peptide is unknown yet
+	 * the parentmass of the other peptide can be calculated from the total combined mass and mass of candidate petide
+	 * @param pepList
+	 * @param linkedquery
+	 * @param linkRes
+	 * @return
+	 */
+	public static List<Peptide> generateLinkedPeptides(List<Peptide> pepList, Spectrum linkedquery, char linkRes){
+		return generateLinkedPeptides(pepList, linkedquery, new char[]{linkRes});
+	}
+	
+	/**
+	 * Similar to method above, but allowing for multiple residues to be react with linker
+	 * @param pepList
+	 * @param linkedquery
+	 * @param linkRes
+	 * @return
+	 */
+	public static List<Peptide> generateLinkedPeptides(List<Peptide> pepList, Spectrum linkedquery, char[] linkRess){
+		List<Peptide> peptides = new ArrayList<Peptide>();
+		for(Iterator<Peptide> it = pepList.iterator(); it.hasNext();){
+			Peptide p = it.next();
+			String pep = p.getPeptide();
+			//System.out.println(p);
+			double parentmass = linkedquery.parentMass*linkedquery.charge;
+			if(parentmass - p.getParentmass() < 200){
+				continue;
+			}
+			for(int i = 0; i < linkRess.length; i++){
+				double offset = LookUpSpectrumLibX.getLinkedOffSet(p, linkedquery);
+				char linkRes = linkRess[i];
+				int pos = pep.indexOf(linkRes);
+				while(pos >= 0 && pos < pep.length()-1){ //disallow c-term linking
+					Peptide copy = new Peptide(p);
+					//copy.setCharge((short)linkedquery.charge);
+					copy.insertPTM(pos+1, offset);
+					copy.setLinkedPos(pos+1);
+					//System.out.println("peptide is: " + copy);
+					peptides.add(copy);
+					pos = pep.indexOf(linkRes, pos+1);
+				}			
+//			pos = pep.indexOf('G');
+//			while(pos >= 0){
+//				Peptide copy = new Peptide(p);
+//				copy.insertPTM(pos+1, offset);
+//				copy.setLinkedPos(pos+1);
+//				peptides.add(copy);
+//				pos = pep.indexOf('G', pos+1);
+//				}
+			}
+		}
+			return peptides;
+	}
+	
 	
 	public static int transformPeakCharge(int peakCharge, int pepCharge){
 		if(pepCharge == 2){

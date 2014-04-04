@@ -244,7 +244,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 			
 			String linkedpep = tokens[10]+"--"+tokens[12];
 			
-			LinkedPeptide lp = new LinkedPeptide(p, p2, s.charge);
+			LinkedPeptide lp = new LinkedPeptide(p, p2, s.charge, CrossLinker.DSS.getLinkerMassOffSet());
 			TheoreticalSpectrum sumo = new TheoreticalSpectrum(lp.peptides[1], s.charge);
 			//SpectrumUtil.removeAnnotatedPeaks(s, sumo, 0.5);
 			
@@ -312,7 +312,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 			
 			((LinkedPeptidePeakScoreLearner)((SimpleProbabilisticScorer)comp).comp).peptideMode = 0;
 			TheoreticalSpectrum t1 = new TheoreticalSpectrum(lp.peptides[0], (short)s.charge);
-			TheoreticalSpectrum t = new TheoreticalSpectrum(lp.peptides[0], lp.peptides[1], (short)s.charge, true);
+			TheoreticalSpectrum t = new TheoreticalSpectrum(lp.peptides[0], lp.peptides[1], (short)s.charge, true, Mass.DSSLINKER_MASS);
 			System.out.println(s.spectrumName + "\t" +  s.parentMass + "\t" + lp +  "\t" + lp.getParentmass()
 					+ "\tTotal score: " + substrateScore + "\t" + tagScore + "\t" + (substrateScore+tagScore) 
 					+ "\toriginal score: " + comp.compare(t1, s) + "\t" + comp.compare(t, s));

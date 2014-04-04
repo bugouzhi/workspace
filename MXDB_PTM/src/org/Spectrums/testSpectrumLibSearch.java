@@ -56,7 +56,7 @@ public class testSpectrumLibSearch {
 		Peptide peptide = new Peptide("QQQTGG", s.charge);
 		List<Peptide> pepList = new ArrayList<Peptide>();
 		pepList.add(peptide);
-		List<Peptide> linkedPeps = LinkedPeakScoreLearner.generateLinkedPeptides(pepList, s);
+		List<Peptide> linkedPeps = LinkedPeptide.generateLinkedPeptides(pepList, s);
 		Peptide linkPep = linkedPeps.get(1);
 		TheoreticalSpectrum t = new TheoreticalSpectrum(linkPep, s.charge);
 		SpectrumUtil.removeAnnotatedPeaks(s, t, 0.5);

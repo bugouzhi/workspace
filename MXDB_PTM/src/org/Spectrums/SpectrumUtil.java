@@ -655,7 +655,7 @@ public class SpectrumUtil {
 		Peptide peptide = new Peptide("QQQTGG", 1);
 		List<Peptide> pepList = new ArrayList<Peptide>();
 		pepList.add(peptide);
-		List<Peptide> linkedPeps = LinkedPeakScoreLearner.generateLinkedPeptides(pepList, s);
+		List<Peptide> linkedPeps = LinkedPeptide.generateLinkedPeptides(pepList, s);
 		Peptide linkPep = linkedPeps.get(1);
 		TheoreticalSpectrum t = new TheoreticalSpectrum(linkPep, s.charge);
 		SpectrumUtil.removeAnnotatedPeaks(s, t, 0.3);
@@ -669,7 +669,7 @@ public class SpectrumUtil {
 		peptide.insertPTM(1, -17);
 		List<Peptide> pepList = new ArrayList<Peptide>();
 		pepList.add(peptide);
-		List<Peptide> linkedPeps = LinkedPeakScoreLearner.generateLinkedPeptides(pepList, s, 'G');
+		List<Peptide> linkedPeps = LinkedPeptide.generateLinkedPeptides(pepList, s, 'G');
 		Peptide linkPep = linkedPeps.get(1);
 		TheoreticalSpectrum t = new TheoreticalSpectrum(linkPep, s.charge);
 		System.out.println("pep: " + linkPep);
@@ -699,7 +699,7 @@ public class SpectrumUtil {
 			Peptide peptide = new Peptide(pep, 1);
 			List<Peptide> pepList = new ArrayList<Peptide>();
 			pepList.add(peptide);
-			List<Peptide> linkedPeps = LinkedPeakScoreLearner.generateLinkedPeptides(pepList, s, 'G');
+			List<Peptide> linkedPeps = LinkedPeptide.generateLinkedPeptides(pepList, s, 'G');
 			Peptide linkPep = linkedPeps.get(1);
 			System.out.println("pep: " + linkPep);
 			System.out.println("spec: " + s.parentMass + "\t" + s.charge);

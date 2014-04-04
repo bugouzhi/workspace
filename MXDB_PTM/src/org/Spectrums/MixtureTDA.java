@@ -75,6 +75,38 @@ public class MixtureTDA extends TDAStat{
 		this.threshold2 = 100;
 	}
 	
+	/**
+	 * Calculate FDR for linked peptides
+	 * @param FDR
+	 * @param tolerance
+	 */
+	public void filterByLinkedTDA(double FDR, double tolerance){
+		List<Double> target1 = new ArrayList<Double>();
+		List<Double> decoy1 = new ArrayList<Double>();
+		List<Double> decoy2 = new ArrayList<Double>();
+		for(Iterator<String> it = resultLines.iterator(); it.hasNext();){
+			String current = it.next();
+			String[] tokens = current.split("\\t");
+			//System.out.println(current);
+			this.tolerance = tolerance;
+			if(checkResult(tokens)){
+				//System.out.println(tokens[protInd1]);
+				String[] prots = tokens[protInd1].split(" & ");				
+				if(isDecoy(prots[0]) && isDecoy(prots[1])){
+					//System.out.println(current);
+					decoy2.add(Double.parseDouble(tokens[scoreInd1]));
+				}else if(isDecoy(prots[0]) || isDecoy(prots[1])){
+					decoy1.add(Double.parseDouble(tokens[scoreInd1]));
+				}else{
+					target1.add(Double.parseDouble(tokens[scoreInd1]));
+				}
+			}	
+		}
+		this.threshold1 = getThreshold(target1, decoy1, decoy2, FDR);
+		
+		this.threshold2 = 100;//getThreshold(target1, decoy1, decoy2, FDR);
+	}
+	
 	private boolean checkResult(String[] tokens){
 		double mass1 = Double.parseDouble(tokens[2]);
 		double mass2 = Double.parseDouble(tokens[6]);
@@ -88,8 +120,8 @@ public class MixtureTDA extends TDAStat{
 	public void printOutFile(String outfile){
 		try{
 			BufferedWriter out = new BufferedWriter(new FileWriter(outfile));
-			String header="#SpectrumFile\tScan#\tM/z\tCharge\tAnnotation\tProtein\tM/Z\tScore\tScore1\tScore2\tNormScore1\tNormScore2\t%Int\t%b_Pep\t%y_Pep\t%b_tag\t%y_tag\tbseries_pep\tyseries_pep\tbseries_tag\ty_series_tag\tmerror_pep\tmerrror_tag\n";
-			int[] singleInds = new int[]{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25};
+			String header="#SpectrumFile\tScan#\tM/z\tCharge\tAnnotation\tProtein\tTheo_M/Z\tScore\tScore1\tScore2\tNormScore1\tNormScore2\t%Int\t%b_Pep1\t%y_Pep1\t%b_Pep2\t%y_Pep2\tbseries_Pep1\tyseries_Pep1\tbseries_Pep2\ty_series_Pep2\tmerror_Pep1\tmerrror_Pep2\t%Int_Pep1\t%Int_Pep2\tSVM-Score\n";
+			int[] singleInds = new int[]{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26};
 			int[] pairInds = new int[]{};
 			int[] pairOutInds = new int[]{};
 			out.write(header);
@@ -111,10 +143,10 @@ public class MixtureTDA extends TDAStat{
 						}
 					}
 				
-					for(int i = 0; i < outs.length; i++){
-						out.write(outs[i]+"\t");
+					for(int i = 0; i < outs.length-1; i++){
+						out.write(outs[i] +"\t");
 					}
-					out.write("\n");
+					out.write(outs[outs.length-1] + "\n");
 				}
 			}
 			out.flush();
@@ -157,30 +189,73 @@ public class MixtureTDA extends TDAStat{
 		MixtureTDA mixTDA = new MixtureTDA(svmOut);
 		mixTDA.filterByTDA(FDR, tolerance);
 		mixTDA.printOutFile(outFile);
-		
+	}
+	
+	public static void SpecializeFilter(String resultFile, String outFile, double FDR, double tolerance, String svmtempDir, String svmBin){
+		String svmModel = "mxdb_PTM_sumo.model";
+		//svmtempDir = "../mixture_linked/";
+		//svmBin = ".//SVM_LIGHT_WINDOWS//";
+		MixtureSVMClassify classify;
+		if(svmtempDir.length() > 0 && svmBin.length() > 0){
+			classify = new MixtureSVMClassify(resultFile, svmtempDir, svmBin, svmModel, svmModel, 7, 24, 25);
+		}else{
+			classify = new MixtureSVMClassify(resultFile, svmModel, svmModel, 7, 24, 25);
+		}
+		classify.spectrumMatchClassify();
+		String svmOut = classify.getSvmResultFile();
+		MixtureTDA mixTDA = new MixtureTDA(svmOut);
+		//mixTDA.filterByLinkedTDA(FDR, tolerance);
+		mixTDA.filterByTDA(FDR, tolerance);
+		mixTDA.printOutFile(outFile);
+	}
+	
+	public static void MXDBFilter(String resultFile, String outFile, double FDR, double tolerance, String svmtempDir, String svmBin){
+		String svmModel = "mxdb_disulfide_linked.model";
+		//svmtempDir = "../mixture_linked/";
+		//svmBin = ".//SVM_LIGHT_WINDOWS//";
+		int[] skips = new int[]{9,10};
+		MixtureSVMClassify classify;
+		if(svmtempDir.length() > 0 && svmBin.length() > 0){
+			classify = new MixtureSVMClassify(resultFile, svmtempDir, svmBin, svmModel, svmModel, 7, 24, 25);
+		}else{
+			classify = new MixtureSVMClassify(resultFile, svmModel, svmModel, 7, 24, 25);
+		}
+		classify.setSkipIndices(skips);
+		classify.spectrumMatchClassify();
+		String svmOut = classify.getSvmResultFile();
+		MixtureTDA mixTDA = new MixtureTDA(svmOut);
+		mixTDA.filterByLinkedTDA(FDR, tolerance);
+		mixTDA.printOutFile(outFile);
 	}
 	
 	public static void main(String[] args){
-		if(args.length < 3 && args.length > 5){
-			System.out.println("usage: java -Xmx1000M -jar MixDBFilter.jar <mixdb results> <output> <fdr> <precursor ppm_tolerance>");
+		if(args.length < 3 && args.length > 6){
+			System.out.println("usage: java -Xmx1000M -jar MixDBFilter.jar <mixdb results> <output> <fdr> <precursor ppm_tolerance> optional: <temporary svm path> <svm binary path>");
 			return;
 		}
-		//double fdr = 0.02;//Double.parseDouble(args[2]);
-		//double tolerance = 25;//Double.parseDouble(args[3]);
-		//String resultFile = "../mixture_linked/mxdb_sumo_outtop.txt";
-		//String outFile = "../mixture_linked/mxdb_sumo_filteredout.txt";
+		//double fdr = 0.01;//Double.parseDouble(args[2]);
+		//double tolerance = 10;//Double.parseDouble(args[3]);
+		//String resultFile = "../mixture_linked/mxdb_xlinktopout.txt";
+		//String outFile = "../mixture_linked/mxdb_xlink_filteredout.txt";
 	
 		try{
 			String resultFile = args[0];
 			String outFile = args[1];
 			double fdr = Double.parseDouble(args[2]);
 			double tolerance = Double.parseDouble(args[3]);
-				//double FDR = 0.01;
+			//double FDR = 0.01;
 			String svmtempDir = System.getProperty("user.dir")+File.separator;
+			String svmBinDir = "";
 			if(args.length == 5){
 				svmtempDir = args[4];
-			}	
-			MixtureFilter(resultFile, outFile, fdr, tolerance, svmtempDir);				
+			}
+			if(args.length == 6){
+				svmBinDir = args[5];
+			}
+			//MixtureFilter(resultFile, outFile, fdr, tolerance, svmtempDir);
+			//MXDBFilter(resultFile, outFile, fdr, tolerance, svmtempDir, svmBinDir);
+			SpecializeFilter(resultFile, outFile, fdr, tolerance, svmtempDir, svmBinDir);
+
 		}catch(Exception e){
 				System.err.println(e.getMessage());
 				e.printStackTrace();

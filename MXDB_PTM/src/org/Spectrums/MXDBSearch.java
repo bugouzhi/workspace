@@ -1,5 +1,6 @@
 package org.Spectrums;
 
+import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
@@ -39,7 +40,13 @@ public class MXDBSearch {
 	public int minScan = 0;
 	public int maxScan = 0;
 	public double linkerMass = 138.0680;
+	public double[] linkerMasses;
 	public char linkerSite = 'K';
+	public String[] Ncuts=new String[]{"K", "R"};
+	public String[] Ccuts=new String[]{"K", "R"};
+	public int miscleaves=1;
+	public String outFile="";
+	
 	public MXDBSearch(){
 		
 	}
@@ -52,14 +59,7 @@ public class MXDBSearch {
 		if(queryFile.endsWith(".mzXML")){
 			iter = new MZXMLReader(queryFile);
 		}
-    	LookUpSpectrumLibXX lookup = new LookUpSpectrumLibXX();
-    	lookup.setMinCharge(1);
-    	lookup.setMaxCharge(1);
-    	//List<String> peptides = Utils.FileIOUtils.createListFromFile(peptideFile);
-    	//LookUpSpectrumLibX pLookup = new LookUpSpectrumLibX(peptides, this.parentMassTolerance, LookUpSpectrumLibX.PARENTMODE);
-    	lookup.setMinMatchedPeak(this.minMatchedPeak);
-    	lookup.setMinContinuousMatch(this.minContinuousMatch);
-    	lookup.loadPeptidesFromFile(peptideFile);
+		this.queryFile = queryFile;
     	System.out.println("start searching");
     	long start = (new GregorianCalendar()).getTimeInMillis();
     	SimpleProbabilisticScorer scorer1 = (SimpleProbabilisticScorer)SpectrumUtil.getLPeakRankBaseScorer(training);
@@ -74,11 +74,15 @@ public class MXDBSearch {
 		arryScorer.setScoreTable(adaptor.getTable());
 		arryScorer.setErrorTable(adaptor.getErrorsTable());
     	
-		peptideFile = "../mixture_linked/database/lib_disulfide1_ACG_plusYeastdecoypeps.fasta";
-    	DatabaseIndexer db = new DatabaseIndexer(peptideFile, 0.01);
-//    	List<Spectrum> specList = reader.readAllMS2Spectra();
-//    	Iterator<Spectrum> iter = specList.iterator();
-    	Mass.DSSLINKER_MASS = this.linkerMass;
+		// We use to indexer here because the first stage, which is essentially a blind search, has very wide tolerance
+		//it will be very inefficient to use a index table with very small resolution
+		DatabaseIndexer db = new DatabaseIndexer(peptideFile, this.Ncuts, this.Ccuts, this.miscleaves, 100);
+		DatabaseIndexer db2 = new DatabaseIndexer(peptideFile, this.Ncuts, this.Ccuts, this.miscleaves, 0.01);
+		BufferedWriter bw = Utils.FileIOUtils.initOutputStream(this.outFile);
+
+		Mass.DSSLINKER_MASS = this.linkerMass;
+    	//System.out.println("this linker " + this.linkerMass);
+    	CrossLinker linker = new CrossLinker(this.linkerMasses, new char[]{'K'});
     	for(;iter.hasNext();){
     		Spectrum s = iter.next();
     		//s.charge = 4;
@@ -89,19 +93,15 @@ public class MXDBSearch {
     		s.windowFilterPeaks(this.topPeaksKept, this.windowWidth);
     		s.removePrecursors(0.5);
     		s.computePeakRank();
-    		List<Peak> pList = s.getTopPeaks(this.topFilteringPeak);
     		System.out.println("Searching " + s.spectrumName + "\t" + s.parentMass + "\t" + s.charge);
-    		List<PeptideLite> candidates = lookup.getCandidatePeptide(s.parentMass, s.charge, pList);
     		String[] targetPeptides = s.peptide.split("--");
 			//int passedFilter = lookup.checkPassFilter(targetPeptides[0], targetPeptides[1], candidates);
 			//System.out.println("Query: "  + s.spectrumName + " after filter one we have: " + candidates.size() + " candidates\tAfter filter correct peptide is retained?: " + passedFilter);
-			if(true){
-				//continue;
-			}
-    		List<Peptide> peps = LinkedPeakScoreLearner.generatePeptides(candidates);
+			
+    		//List<Peptide> peps = LinkedPeakScoreLearner.generatePeptides(candidates);
     		
-//    		List<Peptide> peps = db.getPeptidesFull(500, s.parentMass*s.charge - s.charge*Mass.PROTON_MASS -Mass.WATER -200,
-//					1);
+    		List<Peptide> peps = db.getPeptidesFull(500, s.parentMass*s.charge - s.charge*Mass.PROTON_MASS -Mass.WATER -200,
+					1);
     		
     		List<Peptide> candPepWithMod = new ArrayList();
     		candPepWithMod.addAll(peps);
@@ -109,7 +109,7 @@ public class MXDBSearch {
     		//candPepWithMod.addAll(Peptide.insertPTM(peps, 57, 1, 1));
     		//candPepWithMod.addAll(Peptide.insertPTM(peps, 15.995, new char[]{'M'}, 1));
     		//candPepWithMod.addAll(Peptide.insertPTM(peps, 42.010565, 1, 1));
-    		List<Peptide> linkedPeps = LinkedPeakScoreLearner.generateLinkedPeptides(candPepWithMod, s, this.linkerSite);
+    		List<Peptide> linkedPeps =LinkedPeptide.generateLinkedPeptides(candPepWithMod, s, this.linkerSite);
     		System.out.println(s.spectrumName + " has candidates: " + linkedPeps.size());
     		List<Spectrum> candidateSpectrum = LinkedPeakScoreLearner.generateSpectra3(linkedPeps, s);
    			
@@ -120,141 +120,101 @@ public class MXDBSearch {
 				//System.out.println(s.spectrumName + " target peptides ranks " + ranks[0] + "\t" + ranks[1]);
 			}
     		
-			//Spectrum[] topSpectra = searcher.topSpectra(s, this.topFirstPassMatch);
-			//Spectrum[] topSpectra = searcher.topSpectra(s, this.topFirstPassMatch);
-			Spectrum[] topSpectra = searcher.topArrayCandidates(s, this.topFirstPassMatch, false);
+			Spectrum[] topSpectra = searcher.topArrayCandidates(s, this.topFirstPassMatch, true);
 			
 			if(true){
-			 	continue;
+				//continue;
 			}
 			List<Spectrum> candidatePairs = new ArrayList<Spectrum>();
 			for(int j = 0; j < topSpectra.length && topSpectra[j] != null; j++){
 				String p = topSpectra[j].peptide.split("\\.")[0];
 				Peptide p1 = ((TheoreticalSpectrum)topSpectra[j]).p;
+				//System.out.println("Fasta protein " + p1.getFastaseq());
 				Peptide o = new Peptide(p1);
-				char aaMatch = 'B';
-				if(p.charAt(o.getLinkedPos()-1) == 'K'){
-					aaMatch = 'K';
-				}
-				if(p.charAt(o.getLinkedPos()-1) == 'G'){
-					aaMatch = 'G';
-				}
-				aaMatch = this.linkerSite;
-				double candParentMass = LookUpSpectrumLibX.getLinkedPartnerParentmass(p1, s, CrossLinker.DSS);
-				//System.out.println("pep1: " + p1 + "\tlookup: " + candParentMass);
+				char aaMatch = this.linkerSite;
 				
-				//%%%List<String> candidates2_old = pLookup.getSpectrumByMass(candParentMass);
-				//%%%candidates2.addAll(pLookup.getSpectrumByMass(candParentMass-1.0));
-				
-				lookup.setParentMassTolerance(this.parentMassTolerance);
-				//List<PeptideLite> candidates2lite = lookup.getCandidatePeptide(candParentMass+Mass.PROTON_MASS, 1, pList);
-				//System.out.println("peptide2_old size: " + candidates2_old.size());
-				//System.out.println("peptide2lite size: " + candidates2lite.size());
-				//System.out.println("lookup mass; " + candParentMass);
-	    		//List<Peptide> candidates2 = LinkedPeakScoreLearner.generatePeptides(candidates2lite);
-				
-	    		List<Peptide> candidates2 = db.getPeptidesFull(candParentMass - this.parentMassTolerance - Mass.WATER, 
-	    					candParentMass + this.parentMassTolerance - Mass.WATER,
+				double[] candParentMass = LookUpSpectrumLibX.getLinkedPartnerParentmass(p1, s, linker);
+				for(int k = 0; k < candParentMass.length; k++){
+					List<Peptide> cands = db2.getPeptidesFull(candParentMass[k] - this.parentMassTolerance - Mass.WATER, 
+	    					candParentMass[k] + this.parentMassTolerance - Mass.WATER,
 	    					1);
-	    		//System.out.println("peptide2 size: " + candidates2.size());
-	    		
-				for(int k = 0; k < candidates2.size(); k++){
-					//System.out.println("spect: " + s.parentMass + "\t" + s.charge);
-					//System.out.println("pairing1: " + o + "\t" + o.getParentmass()+ "\twith mass: " + candParentMass);
-					//%%%%String pep2 = candidates2.get(k);
-					//%%%%Peptide p2 = new Peptide(candidates2.get(k) + ".2");
-					Peptide p2 = new Peptide(candidates2.get(k));
-					String pep2 = p2.getPeptide();
-					double offset2 = LookUpSpectrumLibX.getLinkedOffSet(candidates2.get(k), s);
-					//p2.setPtmmasses(new double[]{PeptideMassAnalysis.computeMolecularMass(o.getPeptide())-Mass.WATER});
-					//o.setPtmmasses(new double[]{PeptideMassAnalysis.computeMolecularMass(candidates2.get(k))-Mass.WATER});
-					int pos = pep2.indexOf(aaMatch);
-					//System.out.println("offset2: " + offset2);
-					while(pos >= 0 && pos != pep2.length()-1){
-						Peptide copy = new Peptide(p2);
-						copy.insertPTM(pos+1, offset2);
-						copy.setLinkedPos(pos+1);
-						//o.setCharge((short)2); //artifact from making linked peptide need to fix
-						//System.out.println("peptide1: " + o + "\t"+ o.getCharge() + "\tPeptide2: "  + copy +"\t" + copy.getCharge());
-						//TheoreticalSpectrum th = new TheoreticalSpectrum(o, copy, (short)s.charge, true);
-						LazyEvaluateLinkedSpectrum th = new LazyEvaluateLinkedSpectrum(o, copy, (short)s.charge);
-						//System.out.println("peptide generated is: " + th.peptide);
-						candidatePairs.add(th);
-						pos = pep2.indexOf(aaMatch, pos+1);
+					//System.out.println(o + ": " + candParentMass[k] + "\t" + cands.size());
+					for(int l = 0; l < cands.size(); l++){
+						Peptide p2 = new Peptide(cands.get(l));
+						String pep2 = p2.getPeptide();
+						double offset2 = LookUpSpectrumLibX.getLinkedOffSet(cands.get(l), s);
+						int pos = pep2.indexOf(aaMatch);
+						//System.out.println("offset2: " + offset2);
+						while(pos >= 0 && pos != pep2.length()-1){
+							Peptide copy = new Peptide(p2);
+							copy.insertPTM(pos+1, offset2);
+							copy.setLinkedPos(pos+1);
+							LazyEvaluateLinkedSpectrum th = new LazyEvaluateLinkedSpectrum(o, copy, (short)s.charge, linker.getLinkerMassOffSets()[k]);
+							candidatePairs.add(th);
+							pos = pep2.indexOf(aaMatch, pos+1);
+						}
 					}
 				}
 				
 				double modMass = 42.010565;//15.995;
 				char modAA = 'M';
-				double candParentMassMod = candParentMass - modMass;
-				//%%%List<String> candidates2Mod = pLookup.getSpectrumByMass(candParentMassMod);
-				//%%%candidates2Mod.addAll(pLookup.getSpectrumByMass(candParentMassMod-1.0));
 				
-//				List<PeptideLite> candidates2liteMod = lookup.getCandidatePeptide(candParentMassMod+Mass.PROTON_MASS, 1, pList);
-//	    		List<Peptide> candidates2Mod = LinkedPeakScoreLearner.generatePeptides(candidates2liteMod);
-	    		
-	    		
-	    		List<Peptide> candidates2Mod = db.getPeptidesFull(candParentMassMod - Mass.WATER - this.parentMassTolerance, 
-	    				candParentMassMod - Mass.WATER + this.parentMassTolerance,
-	    				1);	    		
-	    		
-	    		
-				for(int k = 0; k < candidates2Mod.size(); k++){
-					//System.out.println("pairing: " + o + "\twith mass: " + candParentMassMod);
-					
-					//%%%String pep2 = candidates2Mod.get(k);
-					//%%%Peptide p2 = new Peptide(candidates2Mod.get(k) + ".2");
-				
-					Peptide p2 = new Peptide(candidates2Mod.get(k));
-					String pep2 = p2.getPeptide();
-					int modInd = p2.getPeptide().indexOf('M');
-					modInd = 0;
-					if(modInd < 0){
-						continue;
-					}
-					p2.insertPTM(modInd+1, modMass);
-					double offset2 = LookUpSpectrumLibX.getLinkedOffSet(candidates2Mod.get(k), s) - modMass;
-					//System.out.println("offset2: " + offset2);
-					//p2.setPtmmasses(new double[]{PeptideMassAnalysis.computeMolecularMass(o.getPeptide())-Mass.WATER});
-					//o.setPtmmasses(new double[]{PeptideMassAnalysis.computeMolecularMass(candidates2.get(k))-Mass.WATER});
-					int pos = pep2.indexOf(aaMatch);
-					while(pos >= 0 && pos != pep2.length()-1 && pos!= 0){  //we disallow double PTM at the same residue position
-						Peptide copy = new Peptide(p2);
-						int posM = pep2.indexOf(modAA);
-						//copy.insertPTM(posM+1, modMass);
-						copy.insertPTM(pos+1, offset2);
-						copy.setLinkedPos(pos+1);
-						//o.setCharge((short)2); //artifact from making linked peptide need to fix
-						//System.out.println("peptide1: " + o + "\t"+ o.getCharge() + "\tPeptide2: "  + copy +"\t" + copy.getCharge());
-						//TheoreticalSpectrum th = new TheoreticalSpectrum(o, copy, (short)s.charge, true);
-						LazyEvaluateLinkedSpectrum th = new LazyEvaluateLinkedSpectrum(o, copy, (short)s.charge);
-						//System.out.println("peptide generated is: " + th.peptide);
-						candidatePairs.add(th);
-						pos = pep2.indexOf(aaMatch, pos+1);
+				double[] candParentMassMod = ArrayUtils.shift(candParentMass, -1*modMass);
+				for(int k = 0; k < candParentMass.length; k++){
+					List<Peptide> cands = db2.getPeptidesFull(candParentMassMod[k] - this.parentMassTolerance - Mass.WATER, 
+	    					candParentMassMod[k] + this.parentMassTolerance - Mass.WATER,
+	    					1);
+				    		
+					for(int l = 0; l < cands.size(); l++){	
+						Peptide p2 = new Peptide(cands.get(l));
+						String pep2 = p2.getPeptide();
+						int modInd = p2.getPeptide().indexOf('M');
+						modInd = 0;
+						if(modInd < 0){
+							continue;
+						}
+						p2.insertPTM(modInd+1, modMass);
+						double offset2 = LookUpSpectrumLibX.getLinkedOffSet(cands.get(l), s) - modMass;
+						int pos = pep2.indexOf(aaMatch);
+						while(pos >= 0 && pos != pep2.length()-1 && pos!= 0){  //we disallow double PTM at the same residue position
+							Peptide copy = new Peptide(p2);
+							int posM = pep2.indexOf(modAA);
+							//copy.insertPTM(posM+1, modMass);
+							copy.insertPTM(pos+1, offset2);
+							copy.setLinkedPos(pos+1);
+							LazyEvaluateLinkedSpectrum th = new LazyEvaluateLinkedSpectrum(o, copy, (short)s.charge, linker.getLinkerMassOffSets()[k]);
+							candidatePairs.add(th);
+							pos = pep2.indexOf(aaMatch, pos+1);
+						}
 					}
 				}
 				//added a dummy cross-link where the 2nd peptide is unspecified
 				o = new Peptide(p1);
 				Peptide p2 = new Peptide("ZZ.2");
+				p2.setFastaseq(o.getFastaseq());
+				p2.setBeginIndex(1); //just some arbitrary index
 				double offset1 = p1.getPtmmasses()[p1.getPtmmasses().length-1] - Mass.DSSLINKER_MASS - Mass.WATER; //need to modify, now assume linked peptide is alway last mod
 				p2.insertPTM(1, offset1);
 				double offset2 = LookUpSpectrumLibX.getLinkedOffSet(p2, s);
 				//System.out.println("Peptide is: " + p1 + "\toffset:\t" + offset1 + "\t" + offset2);
 				p2.insertPTM(2, offset2);
 				p2.setLinkedPos(2);
-				LazyEvaluateLinkedSpectrum th = new LazyEvaluateLinkedSpectrum(o, p2, (short)s.charge);
+				//LazyEvaluateLinkedSpectrum th = new LazyEvaluateLinkedSpectrum(o, p2, (short)s.charge, Mass.DSSLINKER_MASS);
 				//System.out.println("peptide generated isa: " + th.peptide);
 				//candidatePairs.add(th);
 				//candidates2.add(p);
 				Set<String> uniques = new HashSet<String>();
 			}
-			lookup.setParentMassTolerance(3000.0);
+			//lookup.setParentMassTolerance(3000.0);
 			searcher = new SpectrumLibSearcher(candidatePairs, scorer2);
+			searcher.adjustPrintOrder = true;
 			System.out.println("We gathered pairs: " + candidatePairs.size());
 			searcher.matchTolerance = this.fragmentMassTolerance;
 			searcher.setSingleScorer(scorer1);
 			//searcher.topSpectrum(s);
-			searcher.topLinkedSpectra(s, 10);
+			searcher.queryFile = this.queryFile;
+			searcher.bw = bw;
+			searcher.topLinkedSpectra(s, 1);
     	}
 		System.out.println("matching " + 100 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
 	}
@@ -266,8 +226,11 @@ public class MXDBSearch {
 		String[] suffixes = arguments.get("SuffixIons").split(",");
 		TheoreticalSpectrum.prefixIons = prefixes;
 		TheoreticalSpectrum.suffixIons = suffixes;
-		mxdb.mixtureTraining = arguments.get("MixtureTraining");
-		mxdb.training = arguments.get("Training");
+		mxdb.mixtureTraining = arguments.get("MixtureModel");
+		mxdb.training = arguments.get("SingleModel");
+		mxdb.Ncuts = arguments.get("NtermCut").split(",");
+		mxdb.Ccuts = arguments.get("CtermCut").split(",");
+		mxdb.miscleaves = Integer.parseInt(arguments.get("Miscleaves"));
 		mxdb.parentMassTolerance = Double.parseDouble(arguments.get("ParentMassTolerance"));
 		mxdb.fragmentMassTolerance = Double.parseDouble(arguments.get("FragmentMassTolerance"));
 		mxdb.topFirstPassMatch = Integer.parseInt(arguments.get("TopFirstPassMatch"));
@@ -279,13 +242,14 @@ public class MXDBSearch {
 		String peptideFile = arguments.get("PeptideFile");
 		mxdb.minScan = Integer.parseInt(arguments.get("MinScan"));
 		mxdb.maxScan = Integer.parseInt(arguments.get("MaxScan"));
-		mxdb.linkerMass = Double.parseDouble(arguments.get("LinkerMass"));
+		mxdb.linkerMasses = CommandArgument.getDoulbArray(arguments.get("LinkerMass"), ",");
 		mxdb.linkerSite = arguments.get("LinkerSite").charAt(0);
+		mxdb.outFile = arguments.get("OutputFile");
 		mxdb.search(queryFile, peptideFile);
 	}
 	
 	public static void main(String[] args){
-		args[0] = "..\\mixture_linked\\MXDB_inputs2.txt";
+		//args[0] = "..\\mixture_linked\\MXDB_inputs2.txt";
 		testMXDBSearch(args[0]);
 	}
 }

@@ -333,7 +333,7 @@ public class PrecursorMassChecker {
 				Peptide p2 = ((LinkedPeptide)p).peptides[1];
 				String[] peps = p.getPeptide().split("--");
 				System.out.println("peptide1 is: " + peps[0] + "\t" + "peptides2 is: " + peps[1]);
-				TheoreticalSpectrum linkedSpect = new TheoreticalSpectrum(p1, p2, p.getCharge(), false); //note linkedSpec parent mass seems not correct in this case
+				TheoreticalSpectrum linkedSpect = new TheoreticalSpectrum(p1, p2, p.getCharge(), false, Mass.DSSLINKER_MASS); //note linkedSpec parent mass seems not correct in this case
 				double[] stat = linkedSpect.analyzeMixtureAnnotation(s, peps[0], peps[1], 0.05);
 				System.out.println("Spectrum: " + s.spectrumName+ "\t"  + s.parentMass + " has best match: " +  p1 + "--" + p2  + "\t" +  p.getParentmass()
 						+ "\t" + stat[0] + "\t" + stat[1] + "\t"

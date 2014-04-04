@@ -30,7 +30,7 @@ public class LinkedPeptideAnalysis {
 					+ "\tfiltered spectrum has peaks:\t" + current.getPeak().size());
 			String[] peptides = current.peptide.split("--");
 			LinkedPeptide lp = new LinkedPeptide(current.peptide, current.charge, 5, 6);
-			TheoreticalSpectrum linkedSpect = new TheoreticalSpectrum(lp.peptides[0], lp.peptides[1], lp.getCharge(), false);
+			TheoreticalSpectrum linkedSpect = new TheoreticalSpectrum(lp.peptides[0], lp.peptides[1], lp.getCharge(), false, Mass.DSSLINKER_MASS);
 			double[] stat = linkedSpect.analyzeMixtureAnnotation(current, peptides[0], peptides[1], 0.5);
 			System.out.println(current.spectrumName + "\t" + current.getPeptide() + "\t" +  current.parentMass + "\tbest\t" +  lp + "\t" + lp.getParentmass() + "\t" + lp.getCharge() + "\t" 
 					+ " with score:\t" +  "\t" + stat[0] + "\t" + stat[1] + "\t"

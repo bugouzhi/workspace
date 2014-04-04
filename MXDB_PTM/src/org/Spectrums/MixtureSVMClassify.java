@@ -10,68 +10,94 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- * Perform SVM classification for mixture spectrum
+ * Perform SVM classification for search result
+ * Assume two svm model 
  * using svm_light
  * @author Jian Wang
  *
  */
 public class MixtureSVMClassify {
-	private String currentBin= new File(MixtureSVMClassify.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent()
+	private static String currentBin= new File(MixtureSVMClassify.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent()
 			+File.separator;
-	//private String currentBin = "./";
-	private String currentPath= System.getProperty("user.dir")+File.separator;
+	private static String currentPath= System.getProperty("user.dir")+File.separator;
 	//private String currentPath="../mixture_linked/MSPLIT_v1.0/";
 	private String SVM_LIGHT_PATH= currentBin + "svm_light_windows" +
 			"" + File.separator;	
-//	private String currentPath="../mixture_linked/Specialize_v1.0/";
-//	//private String currentPath="../mixture_linked/MSPLIT_v1.0/";
-//	private String SVM_LIGHT_PATH= currentPath + "svm_light_windows/";
-	//private String svmPath1 = SVM_LIGHT_PATH + "mixdb_stage1.model";
 	private String svmPath1 = SVM_LIGHT_PATH + "mxdb_PTM_sumo.model";
-	//private String svmPath1 = SVM_LIGHT_PATH + "msplit_stage1.model";
-	//private String svmPath2 = SVM_LIGHT_PATH + "mixdb_stage2.model";
 	private String svmPath2 = SVM_LIGHT_PATH + "mxdb_PTM_sumo.model";
 	//private String svmPath2 = SVM_LIGHT_PATH + "msplit_stage2.model";
-	private String resultFile=currentPath;
-	private String svmInFile=currentPath + "temp_svmin.txt";
-	private String svmOutFile1=currentPath + "temp_svmout1.txt";
-	private String svmOutFile2=currentPath + "temp_svmout2.txt";
-	private String svmResultFile=currentPath + "temp_svmresult.txt";
+	private String resultFile;
+	private String svmInFile;
+	private String svmOutFile1;
+	private String svmOutFile2;
+	private String svmResultFile;
 	private int beginFeatureInd=7;
 	private int endFeatureInd=24;
-	private int rawScoreInd = 7;
-	private double minScore = 25;
 	private int totalColumns = 25;
-	
-	
+	private int[] skipIndices=new int[]{};
 	
 	public MixtureSVMClassify(String resultFile){
 		this.resultFile = resultFile;
-		this.svmResultFile = this.getSVMResultFile(this.resultFile);
-		System.out.println("out file: "  + this.svmResultFile);
-		//this.currentPath = System.getProperty("user.dir");
-		//System.out.println("currentpath is: " + currentPath);
-		//this.currentPath = "C:\\Documents and Settings\\Jian Wang\\workspace\\mixture_linked/MSPLIT";
-		//this.svmInFile = currentPath +"/temp_svmin.txt";
-		//this.svmOutFile1 = currentPath + "/temp_svmout1.txt";
-		//this.svmOutFile2 = currentPath + "/temp_svmout2.txt";
-		//this.svmResultFile = currentPath + "/temp_svmresult.txt";
+		initialize();
 	}
 	
 	public MixtureSVMClassify(String resultFile, String classtempDir){
 		this.resultFile = resultFile;
 		this.currentPath = classtempDir;
-		this.svmResultFile = this.getSVMResultFile(this.resultFile);
-		System.out.println("out file: "  + this.svmResultFile);
-		//System.out.println("currentpath is: " + currentPath);
-		//this.currentPath = "C:\\Documents and Settings\\Jian Wang\\workspace\\mixture_linked/MSPLIT";
-		//this.svmInFile = currentPath +"/temp_svmin.txt";
-		//this.svmOutFile1 = currentPath + "/temp_svmout1.txt";
-		//this.svmOutFile2 = currentPath + "/temp_svmout2.txt";
-		//this.svmResultFile = currentPath + "/temp_svmresult.txt";
+		initialize();
 	}
-
 	
+		
+
+	public MixtureSVMClassify(String resultFile, String svmModel1, String svmModel2,
+			int beginFeatureInd, int endFeatureInd, int totalColumns){
+		this(resultFile, 
+				MixtureSVMClassify.currentPath+File.separator,
+				MixtureSVMClassify.currentBin + File.separator + "svm_light_windows" + File.separator,
+				svmModel1, svmModel2, beginFeatureInd, endFeatureInd, totalColumns);
+	}
+	
+	/**
+	 * @param resultFile - raw result file
+	 * @param classtempDir - optional a temporary dir to put temporary file for SVM, see constructor below
+  	 * @param svmBinPath - optional path to svm binary 
+	 * @param svmModel1  - name of first svm model file (assume in the binary path of svm)
+	 * @param svmModel2  - name of second svm model file
+	 * @param beginFeatureInd - begin index of result file to be used as feature
+	 * @param endFeatureInd - end index of result file to be used as feature
+	 * @param totalColumns
+	 */
+	public MixtureSVMClassify(String resultFile, String classtempDir, String svmBinPath, 
+			String svmModel1, String svmModel2,
+			int beginFeatureInd, int endFeatureInd, int totalColumns){
+		this.resultFile = resultFile;
+		this.currentPath = classtempDir;
+		this.SVM_LIGHT_PATH = svmBinPath;
+		this.svmPath1 = svmBinPath + svmModel1;
+		this.svmPath2 = svmBinPath + svmModel2;
+		this.beginFeatureInd = beginFeatureInd;
+		this.endFeatureInd = endFeatureInd;
+		this.totalColumns = totalColumns;
+		initialize();
+		//System.out.println("Current OS: " +  System.getProperty("os.name"));
+		//System.out.println("path1: " + this.svmPath1);
+	}
+	
+	
+	//setup to run svm
+	private void initialize(){
+		this.svmResultFile = this.getSvmResultFile();
+		this.svmInFile=currentPath + "temp_svmin.txt";
+		this.svmOutFile1=currentPath + "temp_svmout1.txt";
+		this.svmOutFile2=currentPath + "temp_svmout2.txt";
+		this.svmResultFile=currentPath + "temp_svmresult.txt";
+		System.out.println("out file: "  + this.svmResultFile);
+	}
+	
+	/**
+	 * Run the svm classification
+	 * @return
+	 */
 	public String spectrumMatchClassify(){
 		this.generateSVMInput();
 		this.runSVMClassify();  
@@ -93,14 +119,20 @@ public class MixtureSVMClassify {
 			while(line!=null){
 				String[] tokens = line.split("\\t");
 				//System.out.println("line: " + line);
-				if(line.contains("NaN") || tokens.length != this.totalColumns || line.contains("#") 
-						|| Double.parseDouble(tokens[this.rawScoreInd]) < this.minScore){
+				if(line.contains("NaN") || tokens.length != this.totalColumns || line.contains("#")){
 					line = buff.readLine();
 					continue;
 				}
 				out.append("-1 ");
+				int ind = 1;
 				for(int i = this.beginFeatureInd; i <= this.endFeatureInd; i++){
-					out.append((i-this.beginFeatureInd+1)+":"+tokens[i]+" ");
+					for(int j = 0; j < this.skipIndices.length; j++){
+						if(i == this.skipIndices[j]){
+							continue;
+						}
+					}
+					out.append((ind)+":"+tokens[i]+" ");
+					ind++;
 				}
 				out.append("\n");
 				line = buff.readLine();
@@ -160,8 +192,7 @@ public class MixtureSVMClassify {
 			String line = buff.readLine();
 			while(line!=null){
 				String[] tokens = line.split("\\t");
-				if(line.contains("NaN") || tokens.length != this.totalColumns|| line.startsWith("#")
-						|| Double.parseDouble(tokens[this.rawScoreInd]) < this.minScore){
+				if(line.contains("NaN") || tokens.length != this.totalColumns|| line.startsWith("#")){
 					line = buff.readLine();
 					continue;
 				}
@@ -277,33 +308,20 @@ public class MixtureSVMClassify {
 	public void setEndFeatureInd(int endFeatureInd) {
 		this.endFeatureInd = endFeatureInd;
 	}
-
-
-	public int getRawScoreInd() {
-		return rawScoreInd;
+	
+	public int[] getSkipIndices() {
+		return skipIndices;
 	}
 
-
-	public void setRawScoreInd(int rawScoreInd) {
-		this.rawScoreInd = rawScoreInd;
+	public void setSkipIndices(int[] skipIndices) {
+		this.skipIndices = skipIndices;
 	}
-
-
-	public double getMinScore() {
-		return minScore;
-	}
-
-
-	public void setMinScore(double minScore) {
-		this.minScore = minScore;
-	}
-
-
+	
 	public int getTotalColumns() {
 		return totalColumns;
 	}
 
-
+	
 	public void setTotalColumns(int totalColumns) {
 		this.totalColumns = totalColumns;
 	}

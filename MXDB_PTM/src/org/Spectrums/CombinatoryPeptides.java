@@ -547,7 +547,7 @@ public class CombinatoryPeptides {
 		Peptide p2 = p.peptides[1];
 		String[] peps = p.getPeptide().split("--");
 		//System.out.println("peptide1 is: " + p1 + "\t" + "peptides2 is: " + p2);
-		TheoreticalSpectrum linkedSpect = new TheoreticalSpectrum(p1, p2, p.getCharge(), false); //note linkedSpec parent mass seems not correct in this case
+		TheoreticalSpectrum linkedSpect = new TheoreticalSpectrum(p1, p2, p.getCharge(), false, CrossLinker.DSS.getLinkerMassOffSet()); //note linkedSpec parent mass seems not correct in this case
 		linkedSpect.p = p;
 		//TheoreticalSpectrum linkedSpect = new TheoreticalSpectrum(p, p.getCharge(), false); //note linkedSpec parent mass seems not correct in this case
 		//System.out.println("number of peaks genearate for peptide with charge: " + linkedSpect.charge + " is: " + linkedSpect.getPeak().size());

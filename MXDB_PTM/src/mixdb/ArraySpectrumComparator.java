@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.Spectrums.ArrayUtils;
+import org.Spectrums.CrossLinker;
 import org.Spectrums.LinkedPeptide;
 import org.Spectrums.LinkedPeptidePeakScoreLearner;
 import org.Spectrums.MZXMLReader;
@@ -232,7 +233,7 @@ public class ArraySpectrumComparator implements SpectrumComparator{
 			System.out.println(pep1 + " & " + pep2);
 			LinkedPeptide pep = new LinkedPeptide(pep1, pep2, s.charge, pep1.getPeptide().indexOf('K')+1, 6);
 			System.out.println("peptide is: " + pep);
-			TheoreticalSpectrum th = new TheoreticalSpectrum(pep.getPeptides()[0], pep.getPeptides()[1], (short)s.charge, true);
+			TheoreticalSpectrum th = new TheoreticalSpectrum(pep.getPeptides()[0], pep.getPeptides()[1], (short)s.charge, true, CrossLinker.DSS.getLinkerMassOffSet());
 			System.out.println("Theoretical spectrum has size: " + th.getPeak().size());	
 			ArrayTheoreticalSpectrum arryTh = (ArrayTheoreticalSpectrum)LinkedTheoSpectrumFactory.getLinkedTheoSpectrum(pep, typeMap, LinkedTheoSpectrumFactory.linkedIonMap);
 			System.out.println("Theoretical array spectrum has size: " + arryTh.getMassIntensityList()[0].length);

@@ -152,7 +152,7 @@ public class TheoreticalCandidateSpectrumFactory {
 			if(Math.abs(cand.getParentmass() - parentMass) <= parentMassTolerance){
 				//TheoreticalSpectrum t = new TheoreticalSpectrum((LinkedPeptide)cand, (short)cand.getCharge(), false);
 				LazyEvaluateLinkedSpectrum t = new LazyEvaluateLinkedSpectrum(((LinkedPeptide)cand).peptides[0], 
-						((LinkedPeptide)cand).peptides[1], cand.getCharge());
+						((LinkedPeptide)cand).peptides[1], cand.getCharge(), Mass.DSSLINKER_MASS);
 				//System.out.println(cand);
 				//System.out.println(t);
 				this.candidates.add(t);

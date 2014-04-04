@@ -112,9 +112,11 @@ public class Mass {
 		}
 		if((int)aa-'A' < 0){
 			System.out.println("warning: " + aa + " might not be a valide aa");
+			//throw new IllegalArgumentException();
 		}
 		if((int)aa-'A' >= aaMap.length){
 			System.out.println("warning: " + aa + " might not be a valide aa");
+			//throw new IllegalArgumentException();
 			return 1000000;
 		}
 		return aaMap[(int)aa-'A'];

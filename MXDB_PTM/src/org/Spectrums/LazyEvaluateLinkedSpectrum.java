@@ -15,6 +15,7 @@ public class LazyEvaluateLinkedSpectrum extends TheoreticalSpectrum{
 	private int linkedCharge;
 	Peptide p1;
 	Peptide p2;
+	double linkerMass;
 	public int getLinkedCharge() {
 		return linkedCharge;
 	}
@@ -34,10 +35,21 @@ public class LazyEvaluateLinkedSpectrum extends TheoreticalSpectrum{
 		this.parentMass = ((p.getParentmass()-p.getCharge()*Mass.PROTON_MASS)+linkedCharge*Mass.PROTON_MASS)/linkedCharge;
 	}
 	
-	public LazyEvaluateLinkedSpectrum(Peptide p1, Peptide p2, int linkedCharge){
+//	public LazyEvaluateLinkedSpectrum(Peptide p1, Peptide p2, int linkedCharge){
+//		this.p1 = p1;
+//		this.p2 = p2;
+//		this.linkedCharge = linkedCharge;
+//		this.parentMass = ((p1.getParentmass()-p1.getCharge()*Mass.PROTON_MASS)+linkedCharge*Mass.PROTON_MASS)/linkedCharge;
+//		this.charge = linkedCharge;
+//		this.peptide = p1 + " & " + p2;
+//	}
+	
+	
+	public LazyEvaluateLinkedSpectrum(Peptide p1, Peptide p2, int linkedCharge, double linkerMass){
 		this.p1 = p1;
 		this.p2 = p2;
 		this.linkedCharge = linkedCharge;
+		this.linkerMass = linkerMass;
 		this.parentMass = ((p1.getParentmass()-p1.getCharge()*Mass.PROTON_MASS)+linkedCharge*Mass.PROTON_MASS)/linkedCharge;
 		this.charge = linkedCharge;
 		this.peptide = p1 + " & " + p2;
@@ -55,7 +67,7 @@ public class LazyEvaluateLinkedSpectrum extends TheoreticalSpectrum{
 		}else{
 			//System.out.println("generating peptide: " + this.peptide);
 			//System.out.println(p1 + "\t" + p2);
-			TheoreticalSpectrum t = new TheoreticalSpectrum(this.p1, this.p2, (short)linkedCharge, true);
+			TheoreticalSpectrum t = new TheoreticalSpectrum(this.p1, this.p2, (short)linkedCharge, true, linkerMass);
 //			System.out.println("generated peptide: " + t.p);
 //			for(int i = 0; i < t.getPeak().size(); i++){
 //				System.out.println(t.getPeak().get(i));
@@ -73,7 +85,8 @@ public class LazyEvaluateLinkedSpectrum extends TheoreticalSpectrum{
 		if(p1 == null || p2 == null){
 			t = new TheoreticalSpectrum(this.p, linkedCharge);
 		}else{
-			t = new TheoreticalSpectrum(this.p1, this.p2, (short)linkedCharge, true);
+			t = new TheoreticalSpectrum(this.p1, this.p2, (short)linkedCharge, true, 
+					this.linkerMass);
 		}
 		this.p = t.p;
 		this.parentMass = t.parentMass;

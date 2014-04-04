@@ -64,7 +64,7 @@ public class MXDBSumo {
     	lookup.setMaxCharge(1);
     	lookup.loadPeptidesFromFileLite(peptideFile);
     	lookup.setToleranceMode(this.mode);
-    	System.out.println("start searching2");
+    	System.out.println("start searching");
     	long start = (new GregorianCalendar()).getTimeInMillis();
     	SimpleProbabilisticScorer scorer1 = (SimpleProbabilisticScorer)SpectrumUtil.getLPeakRankBaseScorer(training);
     	scorer1.matchToleranceMode = this.fragmentMode;
@@ -96,7 +96,8 @@ public class MXDBSumo {
 		for(;iter.hasNext();){
     		Spectrum s = iter.next();
     		//System.out.println("Scan: " + s.scanNumber);
-    		if(s.scanNumber < this.minScan || s.scanNumber > this.maxScan || s.charge >= 6){
+    		if(s.scanNumber < this.minScan || s.scanNumber > this.maxScan 
+    					|| s.charge >= 6 || s.charge < 2){
     			continue;
     		}
     		//s.charge = (s.charge+1)*-1;
@@ -106,7 +107,7 @@ public class MXDBSumo {
     		//SpectrumUtil.removeSUMOPeaks(s);
     		//s.windowFilterPeaks(8, 25);
     		s.computePeakRank();
-    		System.out.println("Searching " + s.spectrumName + "\t" + s.parentMass + "\t" + s.charge);
+    		System.out.println("Searching " + s.spectrumName + "\t" + s.parentMass + "\t" + s.charge +"\t" + s.getPeak().size());
 			List<Peptide> linkedpeps = new ArrayList();
     		int minCharge = s.charge > 0 ? s.charge : 2;
     		int maxCharge = s.charge > 0 ? s.charge : 4;
@@ -167,7 +168,7 @@ public class MXDBSumo {
     				continue;
     			}
     			LazyEvaluateLinkedSpectrum t = new LazyEvaluateLinkedSpectrum(((LinkedPeptide)cand).peptides[0], 
-						((LinkedPeptide)cand).peptides[1], cand.getCharge());
+						((LinkedPeptide)cand).peptides[1], cand.getCharge(), SUMO.getLinkerMassOffSet());
     			//System.out.println("candidate is: " + cand);
     			sList.add(t);
     		}
@@ -223,7 +224,7 @@ public class MXDBSumo {
 	}
 	
 	public static void main(String[] args){
-		args[0] = "..\\mixture_linked\\MXDBSumo_inputs.txt";
+		//args[0] = "..\\mixture_linked\\Specialize_v1.0\\external_test\\205-Part1\\MXDBSumo_inputs.205.txt";
 		testMXDBSUMO(args[0]);
 	}
 }
