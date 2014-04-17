@@ -213,7 +213,7 @@ public class MixtureTDA extends TDAStat{
 		String svmModel = "mxdb_disulfide_linked.model";
 		//svmtempDir = "../mixture_linked/";
 		//svmBin = ".//SVM_LIGHT_WINDOWS//";
-		int[] skips = new int[]{9,10};
+		int[] skips = new int[]{8,9};
 		MixtureSVMClassify classify;
 		if(svmtempDir.length() > 0 && svmBin.length() > 0){
 			classify = new MixtureSVMClassify(resultFile, svmtempDir, svmBin, svmModel, svmModel, 7, 24, 25);

@@ -119,20 +119,25 @@ public class MixtureSVMClassify {
 			while(line!=null){
 				String[] tokens = line.split("\\t");
 				//System.out.println("line: " + line);
-				if(line.contains("NaN") || tokens.length != this.totalColumns || line.contains("#")){
+				if(checkLine(line, tokens)){
+					System.out.println("skipping " + line);
 					line = buff.readLine();
 					continue;
 				}
 				out.append("-1 ");
 				int ind = 1;
+				//System.out.println("skipIndice: " + skipIndices.length);
 				for(int i = this.beginFeatureInd; i <= this.endFeatureInd; i++){
+					boolean skip = false;
 					for(int j = 0; j < this.skipIndices.length; j++){
 						if(i == this.skipIndices[j]){
-							continue;
+							skip=true;
 						}
 					}
-					out.append((ind)+":"+tokens[i]+" ");
-					ind++;
+					if(!skip){
+						out.append((ind)+":"+tokens[i]+" ");
+						ind++;
+					}
 				}
 				out.append("\n");
 				line = buff.readLine();
@@ -144,6 +149,11 @@ public class MixtureSVMClassify {
 			System.err.println(ioe.getMessage());
 			ioe.printStackTrace();
 		}
+	}
+	
+	//check to see if the result line contains any error is comments that we should skipp
+	private boolean checkLine(String line, String[] tokens){
+		return line.contains("NaN") || tokens.length != this.totalColumns || line.startsWith("#");
 	}
 	
 	private void runSVMClassify(){
@@ -192,7 +202,7 @@ public class MixtureSVMClassify {
 			String line = buff.readLine();
 			while(line!=null){
 				String[] tokens = line.split("\\t");
-				if(line.contains("NaN") || tokens.length != this.totalColumns|| line.startsWith("#")){
+				if(checkLine(line, tokens)){
 					line = buff.readLine();
 					continue;
 				}

@@ -224,7 +224,7 @@ public class MXDBSumo {
 	}
 	
 	public static void main(String[] args){
-		//args[0] = "..\\mixture_linked\\Specialize_v1.0\\external_test\\205-Part1\\MXDBSumo_inputs.205.txt";
+		args[0] = "..\\mixture_linked\\MXDBSumo_inputs.txt";
 		testMXDBSUMO(args[0]);
 	}
 }
