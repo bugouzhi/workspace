@@ -849,7 +849,7 @@ public class SpectrumLib implements Iterable, Serializable{
 						counts++;
 						repeat++;
 						if(!toVector){
-							mixture.mergePeaks(mixture, 0.05);
+							mixture.mergePeaks(mixture, 0.25);
 						}
 						mixture.scaleSpectrum(1000);//scale the intensity to avoid the number getting too small
 						bo.write(mixture.toString());
@@ -2186,9 +2186,9 @@ public Spectrum filterAndSearch(Spectrum mix) {
 		if(args.length != 3){
 			System.err.println("java -jar MSPLIT.jar <library file> <query spectrum file> <precursor mass tolerance> > outputfile");
 		}else{
-			args[0]= "../mixture_linked/lib_sumo_mcl1_svm0.5IDs.mgf";
-			args[1]="../mixture_linked/msdata/mcl1/MCL1_veronica_20121113/111212_ananiav_MCL1_light_peptides_20_125fmoleach_jurkat.mzXML";
-			args[2] = "3";
+			//args[0]= "../mixture_linked/lib_sumo_mcl1_svm0.5IDs.mgf";
+			//args[1]="../mixture_linked/msdata/mcl1/MCL1_veronica_20121113/111212_ananiav_MCL1_light_peptides_20_125fmoleach_jurkat.mzXML";
+			//args[2] = "3";
  			String filename = args[0];
 			String fileMix = args[1];
 			SpectrumLib lib1 = null;

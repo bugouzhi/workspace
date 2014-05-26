@@ -1,6 +1,7 @@
 package org.Spectrums;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,9 +10,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-
 import org.systemsbiology.jrap.stax.MSXMLParser;
 import org.systemsbiology.jrap.stax.Scan;
+
+
 
 /**
  * This class holds a series of utility static method to compute various statistics for 
@@ -336,28 +338,43 @@ public class SWATHStatistics {
 		String queryFile = "../mixture_linked/msdata/UPS_Ecoli/14344_UPS1_400fm_Ecolilysate_SWATH_5600.mzXML";
 		String libraryFile = "../mixture_linked/ACG_swathdevelopment_P94_UPS_Ecoli_MSGFDB_IDs_uniqpeps_plusDecoy2_test2.mgf";
 		String ssmResultFile = "../mixture_linked/ACG_swathdevelopment_14344_Swath_SSMs.txt";
-		String locationFile = "../mixture_linked/t00";
 		MZXMLReader reader = new MZXMLReader(queryFile);
 		//ConsensusSpectrumReader reader = new ConsensusSpectrumReader(queryFile);
 		//reader.numNeighbors = 0;
 		//reader.minInt = 0;
 		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
 		List<String> ssmResults = Utils.FileIOUtils.createListFromFile(ssmResultFile);
-		List<String> results = Utils.FileIOUtils.createListFromFile(locationFile);
 		Map<Integer, List<String>> ssmMap = new HashMap<Integer, List<String>>();
 		double minSim = 0.82;
 		double minPeaks = 11;		
-		for(int i = 0; i < ssmResults.size(); i++){
-			String[] tokens = ssmResults.get(i).split("\\t");
-			int scan = Integer.parseInt(tokens[1]);
-			if(!ssmMap.containsKey(scan)){
-				ssmMap.put(scan, new ArrayList<String>());
-			}
-			List<String> matches = ssmMap.get(scan);
-			matches.add(tokens[4] + "." + tokens[6]);
-		}
+		SearchResult searchResult = new SearchResult(ssmResultFile, "", libraryFile, queryFile);
+		searchResult.parseResult(0, 1, 4, 6, 8, 7);
+		
+		System.out.println("Done creating SSM table table");
 		
 		Set<Integer> keys = ssmMap.keySet();
+		List<MixSSM> mSSMs = new ArrayList<MixSSM>();
+		int counter = 0;
+		for(Iterator<AnnotatedSpectrum> it = searchResult.getResultIterator(); it.hasNext();){
+			AnnotatedSpectrum result = it.next();
+			int scan = result.scanNumber;
+			MixSSM mSSM = searchResult.getMatches(scan);
+			for(Iterator<Spectrum> it2 = mSSM.getMatches().iterator(); it2.hasNext();){
+				Spectrum match = it2.next();
+				Spectrum proj = mSSM.getShareMatchSpect(match);
+				proj.sqrtSpectrum();
+				match.sqrtSpectrum();
+				double share = proj.sharePeaks(match, 0.05);
+				double score = match.projectedCosine(proj, 0.05);
+				double score2 = match.projectedCosine(mSSM.getQuery(), 0.05);
+				System.out.println("Shared-stat:\t" + mSSM.getQuery().scanNumber + "\t" + match.peptide + "\tShared-Stat\t" +  + share + "\t" + score +"\t" + score2);
+			}
+			System.out.println(mSSMs.size());
+
+		}
+		System.out.println("Done creating mixSSM");
+		
+		
 		for(Iterator<Integer> it = keys.iterator(); it.hasNext();){
 			int swathScan = it.next();
 			Spectrum swathSpec = reader.getSpectrum(swathScan);
@@ -397,7 +414,7 @@ public class SWATHStatistics {
 				double share = sameSwath.sharePeaks(libSpect, 0.05);
 				double score = libSpect.projectedCosine(proj, 0.05);
 				double score2 = libSpect.projectedCosine(swathSpec, 0.05);
-				System.out.println("Shared-stat:\t" + swathScan + "\t" + libSpect.peptide + "\tShared-Stat\t" +  + share + "\t" + score +"\t" + score2);					
+				System.out.println("Shared-stat-orig:\t" + swathScan + "\t" + libSpect.peptide + "\tShared-Stat\t" +  + share + "\t" + score +"\t" + score2);					
 			}
 		}
 	}
@@ -806,13 +823,90 @@ public class SWATHStatistics {
 		}		
 	}
 	
+	
+	public static void getPairedModSpectrum(){
+		String libraryFile = "../mixture_linked/UPS_Human_lysateREP123_IDA_1pepFDR_plusDecoy2.mgf";
+		String spectrumFile = "../mixture_linked/msdata/UPS12_Human/18468_REP3_500ng_HumanLysate_SWATH_1.mzXML";
+		String resultFile = "../mixture_linked/SWATH/Swath_Human_searches/Swathmsplit/UPS_Human_REP3withLysatelib_msplit_0_pep.txt";
+		List<String> results = Utils.FileIOUtils.createListFromFile(resultFile);
+		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
+		MZXMLReader reader = new MZXMLReader(spectrumFile);
+		Map<String, String[]> resultMap = new HashMap<String, String[]>();
+		for(Iterator<String> it = results.iterator(); it.hasNext();){
+			String[] tokens = it.next().split("\\t");
+			if(tokens.length > 32 && Double.parseDouble(tokens[31]) > 0.3 
+					&& Double.parseDouble(tokens[9]) > 10){
+				String pep = tokens[4];
+				resultMap.put(pep+"."+tokens[6], tokens);
+			}
+		}
+		
+		int count = 0;
+		for(Iterator<String> it = resultMap.keySet().iterator(); it.hasNext();){
+			String key = it.next();
+			if(key.contains("+")){
+				String[] tokens = resultMap.get(key);
+				String pep = tokens[4];
+				String stripSeq = pep.replaceAll("[0-9\\.\\+]", "");
+				//System.out.println(stripSeq + " " + tokens[6]);
+				String unmod = stripSeq+"."+tokens[6];
+				if(resultMap.containsKey(unmod)){
+					String[] tokens2 = resultMap.get(unmod);
+					Spectrum swath1 = reader.getSpectrum(Integer.parseInt(tokens[1]));
+					Spectrum swath2 = reader.getSpectrum(Integer.parseInt(tokens2[1]));
+					swath1.windowFilterPeaks2(15, 25);
+					swath2.windowFilterPeaks2(15, 25);
+					swath1.mergePeaks(swath1, 0.05);
+					swath2.mergePeaks(swath2, 0.05);
+					//System.out.println(tokens[4]);
+					Spectrum lib1 = lib.getSpectra(tokens[4]+"." + tokens[6]).get(0);
+					if(tokens[4].length() - tokens[4].replaceAll("\\+", "").length() > 1){
+						continue;
+					}
+					double massShift = Double.parseDouble(tokens[4].replaceAll("[A-Z]", ""));
+					Spectrum lib2 = lib.getSpectra(tokens2[4]+"." + tokens2[6]).get(0);
+					Spectrum proj1 = swath1.project(lib1, 0.05);
+					Spectrum proj2 = swath2.project(lib2, 0.05);
+					Spectrum shiftLib2= new Spectrum(lib2);
+					Spectrum combined= new Spectrum(lib2);
+					Spectrum shiftProj2= new Spectrum(proj2);
+					Spectrum combinedProj2= new Spectrum(proj2);
+					shiftLib2.shiftSpectrum(massShift);
+					shiftProj2.shiftSpectrum(massShift);
+					combined.getPeak().addAll(shiftLib2.getPeak());
+					combinedProj2.getPeak().addAll(shiftProj2.getPeak());
+					Collections.sort(combined.getPeak(), PeakMassComparator.comparator);
+					Collections.sort(combinedProj2.getPeak(), PeakMassComparator.comparator);
+					lib1.mergePeaks(lib1, 0.05);
+					lib2.mergePeaks(lib2, 0.05);
+					shiftLib2.mergePeaks(shiftLib2, 0.05);
+					combined.mergePeaks(combined, 0.05);
+					//System.out.println(lib1);
+					//System.out.println(lib2);
+					System.out.println(lib1.peptide  + "\t" + lib2.peptide  + "\t" +  lib1.charge 
+							+ "\tsim:\t" + lib1.projectedCosine(lib2, 0.05) + "\t" +lib1.projectedCosine(shiftLib2, 0.05)
+							+"\t" + lib1.projectedCosine(combined, 0.05)
+							+ "\t" + lib1.cosine(proj1, 0.05) + "\t" + lib2.cosine(proj2, 0.05)
+							+ "\t" + lib1.projectedCosine(swath1, 0.05) + "\t" + lib2.projectedCosine(swath2, 0.05)
+							+ "\t" + proj1.projectedCosine(combinedProj2, 0.05));
+					count++;
+				}
+			}
+		}
+		System.out.println("total paired: " + count);
+		
+		
+		
+	}
+	
 	public static void main(String[] args){
 		//simpleCosTest();
 		//testSWATHIntensityVar();
 		//getSWATHFiltering();
 		//getSWATHRangesFromResult();
-		getSWATHRangesFromLib();
+		//getSWATHRangesFromLib();
 		//getSWATHInterference();
+		getPairedModSpectrum();
 		//testProjCosine();
 		//testProjCosineOnSpec();
 		//tofSpecStat();

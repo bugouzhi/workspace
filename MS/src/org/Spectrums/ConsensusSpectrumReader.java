@@ -88,7 +88,8 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		double[][] projections = new double[s.getPeak().size()][specList.size()];
 		for(int i = 0; i < specList.size(); i++){
 			Spectrum neigh = specList.get(i);
-			double[] projection = neigh.projectArray(s, 0.03);
+			//System.out.println(neigh);
+			double[] projection = neigh.projectArray(s, 0.05);
 			for(int j = 0; j < projection.length; j++){
 				projections[j][i] = projection[j];
 			}
@@ -107,7 +108,9 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 	
 	public double[] getProjectCosine(Spectrum s, List<Spectrum> specList){
 		boolean DEBUG = false;
-		
+		if(s.peptide.equals("VVLESLGSIK")){
+			DEBUG = true;
+		}
 		//finding the middle/'apex' spectrum
 		int targetInd = (int)Math.floor((specList.size()/2.0));
 		
@@ -130,6 +133,9 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		double[][] precursorProjection1 = getProjections(precur, surveyScanList);
 		double[][] projections = getProjections(s, specList);
 		double[][] rawprojections = getProjections(s, specList);  //raw intensity can get raw intensity without being normalize 
+		if(DEBUG){
+			System.out.println(s);
+		}
 		double[][] precursorProjection2 = getProjections(precur, specList);
 		ArrayUtils.normalize(precursorProjection1[0]);
 		ArrayUtils.normalize(precursorProjection2[0]);
@@ -142,7 +148,9 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		//find base/reference peaks for Elution profile correlation
 		for(int i = 0; i < s.getPeak().size(); i++){
 			Peak next = s.getPeak().get(i);
+			//if(projections[i][K] > 0){     //we only compute time-corr for matched peaks
 			intensityMap.put(-1*next.getIntensity(), i);
+			//}
 		}
 		baseInd = intensityMap.get(intensityMap.firstKey());
 		basePeak = s.getPeak().get(baseInd);
@@ -161,7 +169,18 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		
 		//extracting only for top peaks for some statistics
 		List<Integer> topIndex = new ArrayList<Integer>();
-		int top = 10;
+		int top = 0;
+		for(int i = 0; i < sarry.length; i++){
+			if(sarry[i] > 0){
+				top++;
+			}
+		}
+		//System.out.println(s.peptide + "\tTop:\t" + top);
+		if(top < 5){
+			top = 5;
+		}
+		top = 10;
+		
 		Iterator<Double> keys = intensityMap.keySet().iterator(); 
 		for(int i = 0; i < top && keys.hasNext(); i++){
 			topIndex.add(intensityMap.get(keys.next()));
@@ -209,7 +228,9 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 			//ArrayUtils.sqrt(projections[i]);
 			//this.thresholdArray(projections[i], 0);
 			//ArrayUtils.normalize(projections[i]);
-			if(DEBUG) System.out.println("parry: " + ArrayUtils.getString(projections[i]));
+			if(DEBUG) System.out.println("parry: " 
+					+ s.getPeak().get(i).getMass() + "\t" + s.getPeak().get(i).getIntensity() + "\t"
+					+ ArrayUtils.getString(projections[i]));
 			ArrayUtils.normalize(projections[i]);
 		}
 		
@@ -228,7 +249,7 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 			for(int j = 0; j < s.getPeak().size(); j++){
 				double corr = ArrayUtils.dotProd(projections[i], projections[j]);
 				//corr = corr * sarry[i];
-				if(corr > -10 && projections[i][5] > 0 && projections[j][5] > 0){
+				if(corr > -10 && projections[i][K] > 0 && projections[j][K] > 0){
 					sim+=corr;
 					localSim+=corr;
 					count++;

@@ -23,10 +23,10 @@ import org.systemsbiology.jrap.stax.Scan;
  */
 public class SWATHMSPLITSearch {
 	public static void testMSPLITSearch(int minScan, int maxScan, String queryFile, String libraryFile){
-		queryFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18488_REP3_40fmol_UPS1_1ug_Ecoli_NewStock2_SWATH_1.mzXML";
+		//queryFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18482_REP3_500ng_Ecoli_NewStock2_SWATH_2.mzXML";
 		//String queryFile = "../mixture_linked/swath_expanded.mgf";
 		//String libraryFile = "../mixture_linked/leftOneLib_plusDecoy2_test2.mgf";
-		libraryFile = "../mixture_linked/ACG_swathdevelopment_UPS12Ecoli_IDA_combined_RTlib_plusDecoy2.mgf";
+		//libraryFile = "../mixture_linked/ACG_swathdevelopment_UPSEcoli_REP234_IDA_plusDecoy2.mgf";
 		Iterator<Spectrum> reader = new MZXMLReader(queryFile);
 		ConsensusSpectrumReader reader2 = new ConsensusSpectrumReader(queryFile);
 		//reader.minInt=40;
@@ -34,7 +34,8 @@ public class SWATHMSPLITSearch {
 		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
 		//lib.windowFilterPeaks(6, 50);
 		//lib.removePeakByMass(10, 400);
-		lib.filterPeaks(6);
+		lib.removeModSpectra();
+		lib.filterPeaks(30);
 		lib.mergeSpectrum(0.05);
 		//SpectrumLib lib = new SpectrumLib(libraryFile, "splib");
 		//SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
@@ -50,10 +51,14 @@ public class SWATHMSPLITSearch {
 		System.out.println("#File\tScan#\tMz\tz\tPeptide\tMz\tz\tcosine\tName\t#Peak(Query)\t#Peaks(match)\t#shared\tfraction-matched\trelative-alpha\tIonCount");
 		Spectrum MS1 = null;
 		SpectrumMap MSMap = null;
+		List<Spectrum> libSpectList = lib.getAllSpectrums();
+		System.out.println("Unmod lib size: " + libSpectList.size());
+		ModifiedSpectrum.addModToLibrary(libSpectList);
+		System.out.println("Modded lib size: " + libSpectList.size());
 		while(iter.hasNext()){
 			Spectrum s = iter.next();
-			minScan = 100;
-			//maxScan = 41;
+			minScan = 300;
+			maxScan = 301150;
 			if(s.scanNumber < minScan || s.scanNumber > maxScan){
 				continue;
 			}else{
@@ -84,6 +89,7 @@ public class SWATHMSPLITSearch {
 			
 			//s.deIsoPeaks(s, 0.03);
 			s.windowFilterPeaks2(15, 25);
+			//s.windowFilterPeaks2(2.0, 50);
 			//s.filterPeaksByRankScore(3);
 			//s.filterPeaksByIntensity(100);
 			//s.filterPeaksByIntensity(50);
@@ -94,7 +100,7 @@ public class SWATHMSPLITSearch {
 			//TreeMap<Double,Spectrum> bestCands = bestPsimSpec(lib.getAllSpectrums(), s, 1, 2, 0.05);
 			//s.shiftSpectrumPPM(100);
 			double tolerance = 0.05;
-			TreeMap<Double,Spectrum> bestCands = bestPsimSpec(lib.getAllSpectrums(), s, MSMap, 0.65, 25, tolerance);
+			TreeMap<Double,Spectrum> bestCands = bestPsimSpec(libSpectList, s, MSMap, 0.72, 25, tolerance);
 			Iterator it = bestCands.descendingKeySet().iterator();
 			double maxInt = 0.0; //matches with maximum abundance
 			while(it.hasNext()){
@@ -114,18 +120,19 @@ public class SWATHMSPLITSearch {
 				}
 				
 				double sharePeaks = cand.sharePeaks(s, tolerance, DEBUG);
-				if(sharePeaks > 4){
+				if(sharePeaks > 8){
 					double projectInt = cand.projectedPeakIntensity(s, tolerance);
 					double projectInt2 = s.projectedPeakIntensity(cand, tolerance);
 					double libInt = cand.magnitude();
 					libInt = libInt*libInt;
 					//System.out.println("name is: " + s.spectrumName);
 					String RT = "0";
-					if(cand.spectrumName.split("\\s+").length > 5){  //check if retention time is in lib
+					if(cand.spectrumName.split("\\s+").length > 5 && cand.spectrumName.contains("Reteintion Time")){  //check if retention time is in lib
 						RT = cand.spectrumName.split("\\s+")[5];
 						RT = RT.substring(2, RT.length()-3);
 					}	
 					double libRT = Double.parseDouble(RT);
+					cand.filterPeaksByMass(180, 2500);
 					List<Spectrum> neighs = reader2.getNeighborScans(s.scanNumber, 5, 5);
 					double[] simTwoD = reader2.getProjectCosine(cand, neighs);		
 					System.out.print(queryFile + "\t" +  s.scanNumber + "\t" + s.parentMass +"\t" + s.charge +"\t" 

@@ -138,6 +138,31 @@ public class SimpleMatchingGraph implements UndirectedGraph{
 		return vertexSet;
 	}
 	
+	/**
+	 * create a bi-partite graph with each node
+	 * has at most one edge, use closest mass to determine
+	 * which peaks got matched
+	 */
+	public void toBiPartiteByMassError(){
+		for(Iterator<LabelledPeak> it = this.vertexSet(SimpleMatchingGraph.Observed).iterator(); it.hasNext();){
+			Peak p = it.next();
+			List neighs = this.getNeighbors(p);
+			LabelledPeak closestP = null;
+			double smallestErr = 10000;
+			for(int i = 0; i < neighs.size(); i++){
+				LabelledPeak currPeak = (LabelledPeak)neighs.get(i);
+				double currDiff = Math.abs(currPeak.getMass()-p.getMass());
+				closestP = currDiff < smallestErr ? currPeak : closestP;
+				smallestErr = currDiff < smallestErr ? currDiff : smallestErr;
+			}
+			if(closestP != null){
+				neighs.clear();
+				neighs.add(closestP);
+			}
+		}
+	}
+	
+	
 	public void clearGraph(){
 		this.adjList1.clear();
 		this.adjList2.clear();

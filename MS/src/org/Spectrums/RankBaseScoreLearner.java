@@ -230,9 +230,9 @@ public class RankBaseScoreLearner implements PeakComparator, Serializable{
 //			DecoySpectrumGenerator d = new DecoySpectrumGenerator();
 			TheoreticalSpectrum t = new TheoreticalSpectrum(new Peptide(s.peptide+"."+s.charge), Mass.standardPrefixes, Mass.standardSuffixes);//+"."+s.charge));//, Mass.standardPrefixes, Mass.standardSuffixes);
 			//System.out.println("pep " + s.peptide);
-			if(s.peptide.contains("+")|| s.peptide.contains("-")){
-				continue;
-			}
+//			if(s.peptide.contains("+")|| s.peptide.contains("-")){
+//				continue;
+//			}
 //			TheoreticalSpectrum t = new TheoreticalSpectrum(new Peptide(d.shuffle(s.peptide)+"."+s.charge), Mass.standardPrefixes, Mass.standardSuffixes);//+"."+s.charge));//, Mass.standardPrefixes, Mass.standardSuffixes);
 //			TheoreticalSpectrum t = new TheoreticalSpectrum(new Peptide(s.peptide), Mass.prefixes_plus_noises, Mass.standardSuffixes);
 			SimpleMatchingGraph matchingG = t.getMatchGraph(s, 0.5);
@@ -614,14 +614,14 @@ public class RankBaseScoreLearner implements PeakComparator, Serializable{
 	}
 	
 	public static void testGetIonStat(){
-		String file = "..\\mixture_linked\\Swath_allHumanruns_IDA_1pepFDR_msgfdbIds.mgf";
+		String file = "..\\mixture_linked\\test.mgf";
 		SpectrumLib lib = new SpectrumLib(file, "MGF");
-		lib.removeModSpectra();
+		//lib.removeModSpectra();
 		lib.windowFilterPeaks(12, 25);
 		lib.computeRank();
 		RankBaseScoreLearner learner = new RankBaseScoreLearner(lib);
 		learner.getIonsCount();
-		learner.writeLibToFile("..\\mixture_linked\\Cid_TOF_5600_win12_25.o");
+		learner.writeLibToFile("..\\mixture_linked\\Lib_disulfide_dangle.o");
 	}
 	
 	

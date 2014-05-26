@@ -90,14 +90,17 @@ public class MXDBSearch {
     		//candPepWithMod.addAll(Peptide.insertPTM(peps, 156.0680, new char[]{'K'}, 1));
     		//candPepWithMod.addAll(Peptide.insertPTM(peps, 57, 1, 1));
     		//candPepWithMod.addAll(Peptide.insertPTM(peps, 15.995, new char[]{'M'}, 1));
-    		candPepWithMod.addAll(Peptide.insertPTM(peps, 42.010565, 1, 1));
+    		//candPepWithMod.addAll(Peptide.insertPTM(peps, 42.010565, 1, 1));
     		List<Peptide> linkedPeps = LinkedPeakScoreLearner.generateLinkedPeptides(candPepWithMod, s, this.linkerSite);
     		System.out.println(s.spectrumName + " has candidates: " + linkedPeps.size());
     		List<Spectrum> candidateSpectrum = LinkedPeakScoreLearner.generateSpectra3(linkedPeps, s);
    			SpectrumLibSearcher searcher = new SpectrumLibSearcher(candidateSpectrum, filter);
 			if(targetPeptides.length == 2){
-				//int[] ranks = searcher.linkedRanks(s);
-				//System.out.println(s.spectrumName + " target peptides ranks " + ranks[0] + "\t" + ranks[1]);
+				int[] ranks = searcher.linkedRanks(s);
+				System.out.println(s.spectrumName + " target peptides ranks " + ranks[0] + "\t" + ranks[1]);
+			}
+			if(targetPeptides.length > 0){
+				//continue;
 			}
 			Spectrum[] topSpectra = searcher.topSpectra(s, this.topFirstPassMatch);
 
@@ -248,7 +251,7 @@ public class MXDBSearch {
 	}
 	
 	public static void main(String[] args){
-		args[0] = "..\\mixture_linked\\MXDB_inputs1.txt";
+		args[0] = "..\\mixture_linked\\MXDB_inputs2.txt";
 		testMXDBSearch(args[0]);
 	}
 }

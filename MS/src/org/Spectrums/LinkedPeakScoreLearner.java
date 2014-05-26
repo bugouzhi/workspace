@@ -399,10 +399,10 @@ public class LinkedPeakScoreLearner implements PeakComparator{
 	public static void generateMixSpectra(){
 		//String libfile2 = ".\\MSPLib\\Lib\\yeast.msp";
 		//SpectrumLib lib2 = new SpectrumLib(libfile2, "MSP");
-		String libfile2 = "..\\mixture_linked\\Swath_allHumanruns_IDA_1pepFDR_msgfdbIds.mgf";
+		String libfile2 = "..\\mixture_linked\\human_heck_1pepFDR_msgfdb.mgf";
 		SpectrumLib lib2 = new SpectrumLib(libfile2, "MGF");
 		lib2.removeModSpectra();
-		lib2.createMix("..\\mixture_linked\\mixtures.mgf", 150000, 0.1, 0.00001, 1.0, 3, false, 5);
+		lib2.createMix("..\\mixture_linked\\mixtures.mgf", 100, 0.1, 0.00001, 0.3, 3, false, 5);
 //		for(int i = 0; i < 1; i++){
 //			SpectrumLib mixture = lib2.createRandomMix(5000, 0.1, 0.001, 1.0, 3, false);
 //			System.out.println("Generated library size: " + mixture.getAllSpectrums().size());

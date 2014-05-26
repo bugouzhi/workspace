@@ -31,6 +31,8 @@ public class Mass {
 	public static String[] standardSuffixes = {	"y", "y-H20", "y-NH3","y-H20-H20", "y-H20-NH3", "y(iso)"};
 	public static String[] standardPrefixesX = {"b",  "b(iso)", "b(X)", "b(Xiso)", "b-H20", "b-NH3","b-H20-H20", "b-H20-NH3"}; //with isotop-coded xlinker
 	public static String[] standardSuffixesX = {"y", "y(iso)", "y(X)", "y(Xiso)", "y-H20", "y-NH3","y-H20-H20", "y-H20-NH3"};
+	public static final int DIFF_DA = 1;
+	public static final int DIFF_PPM = 2;
 
 	public static double maxAAMass = 200;	
 	public static HashMap initialize(){
@@ -166,6 +168,19 @@ public class Mass {
 			}
 		}
 		return aaIndMap;
+	}
+	
+	public static boolean checkMass(double mass1, double mass2, double tolerance, int mode){
+		 double diff = mass1 - mass2;
+		 diff = Math.abs(diff);
+		//System.out.println("diff: " + diff + "\t" + diff*1000000/precursor +"\t" + tolerance + "\t" + (diff < tolerance));
+		 if(mode == DIFF_DA){
+			 return diff < tolerance;
+		 }
+		 if(mode == DIFF_PPM){
+			 return diff*1000000/mass1 < tolerance;
+		 }
+		 return false;
 	}
 	
 	

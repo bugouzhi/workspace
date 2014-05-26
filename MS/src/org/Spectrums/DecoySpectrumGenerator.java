@@ -112,6 +112,7 @@ public class DecoySpectrumGenerator {
 	}
 	
 	
+	
 	private void addUnannotatedPeaks(SimpleMatchingGraph g, List<Peak> pList){
 		int annotated = pList.size();
 		List<Peak> unAnnotated = new ArrayList();
@@ -235,7 +236,7 @@ public class DecoySpectrumGenerator {
 	}
 	
 	public static void testShuffleSpectra(String spectrumFile){
-		spectrumFile = "..\\mixture_linked\\ACG_swathdevelopment_UPS12Ecoli_IDA_combined_testlib.mgf";
+		//spectrumFile = "..\\mixture_linked\\APSWATH_PPP2RA_MSGFDB_IDs_1pepFDR.mgf";
 		LargeSpectrumLibIterator<Spectrum> iter = new LargeSpectrumLibIterator(spectrumFile);
 		int index = spectrumFile.lastIndexOf('.');
 		String decoyName = spectrumFile.substring(0, index) + "_plusDecoy2.mgf";

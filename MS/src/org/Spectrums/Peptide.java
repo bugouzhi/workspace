@@ -16,6 +16,8 @@ public class Peptide implements Serializable{
 	private static double[] EMPTY_PTMS = new double[0];
 	private String peptide;
 	private char[] pepseq;
+	private int beginIndex;
+	private int endIndex;
 	private int[] pos = EMPTY_POS;
 	private double[] ptmmasses = EMPTY_PTMS;
 	private short charge;

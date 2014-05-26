@@ -161,14 +161,14 @@ public class SearchResultReporter {
 		SpectrumFilter upsAbundFilter4 = new SpectrumProteinFilter(".*HUMAN.*_50$");
 		SpectrumFilter upsAbundFilter5 = new SpectrumProteinFilter(".*HUMAN.*_5$");
 		SpectrumFilter upsAbundFilter6 = new SpectrumProteinFilter(".*HUMAN.*_0.5$");
-		SpectrumFilter fdrFilter = new SpectrumFDRFilter(0.01, SpectrumFDRFilter.PEP);
+		SpectrumFilter fdrFilter = new SpectrumFDRFilter(0.012, SpectrumFDRFilter.PEP);
 		SpectrumFilter[] filters = new SpectrumFilter[]{fdrFilter, unModFilter};
 		SpectrumFilter[] filters2 = new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter};
 		// int[] scanCounts = reader.getSpectrumStat();
 		int[] scanCounts = new int[]{69825, 67829, 66000};
 		
 		Collection<Collection> subResults = new ArrayList<Collection>();
-		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter}));
+		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter}));
 		subResults.add(this.getSubResults(filters));
 		subResults.add(this.getSubResults(filters2));
 		
@@ -180,14 +180,15 @@ public class SearchResultReporter {
 		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter4}));
 		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter5}));
 		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter6}));
-		List<AnnotatedSpectrum> filtered = new ArrayList();
+		List<Spectrum> filtered = new ArrayList();
 		filtered.addAll(subResults.iterator().next());
 		
-		ProteinIDExtractor protID = new ProteinIDExtractor(filtered, "../mixture_linked/database/UPS_plusHuman_plusDecoy.fasta");
+		ProteinIDExtractor protID = new ProteinIDExtractor(filtered, "../mixture_linked/database/Human_allproteins_plusDecoy.fasta");
 		Set<String> peps = protID.getNonSharedPeps();
-
+		
+		//peptide stats
 		for(int i = 0; i < filtered.size(); i++){
-			AnnotatedSpectrum s = filtered.get(i);
+			AnnotatedSpectrum s = (AnnotatedSpectrum)filtered.get(i);
 			int unique = 0;
 			String protein = "";
 			if(peps.contains(s.peptide)){
@@ -196,7 +197,8 @@ public class SearchResultReporter {
 			if(protID.peptideMap.containsKey(s.peptide)){
 				protein = protID.peptideMap.get(s.peptide).get(0);
 			}
-			//System.out.println(this.resultsFile + "\t" + Utils.StringUtils.getPepSeq(s.peptide) + "\t" + s.getAnnotation().get("pepfdr") +"\t" + unique + "\t" + protein);
+			System.out.println("PepList\t" + this.resultsFile + "\t" + Utils.StringUtils.getPepSeq(s.peptide) + "\t"
+					+ s.score + "\t" + s.getAnnotation().get("pepfdr") +"\t" + unique + "\t" + protein);
 		}
 		//Set<String> peps = protID.peptideIDs;
 		Map<String, AnnotatedSpectrum> proteinMap = this.tdaStat.proteinMap;
@@ -258,7 +260,7 @@ public class SearchResultReporter {
 			int pepcount = (Integer)s.getAnnotation().get("pepcount");
 			int uniquecount = (Integer)s.getAnnotation().get("uniquePepcount");
 			double protfdr = (Double)s.getAnnotation().get("Protfdr");
-			System.out.println(this.resultsFile +"\t" + s.protein + "\t" + pepcount + "\t" + uniquecount + "\t" + protfdr);
+			System.out.println("ProtList\t" + this.resultsFile +"\t" + s.protein + "\t" + pepcount + "\t" + uniquecount + "\t" + protfdr);
 		
 			if(protfdr <= 0.01){
 				int ind = ArrayUtils.getIntervalIndex(pepcount, pepNum);
@@ -281,7 +283,9 @@ public class SearchResultReporter {
 		for(Iterator<Collection> it = subResults.iterator(); it.hasNext();){
 			System.out.print(it.next().size() +"\t");
 		}
-		System.out.print(this.tdaStat.Prots[0] +"\t");
+		for(int i = 0; i < this.tdaStat.Prots.length; i++){
+			System.out.print(this.tdaStat.Prots[i] +"\t");
+		}
 		System.out.println();
 		
 		//pepcount
@@ -289,32 +293,48 @@ public class SearchResultReporter {
 		return subResults.toArray();
 	}
 	
-	
+	public void getPeptideReport(){
+		SpectrumFilter fdrFilter = new SpectrumFDRFilter(0.012, SpectrumFDRFilter.PEP);
+		SpectrumFilter unModFilter = new SpectrumPepFilter("[^0-9]+");
+		Collection<Spectrum> subResult = this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter});
+		System.out.println("total result: " + subResult.size());
+		//for(Iterator<Spectrum> it = subResult.iterator(); it.hasNext();){
+		//	System.out.println(it.next());
+		//}
+	}
 	
 	public static void testSearchResultReport(){
-		String spectFilePath = "../mixture_linked/msdata/UPS12_Human/";
-		String resultFilePath = "../mixture_linked/SWATH/Swath_Human_searches/APSWATHSwathmsplit/SwathMsplit_withnewcombinedLib/";
+		String spectFilePath = "../mixture_linked/msdata/";
+		String resultFilePath = "../mixture_linked///SWATH/APSWATH/PeptideIDs/APSWATHPPP2RA/";
 		File spectrumFiles = new File(spectFilePath);
 		File resultFiles = new File(resultFilePath);
 		File[] files = resultFiles.listFiles();
 		for(int i = 0; i < files.length; i++){
-			if(files[i].isDirectory() || !files[i].getName().contains("APSWATH")){
+			if(files[i].isDirectory() || !files[i].getName().matches(".*_pep\\.txt")){
 				continue;
 			}
 			String searchResult = files[i].toString();
 			String spectrumFile = spectFilePath + getSpectrumFile(searchResult, 0);
 			//SearchResultReporter reporter = new SearchResultReporter(spectrumFile, searchResult, 7,8,11,1);
-			SearchResultReporter reporter = new SearchResultReporter(spectrumFile, searchResult,4,8,31,-1);
+			SearchResultReporter reporter = new SearchResultReporter(spectrumFile, searchResult,4,8,32,-1);
 			//SearchResultReporter reporter = new SearchResultReporter(spectrumFile, searchResult,1,0,5,1);
 			//reporter.getStatSummary();
 			reporter.getCustomReport1();
 		}
 	}
 	
+	public static void testSearchResultReport(String file){
+		file = "../mixture_linked//out.txt";
+		String searchResult = file;
+		//SearchResultReporter reporter = new SearchResultReporter(spectrumFile, searchResult, 7,8,11,1);
+		SearchResultReporter reporter = new SearchResultReporter("", searchResult,4,8,32,-1);
+		reporter.getPeptideReport();
+	}
+	
 	
 	public static void testSearchResultReportPair(){
 		String spectFilePath = "../mixture_linked/msdata/UPS12_Human/";
-		String resultFilePath = "../mixture_linked/SWATH/Swath_Human_searches/APSWATHSwathmsplit/SwathMsplit_withnewcombinedLib/";
+		String resultFilePath = "../mixture_linked/SWATH/Swath_Human_searches/APSWATHSwathmsplit/SwathMsplit_withnewcombinedLit/";
 		File spectrumFiles = new File(spectFilePath);
 		File resultFiles = new File(resultFilePath);
 		File[] files = resultFiles.listFiles();
@@ -365,7 +385,8 @@ public class SearchResultReporter {
 	
 	
 	public static void main(String[] args){
-		testSearchResultReport();
+		//testSearchResultReport();
+		testSearchResultReport(args[0]);
 		//testSearchResultReportPair();
 	}
 	

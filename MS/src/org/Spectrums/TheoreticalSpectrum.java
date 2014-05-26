@@ -93,6 +93,7 @@ public class TheoreticalSpectrum extends Spectrum{
 	public TheoreticalSpectrum(Peptide p, String[] prefixIons, String[] suffixIons){
 		super();
 		p = new Peptide(p);
+		System.out.println("peptide is " + p);
 		this.peptide = p.getPeptide()+"."+p.getCharge();
 		if(p.getCharge() == 4){
 			//p.setCharge((short)3);

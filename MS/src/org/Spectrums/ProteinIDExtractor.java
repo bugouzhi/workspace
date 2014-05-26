@@ -52,7 +52,7 @@ public class ProteinIDExtractor {
 		//printProteins();
 	}
 	
-	public ProteinIDExtractor(List<AnnotatedSpectrum> IDs, String dbFile){
+	public ProteinIDExtractor(List<Spectrum> IDs, String dbFile){
 		this.peptideIDs = new HashSet();
 		//System.out.println("Protein fasta: " + dbFile);
 		this.proteinDBFile = dbFile;

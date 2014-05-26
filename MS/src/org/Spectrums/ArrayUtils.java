@@ -1,5 +1,9 @@
 package org.Spectrums;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 /**
  * Contain Utiliy function for array
  * @author jian wang
@@ -137,6 +141,30 @@ public class ArrayUtils {
 			combine[i+offset] = array2[i];
 		}
 		return combine;
+	}
+	
+	/**
+	 * Select a set of random integer
+	 * @param max
+	 * @param num
+	 * @return
+	 */
+	public static int[] getnRandom(int max, int num){
+		int[] randoms = new int[num];
+		Set<Integer> selected = new HashSet<Integer>();
+		int count = 0;
+		while(count < max){
+			int rand = (int)(Math.random()*max);
+			if(!selected.contains(rand)){
+				selected.add(rand);
+				count++;
+			}
+		}
+		int i = 0;
+		for(Iterator<Integer> it = selected.iterator(); it.hasNext();){
+			randoms[i] = it.next();
+		}
+		return randoms;
 	}
 	
 	/**

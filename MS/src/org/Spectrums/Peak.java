@@ -29,7 +29,7 @@ public class Peak implements Serializable{
 	
 	public String toString(){
 		String mz = String.format("%1$.3f", this.massByCharge);
-		String Intensity = String.format("%1$.2f", this.intensity);
+		String Intensity = String.format("%1$.6f", this.intensity);
 		if(rank  > 0){
 			return "" + mz + " " + Intensity + " rank: " + this.rank;
 		}else{

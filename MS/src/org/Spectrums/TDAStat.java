@@ -39,6 +39,7 @@ public class TDAStat{
 	public int[] Prots = new int[thresholds.length];
 	public int[] PSMs = new int[thresholds.length];
 	public int[] peps = new int[thresholds.length];
+	public boolean msplit= false;
 	
 	public TDAStat(String resultFile){
 		this(resultFile, 7, 8, 11, 1);
@@ -130,33 +131,32 @@ public class TDAStat{
 		this.peps = peps;
 	}
 
-
+	private boolean isSkip(String[] tokens, String line){
+		return (tokens[0].startsWith("#") || tokens.length < 5 || isHeader(line));
+	}
+	
 	private void parseResult(){
 		BufferedReader reader = Utils.FileIOUtils.createReaderFromFile(resultFile);
 		//System.out.println("got reader");
 		try{
-			String result = reader.readLine();
-			result = reader.readLine();
 			int counter = 0;
+			String result = reader.readLine(); counter++;		
 			results = new ArrayList<AnnotatedSpectrum>();
 			resultMap = new HashMap<Integer, AnnotatedSpectrum>();
 			peptideMap = new HashMap<String, AnnotatedSpectrum>();
 			proteinMap = new HashMap<String, AnnotatedSpectrum>();
 			while(result != null){
-				if(isHeader(result)){
-					result = reader.readLine();
-					continue;
-				}
-				//System.out.println("line is: " + result);
 				String[] tokens = result.split("\\t+");
-				if(tokens[0].startsWith("#") || tokens.length < 5){
-					result = reader.readLine();
+				if(isSkip(tokens, result)){
+					result = reader.readLine(); counter++;
 					continue;
 				}
-				if(Double.parseDouble(tokens[11]) < 10){
-					result = reader.readLine();
-					continue;
-				}
+				
+				
+				//if(this.msplit && Double.parseDouble(tokens[11]) < 10){
+				//	result = reader.readLine();
+				//	continue;
+				//}
 				AnnotatedSpectrum s = new AnnotatedSpectrum();
 				//s.scanNumber = Integer.parseInt(tokens[1]);
 				s.peptide = tokens[pepInd];
@@ -205,8 +205,7 @@ public class TDAStat{
 					this.proteinMap.put(key, ps);
 				}
 				resultMap.put(counter, s);
-				counter++;
-				result = reader.readLine();
+				result = reader.readLine(); counter++;
 			}
 			System.out.println("parsed result " + counter);
 			reader.close();
@@ -220,23 +219,30 @@ public class TDAStat{
 	 * Print out the original results with FDR info added
 	 */
 	public void printResultWithFDRInfo(){
+		printResultWithFDRInfo(100);
+	}
+	
+	public void printResultWithFDRInfo(double minFDR){
 		BufferedReader reader = Utils.FileIOUtils.createReaderFromFile(resultFile);
 		try{
-			String result = reader.readLine();
 			int counter = 0;
+			String result = reader.readLine(); counter++;
 			while(result != null){
-				if(isHeader(result)){
+				String[] tokens = result.split("\\t");
+				if(isSkip(tokens, result)){
 					System.out.println(result);
-					result = reader.readLine();
+					result = reader.readLine(); counter++;
 					continue;
 				}
 				if(this.resultMap.containsKey(counter)){
 					AnnotatedSpectrum s = this.resultMap.get(counter);
-					System.out.println(result + "\t" + s.getAnnotation().get("fdr") +"\t"
-						+ s.getAnnotation().get("pepfdr"));
-					result = reader.readLine();
-					counter++;
+					if((Double)s.getAnnotation().get("pepfdr") <= minFDR){
+						//System.out.println(s.spectrumName + "\t" + s.peptide);
+						System.out.println(result + "\t" + s.getAnnotation().get("fdr") +"\t"
+								+ s.getAnnotation().get("pepfdr"));
+					}
 				}
+				result = reader.readLine(); counter++;
 			}
 		}catch(IOException ioe){
 			System.err.println(ioe.getMessage());
@@ -414,8 +420,31 @@ public class TDAStat{
 		stat.getSummary();
 	}
 	
+	public static void runSwathMsplitTDA(String result, double minFDR){
+		result = "../mixture_linked/UPS_Ecoli_mods_msplit_2_pep.txt";
+		TDAStat stat = new TDAStat(result, 4,8,32,-1);
+		stat.printResultWithFDRInfo(0.01);
+		System.out.println();
+	}
+	
+	public static void runTDA(String result, double minFDR, int pepInd, int protInd, int scoreInd, int direction){
+		//result = "../mixture_linked/out.txt";
+		TDAStat stat = new TDAStat(result, pepInd,protInd, scoreInd, direction);
+		stat.printResultWithFDRInfo(minFDR);
+		System.out.println();
+	}
+	
 	public static void main(String[] args){
-		testTDA();
+		//testTDA();
+		if(args.length == 2){
+			runSwathMsplitTDA(args[0], Double.parseDouble(args[1]));
+		}else if(args.length == 6){
+			runTDA(args[0], Double.parseDouble(args[1]), 
+					Integer.parseInt(args[2]),
+					Integer.parseInt(args[3]),
+					Integer.parseInt(args[4]),
+					Integer.parseInt(args[5]));
+		}
 	}
 	
 }

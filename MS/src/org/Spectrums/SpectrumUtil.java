@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -168,6 +169,28 @@ public class SpectrumUtil {
 			p = sortedList.get(i);
 			p.setRank(size - i);
 		}
+	}
+	
+	
+	public static Spectrum mergeSpectrum(Spectrum s1, Spectrum s2, double tolerance){
+		Spectrum merged = new Spectrum();
+		mergeInto(merged,s1, tolerance);
+		mergeInto(merged, s2, tolerance);
+		return merged;
+	}
+	
+	public static Spectrum mergeSpectrum(Collection<Spectrum> specList, double tolerance){
+		Spectrum merged = new Spectrum();
+		for(Iterator<Spectrum> it = specList.iterator(); it.hasNext();){
+			mergeInto(merged, it.next(), tolerance);
+		}
+		return merged;
+	}
+	
+	public static void mergeInto(Spectrum merged, Spectrum toBeMerge, double tolerance){
+		merged.getPeak().addAll(toBeMerge.getPeak());
+		Collections.sort(merged.getPeak(), PeakMassComparator.comparator);
+		merged.mergePeaks(merged, tolerance);
 	}
 	
 	public static void printLibPeptides(){
@@ -449,9 +472,15 @@ public class SpectrumUtil {
 	}
 	
 	public static SimpleMatchingGraph getMatchGraph(Spectrum s, double tolerance){
+		String[] prefixIons = new String[]{"b", "b-H20", "b-NH3"};//, "b(iso)"};
+		String[] suffixIons = new String[]{"y", "y-H20", "y-NH3"};//, "y(iso)"};
+		return getMatchGraph(s, tolerance, prefixIons, suffixIons);
+	}
+	
+	public static SimpleMatchingGraph getMatchGraph(Spectrum s, double tolerance, String[] prefixIon, String[] suffixIon){
 		Peptide pep = new Peptide(s.peptide, s.charge);
-		TheoreticalSpectrum.prefixIons = new String[]{"b"};//, "b-H20", "b-NH3"};//, "b(iso)"};
-		TheoreticalSpectrum.suffixIons = new String[]{"y"};//, "y-H20", "y-NH3"};//, "y(iso)"};
+		TheoreticalSpectrum.prefixIons = prefixIon;
+		TheoreticalSpectrum.suffixIons = suffixIon;
 		TheoreticalSpectrum th = new TheoreticalSpectrum(pep);
 		//TheoreticalSpectrum.addIsotopicPeaks(th, 1);
 		SimpleMatchingGraph g = th.getMatchGraph(s, tolerance);
@@ -479,8 +508,8 @@ public class SpectrumUtil {
 	}
 	
 	public static void annotateSpectrumLibFromMzXMLs(String spectrumDir, String annotationFile, String outfile){
-		spectrumDir = "../mixture_linked//msdata/UPS12_Human/";
-		annotationFile = "..\\mixture_linked/Swath_human_REP3_IDA_1pepFDR_msgfdb.txt";
+		spectrumDir = "j:/workspace/mixture_linked/msdata/gringar/APSWATH/PPP2R1A/DDA/";
+		annotationFile = "..\\mixture_linked/APSWATH_PPP2RA_MSGFDB_IDs_1pepFDR.txt";
 		outfile = "..\\mixture_linked\\test.mgf";
 		List<Spectrum> specList = new ArrayList<Spectrum>();
 		Map<String, MZXMLReader> readers = new HashMap<String, MZXMLReader>();
@@ -491,7 +520,7 @@ public class SpectrumUtil {
 			String prevFile= "";
 			MZXMLReader reader = null;
 			int counter = 1; //one base index
-			int pepInd = 4;
+			int pepInd = 7;
 			int chargeInd = 6;
 			while((line=buff.readLine()) != null){
 				String[] tokens = line.split("\\t");
@@ -507,7 +536,7 @@ public class SpectrumUtil {
 				Spectrum s = reader.getSpectrum(Integer.parseInt(tokens[1]));
 				String peptide = tokens[pepInd];
 				int charge = Integer.parseInt(tokens[chargeInd]);
-				//peptide = peptide.substring(2, peptide.length()-2);
+				peptide = peptide.substring(2, peptide.length()-2);
 				Peptide p = new Peptide(peptide, charge);
 				s.peptide=peptide;
 				s.charge = charge;
@@ -1042,7 +1071,7 @@ public class SpectrumUtil {
 		//annotateSpectrumLib();
 		annotateSpectrumLibFromMzXML();
 		if(Integer.parseInt(args[3]) == 7){
-		//	annotateSpectrumLibFromMzXMLs(args[0], args[1], args[2]);
+			annotateSpectrumLibFromMzXMLs(args[0], args[1], args[2]);
 		}
 		//annotateSpectrumLibFromMGF();
 		//removeAnnotateFromMzXMLs();

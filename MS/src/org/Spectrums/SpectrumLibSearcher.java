@@ -108,6 +108,7 @@ public class SpectrumLibSearcher {
 		peps[0]=peps[0].replaceAll("[0-9\\.\\+\\-]", "");
 		peps[1]=peps[1].replaceAll("[0-9\\.\\+\\-]", "");
 		System.out.println("targets are: " + peps[0] + " and " + peps[1]);
+		System.out.println("Total: " + spectrumScorePairs.size());
 		boolean found1 = false, found2 = false;
 		for(int i = this.spectrumScorePairs.size()-1; i >= 0; i--){
 			Spectrum curr = this.spectrumScorePairs.get(i).s;

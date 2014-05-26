@@ -64,7 +64,7 @@ public class MXDBSumo {
 		List<Peak> pList = new ArrayList();
 		//creat sumo
 		List<Peptide> peptides2 = new ArrayList();
-		System.out.println("Number of PTM tag consider: " + this.ptms.length);
+		//System.out.println("Number of PTM tag consider: " + this.ptms.length);
 		for(int i =0; i < this.ptms.length; i++){
 			peptides2.add(new Peptide(ptms[i], 1));
 		}

@@ -129,7 +129,7 @@ public class FileIOUtils {
 	
 	//get only the file name from the path 
 	public static String getFileName(String path){
-		int ind = 0;
+		int ind = -1;
 		if(path.contains("/")){
 			ind = path.lastIndexOf("/");
 		}

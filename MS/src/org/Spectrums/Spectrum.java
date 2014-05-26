@@ -158,27 +158,30 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 	}
 	
 	//with copied rank and combine mass within tolerance
-	public Spectrum(Spectrum s1, Spectrum s2, double scale1, double scale2, boolean toVector){
+	
+	//no scaling
+	public Spectrum(Spectrum s1, Spectrum s2, boolean toVector){
 		if(toVector){
 			s1 = s1.toVector(BINWIDTH, MINMASS, MAXMASS);
 			s2 = s2.toVector(BINWIDTH, MINMASS, MAXMASS);
 			s1.computePeakRank();
 			s2.computePeakRank();
 		}
-		int commonpeak = 0;
 		double mag1 = s1.sumOfPeaks();
 		mag1 = mag1*mag1;
 		double mag2 = s2.sumOfPeaks();
 		mag2 = mag2*mag2;
-		System.out.println(s1.peptide + " & " + s2.peptide + " real alpha " + (mag1/s1.magnitude())/(mag2/s2.magnitude()));
+		int commonpeak = 0;
+		System.out.println(s1.peptide + " & " + s2.peptide + " alpha " +  (mag2/mag1) + " real alpha " + (mag2/s2.magnitude())/(mag1/s1.magnitude()));
 		//mag1 = s1.magnitude();
 		//mag2 = s2.magnitude();
-		s1.scaleSpectrum(1/mag1);
-		s2.scaleSpectrum(1/mag2);
-		if(s1.peptide.contains(".")){
+		
+		if(s1.peptide.contains(".") && s2.peptide.contains(".")){
 			this.peptide = s1.peptide + " & " +  s2.peptide;
+		}else if(!s2.peptide.contains(".") && !s1.peptide.contains(".")){
+			this.peptide = s1.peptide + "." + s1.charge +  " & " +  s2.peptide + "." + s2.charge;
 		}else{
-			this.peptide = s1.peptide + "."+ s1.charge + " & " +  s2.peptide + "." + s2.charge;
+			this.peptide = s1.peptide + " & " +  s2.peptide + "." + s2.charge;
 		}
 		this.modMass = 0;
 		this.modPos = 0;
@@ -196,11 +199,11 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			mz1 = p1.getMass();
 			mz2 = p2.getMass();
 			if(mz1 < mz2){
-				this.peaks.add(new Peak(mz1, p1.getIntensity()*scale1));
+				this.peaks.add(new Peak(mz1, p1.getIntensity()));
 				peaks.get(peaks.size()-1).copyRank(p1);
 				i++;
 			}else if(mz1 == mz2){
-				this.peaks.add(new Peak(mz1, p1.getIntensity()*scale1 + p2.getIntensity()*scale2));
+				this.peaks.add(new Peak(mz1, p1.getIntensity() + p2.getIntensity()));
 				if(p1.getIntensity() > p2.getIntensity()){
 					peaks.get(peaks.size()-1).copyRank(p1);
 				}else{
@@ -210,7 +213,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				i++;
 				j++;
 			}else {
-				this.peaks.add(new Peak(mz2, p2.getIntensity()*scale2));
+				this.peaks.add(new Peak(mz2, p2.getIntensity()));
 				peaks.get(peaks.size()-1).copyRank(p2);
 				j++;
 			}
@@ -218,17 +221,30 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		//appending any remaining peaks 
 		while(i < s1.peaks.size()){
 			p1 = s1.peaks.get(i);
-			this.peaks.add(new Peak(p1.getMass(), p1.getIntensity()*scale1));
+			this.peaks.add(new Peak(p1.getMass(), p1.getIntensity()));
 			peaks.get(peaks.size()-1).copyRank(p1);
 			i++;
 		}
 		while(j < s2.peaks.size()){
 			p2 = s2.peaks.get(j);
-			this.peaks.add(new Peak(p2.getMass(), p2.getIntensity()*scale2));
+			this.peaks.add(new Peak(p2.getMass(), p2.getIntensity()));
 			peaks.get(peaks.size()-1).copyRank(p2);
 			j++;
 		}
 		//rSystem.out.println("peaks count " + s1.getPeak().size() + "\t" + s2.getPeak().size() + "\t" + commonpeak);
+	
+	}
+
+	public Spectrum(Spectrum s1, Spectrum s2, double scale1, double scale2, boolean toVector){
+		double mag1 = s1.sumOfPeaks();
+		mag1 = mag1*mag1;
+		double mag2 = s2.sumOfPeaks();
+		mag2 = mag2*mag2;
+		s1.scaleSpectrum(1/mag1);
+		s2.scaleSpectrum(1/mag2);
+		s1.scaleSpectrum(scale1);
+		s2.scaleSpectrum(scale2);
+		
 	}
 	
 	public Spectrum(Spectrum s1, Spectrum s2, double scale1, double scale2, boolean toVector, boolean merge){
@@ -296,6 +312,65 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		mix.setPeaks(newPeakList);
 		//System.out.println("after merging we have "  + mix.peaks.size());
 	}
+	
+	
+	public void mergePeaks(Spectrum mix, PeakMassComparator comp){
+		//System.out.println("we start with  " + mix.peaks.size() + " peaks");
+		
+		for(int i = 0; i < mix.getPeaks().size(); i++){
+			Peak current = mix.getPeaks().get(i);
+			current.setIntensity(current.getIntensity()+ Math.random()*0.0000001);  //we add a very small number to make sure no intensity clashes
+		}
+		
+		TreeMap<Double, Peak> intensityMap = new TreeMap<Double, Peak>();
+		TreeMap<Double, Peak> massMap = new TreeMap<Double, Peak>();
+		List<Peak> newPeakList = new ArrayList<Peak>();
+		for(int i = 0; i < mix.getPeaks().size(); i++){
+			Peak current = mix.getPeaks().get(i);
+			current.setIntensity(current.getIntensity()+Math.random()*0.000000001);//in case exact same intensity
+			current.setMoz(current.getMass()+Math.random()*0.000000001); //in case exact same mass
+			intensityMap.put(current.getIntensity(), current); 
+			massMap.put(current.getMass(), current); //in case exact same masses
+		}
+		while(intensityMap.size() > 0){
+			Entry<Double, Peak> e = intensityMap.lastEntry();
+			Peak current = e.getValue();
+			Double currentKey = current.getIntensity();
+			SortedMap<Double, Peak> subMap = massMap.subMap(comp.getLowMass(current.getMass()), comp.getHighMass(current.getMass()));
+			//System.out.println("current: " + current);
+			//System.out.println("map has size " + intensityMap.size());
+			//System.out.println("map has size " + massMap.size());
+			List<Peak> toBeRemoved = new ArrayList<Peak>();
+			while(subMap.size() > 1){
+				for(Iterator<Peak> it = subMap.values().iterator(); it.hasNext();){
+					Peak neigh = it.next();
+					if(neigh.equals(current)){
+						continue;
+					}
+					double weight = current.getIntensity() / (current.getIntensity()+neigh.getIntensity());
+					current.setMoz(current.getMass()*weight + neigh.getMass()*(1-weight));
+					current.setIntensity(current.getIntensity()+neigh.getIntensity());
+					toBeRemoved.add(neigh);
+				}
+				for(int j = 0; j < toBeRemoved.size(); j++){
+					//System.out.println("add to removed: " + toBeRemoved.get(j));
+					intensityMap.remove(toBeRemoved.get(j).getIntensity());
+					massMap.remove(toBeRemoved.get(j).getMass());
+					
+				}
+				subMap = massMap.subMap(comp.getLowMass(current.getMass()), comp.getHighMass(current.getMass()));
+				//System.out.println("neighbor has size: " + subMap.size());
+			}
+			newPeakList.add(current);
+			intensityMap.remove(currentKey);
+			
+			//System.out.println("remainging peaks to process: " + intensityMap.size());
+		}
+		Collections.sort(newPeakList, PeakMassComparator.comparator);
+		mix.setPeaks(newPeakList);
+		//System.out.println("after merging we have "  + mix.peaks.size());
+	}
+	
 	
 	public void deIsoPeaks(Spectrum mix, double tolerance){
 		System.out.println("we start with  " + mix.peaks.size() + " peaks");
@@ -765,10 +840,17 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 	
 	//we normalize the intensity of the spectrum
 	//so it is has norm one
-	private void normalize(){
+	public void normalize(){
 		double total = magnitude();
 		this.scaleSpectrum(1/total);
 	}
+	
+	//makes Total ion intensity of the spectrum to one
+	public void normalizeTIC(){
+		double total = this.sumMagnitude();
+		this.scaleSpectrum(1/total);
+	}
+	
 	
 	//convert the spectrum to relative intensity
 	public void toRelIntensity(){
@@ -2367,7 +2449,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			}
 			for(int i = right+1;  i < this.peaks.size(); i++){
 				Peak bigger = this.peaks.get(i);
-				bigger.setIntensity(bigger.getIntensity()+Math.random()*0.000001);
+				bigger.setIntensity(bigger.getIntensity()*(1+i*0.000001));   //creat some ordering for same intensity peaks
 				if(bigger.getMass() - p.getMass()  <= deltaM){
 					neighs.add(bigger);
 				}else{
@@ -2377,7 +2459,8 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			}
 			//System.out.println("current list size: " + neighs.size());
 			Iterator<Peak> it = neighs.descendingIterator();
-			for(int i = 0; it.hasNext(); i++){
+			Peak prev = null;
+			for(int i = 0; it.hasNext();i++){
 //				//System.out.println("i is: " +i);
 				Peak p2 = it.next();
 				//System.out.println(p2);
@@ -2385,11 +2468,60 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				if(p == p2){
 					break;
 				}
+				//if(prev != null && (prev.getIntensity() - p2.getIntensity() > 0.01)){
+				//	i++;
+				//}
+				prev = p2;
 				if(i > n){
 					toBeRemove.add(p);
 					break;
 //					//System.out.println("remove " + p);
 				}
+			}
+			//System.out.println();
+			current++;
+		}
+		int before = this.getPeak().size();
+		this.peaks.removeAll(toBeRemove);
+		//System.out.println(this.spectrumName + "\twindow-filtering:\t" + before + "\t" + this.getPeak().size());
+	}
+	
+	public void windowFilterPeaks2(double signalRatio, double deltaM){
+		int current = 0, left = 0, right = 0;
+		Collection<Peak> toBeRemove = new ArrayList();
+		TreeSet<Peak> neighs = new TreeSet(PeakIntensityComparator.comparator);
+		while(current < this.peaks.size()){
+			Peak p = this.peaks.get(current);
+			for(int i = left; i < current; i++){
+				Peak smaller = this.peaks.get(i);
+				if(p.getMass() - smaller.getMass() > deltaM){
+					neighs.remove(smaller);
+					left = i;
+				}
+			}
+			for(int i = right+1;  i < this.peaks.size(); i++){
+				Peak bigger = this.peaks.get(i);
+				bigger.setIntensity(bigger.getIntensity()*(1+i*0.000001));
+				if(bigger.getMass() - p.getMass()  <= deltaM){
+					neighs.add(bigger);
+				}else{
+					right = i-1;
+					break;
+				}
+			}
+			
+			//System.out.println("current list size: " + neighs.size());
+			Iterator<Peak> it = neighs.descendingIterator();
+			double medianIntensity = 0.0;
+			double half = neighs.size()/(2.0);
+			//System.out.println(neighs.size() + "\t" + half);
+			for(int j = 0; it.hasNext() && j <= half; j++){
+				medianIntensity = it.next().getIntensity();
+				//System.out.println("Int " + medianIntensity);
+			}
+			//System.out.println("median " + medianIntensity);
+			if(p.getIntensity()/medianIntensity < signalRatio){
+				toBeRemove.add(p);
 			}
 			//System.out.println();
 			current++;
