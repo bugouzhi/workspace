@@ -3,6 +3,9 @@
 import java.util.ArrayList;
 import java.util.List;
 
+import Spectrum.Peak;
+import Spectrum.SpectrumLib;
+
 public class MemoryUsageTester {
 	public static void testLoadSpectrum(){
 		//String file = "..\\MSPLib\\Lib\\yeast.msp";
