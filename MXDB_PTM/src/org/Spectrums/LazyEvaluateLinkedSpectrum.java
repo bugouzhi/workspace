@@ -28,7 +28,7 @@ public class LazyEvaluateLinkedSpectrum extends TheoreticalSpectrum{
 	//think about what is proper way to do this? is it to initialize everything but not created the peasks?
 	public LazyEvaluateLinkedSpectrum(Peptide p, int linkedCharge){
 		this.linkedCharge = linkedCharge;
-		this.peptide = p.getPeptide()+"."+p.getCharge();
+		this.peptide = p.toString();//p.getPeptide()+"."+p.getCharge();
 		this.p = p;
 		this.p1 = p;
 		this.charge = linkedCharge;
@@ -99,9 +99,11 @@ public class LazyEvaluateLinkedSpectrum extends TheoreticalSpectrum{
 		Spectrum t = null;
 		if(p1 == null || p2 == null){
 			t = LinkedTheoSpectrumFactory.getLinkedTheoSpectrum(p.getPeptide(), charge, 
-					p.getPos(),p.getPtmmasses(), p.getLinkedPos(), 
+					p.getPos(), p.getPtmmasses(), p.getLinkedPos(), 
 					LinkedTheoSpectrumFactory.linkedTypeMap, LinkedTheoSpectrumFactory.linkedIonMap);
-			t.peptide = p.getPeptide();
+			//System.out.println("peptide is: " + p);
+			//t.peptide = p.getPeptide();
+			t.peptide = p.toString();
 		}else{
 			int charge = this.linkedCharge;
 			t = LinkedTheoSpectrumFactory.getLinkedTheoSpectrum(p1.getPeptide(), p2.getPeptide(), charge, charge, 

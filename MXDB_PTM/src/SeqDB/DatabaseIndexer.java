@@ -208,6 +208,7 @@ public class DatabaseIndexer {
 		if(tolerance > offset){   //no need to consider this when tolerance is large
 			C13 = 0;
 		}
+		//System.out.println("num: " + C13);
 		for(int c = 0; c <= C13; c++){
 			double leftMass = fromMass - offset*c;
 			double rightMass = toMass - offset*c;
@@ -231,7 +232,7 @@ public class DatabaseIndexer {
 	//which is more like and posisiton specifier to the protein object
 	public List<Peptide> getPeptidesFull(double fromMass, double toMass, int C13){
 		List<PeptideLite> cands = this.getPeptidesWithC13(fromMass, toMass, 0.05, C13);
-		List<Peptide> peptides = PeptideUtils.generatePeptide(cands, this.seq, fromMass, toMass);
+		List<Peptide> peptides = PeptideUtils.generatePeptide(cands, this.seq, fromMass, toMass, C13);
 		return peptides;
 	}
 	

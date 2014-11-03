@@ -1,5 +1,7 @@
 package org.Spectrums;
 
+import java.util.List;
+
 /**
  * Contain Utiliy function for array
  * @author jian wang
@@ -76,6 +78,14 @@ public class ArrayUtils {
 		return combine;
 	}
 	
+	
+	public static double[] toArray(List<Double> values){
+		double[] double_arry = new double[values.size()];
+		for(int i = 0; i < double_arry.length; i++){
+			double_arry[i] = values.get(i);
+		}
+		return double_arry;
+	}
 	/**
 	 * Given an element and a array of elements which represent the
 	 * boundaries of intervals, return the interval that this element

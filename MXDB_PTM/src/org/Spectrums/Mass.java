@@ -112,6 +112,7 @@ public class Mass {
 		}
 		if((int)aa-'A' < 0){
 			System.out.println("warning: " + aa + " might not be a valide aa");
+			return 0;
 			//throw new IllegalArgumentException();
 		}
 		if((int)aa-'A' >= aaMap.length){
@@ -120,6 +121,30 @@ public class Mass {
 			return 1000000;
 		}
 		return aaMap[(int)aa-'A'];
+	}
+	
+	public static int getAAMassInd(char aa){
+		if(aa == '*'){
+			return -1;
+		}
+		if(aa == 'U'){
+			return -1;
+		}
+		
+		if(aa == '_'){
+			return -1;
+		}
+		if((int)aa-'A' < 0){
+			System.out.println("warning: " + aa + " might not be a valide aa");
+			//throw new IllegalArgumentException();
+			return -1;
+		}
+		if((int)aa-'A' >= aaMap.length){
+			System.out.println("warning: " + aa + " might not be a valide aa");
+			//throw new IllegalArgumentException();
+			return -1;
+		}
+		return (int)aa-'A';
 	}
 	
 	public static boolean isAAMass(double mass){
@@ -131,6 +156,13 @@ public class Mass {
 		return false;
 	}
 	
+	public static void addFixMod(char c, double mass){
+		int ind = Mass.getAAMassInd(c);
+		if(ind > 0){
+			Mass.aaMap[ind]+=mass;
+		}
+	}
+	
 	/**
 	 * Check whether mass1 and mass2 is within certain mass tolerance
 	 * @param mass1
@@ -140,16 +172,27 @@ public class Mass {
 	 * @return
 	 */
 	public static boolean checkMass(double mass1, double mass2, double tolerance, int mode){
+		 return massDiff(mass1, mass2, mode) < tolerance;
+	}
+	/**
+	 * compute mass difference
+	 * @param mass1
+	 * @param mass2
+	 * @param tolerance
+	 * @param mode - return mass difference in absolute (Da) or relative mode (PPM)
+	 * @return
+	 */
+	public static double massDiff(double mass1, double mass2, int mode){
 		 double diff = mass1 - mass2;
 		 diff = Math.abs(diff);
 		//System.out.println("diff: " + diff + "\t" + diff*1000000/precursor +"\t" + tolerance + "\t" + (diff < tolerance));
 		 if(mode == DIFF_DA){
-			 return diff < tolerance;
+			 return diff;
 		 }
 		 if(mode == DIFF_PPM){
-			 return diff*1000000/mass1 < tolerance;
+			 return diff*1000000/mass1;
 		 }
-		 return false;
+		 return 100000.0;
 	}
 
 	/**
@@ -170,6 +213,15 @@ public class Mass {
 			}
 		}
 		return false;
+	}
+	
+	public static double minMassDiff(double mass1, double mass2, int charge , int numC13, int mode){
+		double minDiff = 10000000;
+		for(int i = 0; i <= numC13; i++){
+			double diff = massDiff(mass1, mass2+i*Mass.IsoDiff/charge, mode);
+			minDiff = diff < minDiff ? diff : minDiff;
+		}
+		return minDiff;
 	}
 	
 	

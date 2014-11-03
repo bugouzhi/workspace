@@ -45,7 +45,10 @@ public class MXDBSearch {
 	public String[] Ncuts=new String[]{"K", "R"};
 	public String[] Ccuts=new String[]{"K", "R"};
 	public int miscleaves=1;
+	public int numC13 = 1;
+	public double CysProt = 57.021410;
 	public String outFile="";
+	
 	
 	public MXDBSearch(){
 		
@@ -73,15 +76,17 @@ public class MXDBSearch {
 		ArraySpectrumComparator arryScorer = new ArraySpectrumComparator(0.5, peakscorer);
 		arryScorer.setScoreTable(adaptor.getTable());
 		arryScorer.setErrorTable(adaptor.getErrorsTable());
-    	
+		//setting mass parameters
+		Mass.addFixMod('C', this.CysProt-57.021410);
+		Mass.DSSLINKER_MASS = this.linkerMass;
+    
+		
 		// We use to indexer here because the first stage, which is essentially a blind search, has very wide tolerance
 		//it will be very inefficient to use a index table with very small resolution
 		DatabaseIndexer db = new DatabaseIndexer(peptideFile, this.Ncuts, this.Ccuts, this.miscleaves, 100);
 		DatabaseIndexer db2 = new DatabaseIndexer(peptideFile, this.Ncuts, this.Ccuts, this.miscleaves, 0.01);
 		BufferedWriter bw = Utils.FileIOUtils.initOutputStream(this.outFile);
-
-		Mass.DSSLINKER_MASS = this.linkerMass;
-    	//System.out.println("this linker " + this.linkerMass);
+		//System.out.println("this linker " + this.linkerMass);
     	CrossLinker linker = new CrossLinker(this.linkerMasses, new char[]{'K'});
     	for(;iter.hasNext();){
     		Spectrum s = iter.next();
@@ -120,8 +125,7 @@ public class MXDBSearch {
 				//System.out.println(s.spectrumName + " target peptides ranks " + ranks[0] + "\t" + ranks[1]);
 			}
     		
-			Spectrum[] topSpectra = searcher.topArrayCandidates(s, this.topFirstPassMatch, true);
-			
+			Spectrum[] topSpectra = searcher.topArrayCandidates(s, this.topFirstPassMatch, false);
 			if(true){
 				//continue;
 			}
@@ -132,12 +136,11 @@ public class MXDBSearch {
 				//System.out.println("Fasta protein " + p1.getFastaseq());
 				Peptide o = new Peptide(p1);
 				char aaMatch = this.linkerSite;
-				
 				double[] candParentMass = LookUpSpectrumLibX.getLinkedPartnerParentmass(p1, s, linker);
 				for(int k = 0; k < candParentMass.length; k++){
 					List<Peptide> cands = db2.getPeptidesFull(candParentMass[k] - this.parentMassTolerance - Mass.WATER, 
-	    					candParentMass[k] + this.parentMassTolerance - Mass.WATER,
-	    					1);
+	    					candParentMass[k] + this.parentMassTolerance - Mass.WATER, 
+	    					this.numC13);
 					//System.out.println(o + ": " + candParentMass[k] + "\t" + cands.size());
 					for(int l = 0; l < cands.size(); l++){
 						Peptide p2 = new Peptide(cands.get(l));
@@ -163,7 +166,7 @@ public class MXDBSearch {
 				for(int k = 0; k < candParentMass.length; k++){
 					List<Peptide> cands = db2.getPeptidesFull(candParentMassMod[k] - this.parentMassTolerance - Mass.WATER, 
 	    					candParentMassMod[k] + this.parentMassTolerance - Mass.WATER,
-	    					1);
+	    					this.numC13);
 				    		
 					for(int l = 0; l < cands.size(); l++){	
 						Peptide p2 = new Peptide(cands.get(l));
@@ -245,11 +248,13 @@ public class MXDBSearch {
 		mxdb.linkerMasses = CommandArgument.getDoulbArray(arguments.get("LinkerMass"), ",");
 		mxdb.linkerSite = arguments.get("LinkerSite").charAt(0);
 		mxdb.outFile = arguments.get("OutputFile");
+		mxdb.numC13 = Integer.parseInt(arguments.get("NumC13"));
+		//mxdb.CysProt = Double.parseDouble(arguments.get("CysProt"));
 		mxdb.search(queryFile, peptideFile);
 	}
 	
 	public static void main(String[] args){
-		//args[0] = "..\\mixture_linked\\MXDB_inputs2.txt";
+		args[0] = "..\\mixture_linked\\MXDB_inputs2.txt";
 		testMXDBSearch(args[0]);
 	}
 }

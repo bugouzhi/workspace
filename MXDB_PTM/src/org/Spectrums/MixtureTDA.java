@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * Perform SVM classification of
@@ -28,6 +29,9 @@ public class MixtureTDA extends TDAStat{
 	private double threshold1;
 	private double threshold2;
 	private double tolerance = 10;
+	private boolean adaptTolerance = true;
+	private double learnedTolerance = 10;
+	public int topCandidates = 200;
 	
 	public MixtureTDA(String resultFile){
 		super(resultFile);
@@ -36,6 +40,7 @@ public class MixtureTDA extends TDAStat{
 	public void filterByTDA(double FDR){
 		filterByTDA(FDR, 10000);
 	}
+	
 	
 	public void filterByTDA(double FDR, double tolerance){
 		List<Double> target1 = new ArrayList<Double>();
@@ -55,7 +60,13 @@ public class MixtureTDA extends TDAStat{
 			}	
 		}
 		this.threshold1 = getThreshold(target1, decoy1, FDR);
-		
+		this.learnedTolerance = learnTolerance(threshold1, this.scoreInd1);
+		if(this.adaptTolerance){
+			System.out.println("Learned precursor tolerance : " + this.learnedTolerance );
+			this.tolerance = this.learnedTolerance;
+			this.adaptTolerance = false;
+			filterByTDA(FDR,  learnedTolerance);
+		}
 //		List<Double> target2 = new ArrayList<Double>();
 //		List<Double> decoy2 = new ArrayList<Double>();
 //		for(Iterator<String> it = resultLines.iterator(); it.hasNext();){
@@ -73,6 +84,33 @@ public class MixtureTDA extends TDAStat{
 //		}
 //		this.threshold2 = getThreshold(target2, decoy2, FDR);
 		this.threshold2 = 100;
+	}
+	
+	public double learnTolerance(double threshold1, int scoreInd){
+		TreeSet<Double> massDiff = new TreeSet<Double>();
+		for(Iterator<String> it = resultLines.iterator(); it.hasNext();){
+			String current = it.next();
+			String[] tokens = current.split("\\t");
+			if(checkResult(tokens) && Double.parseDouble(tokens[scoreInd]) > threshold1){
+				double mass1 = Double.parseDouble(tokens[2]);
+				double mass2 = Double.parseDouble(tokens[6]);
+				int charge = Integer.parseInt(tokens[3]);
+				massDiff.add(Mass.minMassDiff(mass1, mass2, charge, 1, Mass.DIFF_PPM));
+			}
+		}
+		int index = (int)(0.95*massDiff.size());
+		int i = 0;
+		for(Iterator<Double> it = massDiff.iterator(); it.hasNext(); i++){
+			double diff = it.next();
+			if(i >= index){
+				return diff;
+			}
+		}
+		if(massDiff.isEmpty()){
+			return 0.0;
+		}
+		return massDiff.pollLast();
+		
 	}
 	
 	/**
@@ -103,9 +141,18 @@ public class MixtureTDA extends TDAStat{
 			}	
 		}
 		this.threshold1 = getThreshold(target1, decoy1, decoy2, FDR);
-		
+		this.learnedTolerance = learnTolerance(threshold1, this.scoreInd1);
+		if(this.adaptTolerance){
+			System.out.println("Learned precursor tolerance : " + this.learnedTolerance);
+			this.tolerance = this.learnedTolerance+0.01;  //allow some tolerance
+			this.adaptTolerance = false;
+			filterByLinkedTDA(FDR,  this.tolerance);
+		}
 		this.threshold2 = 100;//getThreshold(target1, decoy1, decoy2, FDR);
 	}
+	
+	
+	
 	
 	private boolean checkResult(String[] tokens){
 		double mass1 = Double.parseDouble(tokens[2]);
@@ -113,14 +160,14 @@ public class MixtureTDA extends TDAStat{
 		int charge = Integer.parseInt(tokens[3]);
 		return (Double.parseDouble(tokens[rawScoreInd]) > this.minScore 
 				&& !tokens[4].contains("Z")
-				&& Mass.checkMassWithIso(mass1, mass2, tolerance, charge, 1, Mass.DIFF_PPM)
+				&& Mass.checkMassWithIso(mass1, mass2, tolerance, charge, 5, Mass.DIFF_PPM)
 				&& tokens.length >= this.scoreInd2);
 	}
 	
 	public void printOutFile(String outfile){
 		try{
 			BufferedWriter out = new BufferedWriter(new FileWriter(outfile));
-			String header="#SpectrumFile\tScan#\tM/z\tCharge\tAnnotation\tProtein\tTheo_M/Z\tScore\tScore1\tScore2\tNormScore1\tNormScore2\t%Int\t%b_Pep1\t%y_Pep1\t%b_Pep2\t%y_Pep2\tbseries_Pep1\tyseries_Pep1\tbseries_Pep2\ty_series_Pep2\tmerror_Pep1\tmerrror_Pep2\t%Int_Pep1\t%Int_Pep2\tSVM-Score\n";
+			String header="#SpectrumFile\tScan#\tM/z\tCharge\tAnnotation\tProtein\tTheo_M/Z\tScore\tScore1\tScore2\tNormScore1\tNormScore2\t%Int\t%b_Pep1\t%y_Pep1\t%b_Pep2\t%y_Pep2\tbseries_Pep1\tyseries_Pep1\tbseries_Pep2\ty_series_Pep2\tmerror_Pep1\tmerrror_Pep2\t%Int_Pep1\t%Int_Pep2\tSVM-Score\tPepSeq\n";
 			int[] singleInds = new int[]{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26};
 			int[] pairInds = new int[]{};
 			int[] pairOutInds = new int[]{};
@@ -131,6 +178,7 @@ public class MixtureTDA extends TDAStat{
 				int match = getMatchClass(tokens);
 				String[] outs = new String[singleInds.length];
 				if(match != this.NO_MATCH){
+					//System.out.println("line is" + current);
 					for(int i = 0; i < singleInds.length; i++){
 						outs[i]=tokens[singleInds[i]-1];
 					}
@@ -142,11 +190,23 @@ public class MixtureTDA extends TDAStat{
 								+ "!" + tokens[pairInds[i]-1]; 
 						}
 					}
-				
 					for(int i = 0; i < outs.length-1; i++){
 						out.write(outs[i] +"\t");
 					}
-					out.write(outs[outs.length-1] + "\n");
+					out.write(outs[outs.length-1] + "\t");
+					//we write out an column that contain only the peptide sequence, to help find out unique linked-peptides identified
+					String pepSeq = tokens[4].replaceAll("[0-9\\.\\+\\[\\]\\(\\)]", "");
+					String[] pepSeqs = pepSeq.split("[&|]");
+					if(pepSeqs[0].compareTo(pepSeqs[1]) < 0){
+						out.write(pepSeqs[0]);
+						out.write("|");
+						out.write(pepSeqs[1]);
+					}else{
+						out.write(pepSeqs[1]);
+						out.write("|");
+						out.write(pepSeqs[0]);
+					}
+					out.write("\n");
 				}
 			}
 			out.flush();
@@ -224,7 +284,8 @@ public class MixtureTDA extends TDAStat{
 		classify.spectrumMatchClassify();
 		String svmOut = classify.getSvmResultFile();
 		MixtureTDA mixTDA = new MixtureTDA(svmOut);
-		mixTDA.filterByLinkedTDA(FDR, tolerance);
+		//mixTDA.filterByLinkedTDA(FDR, tolerance);
+		mixTDA.filterByLinkedTDA(FDR, 500);
 		mixTDA.printOutFile(outFile);
 	}
 	
@@ -233,10 +294,10 @@ public class MixtureTDA extends TDAStat{
 			System.out.println("usage: java -Xmx1000M -jar MixDBFilter.jar <mixdb results> <output> <fdr> <precursor ppm_tolerance> optional: <temporary svm path> <svm binary path>");
 			return;
 		}
-		//double fdr = 0.01;//Double.parseDouble(args[2]);
-		//double tolerance = 10;//Double.parseDouble(args[3]);
-		//String resultFile = "../mixture_linked/mxdb_xlinktopout.txt";
-		//String outFile = "../mixture_linked/mxdb_xlink_filteredout.txt";
+//		double fdr = 0.01;//Double.parseDouble(args[2]);
+//		double tolerance = 1000;//Double.parseDouble(args[3]);
+//		String resultFile = "../mixture_linked/MXDB_v1.0/out.txt";
+//		String outFile = "../mixture_linked/mxdb_xlink_filteredout.txt";
 	
 		try{
 			String resultFile = args[0];
@@ -253,8 +314,8 @@ public class MixtureTDA extends TDAStat{
 				svmBinDir = args[5];
 			}
 			//MixtureFilter(resultFile, outFile, fdr, tolerance, svmtempDir);
-			//MXDBFilter(resultFile, outFile, fdr, tolerance, svmtempDir, svmBinDir);
-			SpecializeFilter(resultFile, outFile, fdr, tolerance, svmtempDir, svmBinDir);
+			MXDBFilter(resultFile, outFile, fdr, tolerance, svmtempDir, svmBinDir);
+			//SpecializeFilter(resultFile, outFile, fdr, tolerance, svmtempDir, svmBinDir);
 
 		}catch(Exception e){
 				System.err.println(e.getMessage());

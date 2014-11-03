@@ -265,6 +265,8 @@ public class SpectrumLibSearcher {
 			currScore = this.comparator.compare(curr, aSpect);
 			if(currScore > bestScore){
 				bestList.put(currScore, this.specList.get(i));
+				//System.out.println("prot is " + ((TheoreticalSpectrum)specList.get(i)).p.getFastaseq());
+				//bestList.put(currScore, curr);
 				if(bestList.size() >= topN && bestList.size() > 1){
 					bestList.pollFirstEntry();
 					bestScore = bestList.firstKey().doubleValue();
@@ -285,7 +287,9 @@ public class SpectrumLibSearcher {
 			SpectrumScorePair currpair = new SpectrumScorePair(currbest);
 			currpair.score = bestEntry.getKey();
 			if(print){
-				printTopLinkedCandidateInfo(query, currpair, this.adjustPrintOrder);
+				//printTopLinkedCandidateInfo(query, currpair, this.adjustPrintOrder);
+				this.printTopCandidateInfo(query, currpair);
+				//System.out.println(query.scanNumber + "\tTop answer\t" + currpair.s.peptide  + "\tscore:\t" + currpair.score);
 			}
 //			if(peps.length == 2){
 //				String pepseq = currbest.getPeptide().split("\\.")[0];
@@ -307,7 +311,7 @@ public class SpectrumLibSearcher {
 //		}
 		
 		//System.out.println("best has size: " + bestList.size());
-		//printTopCandidatesInfo(query, bestList);
+		//printTopCandidatesInfo(query, bestList); 
 		//System.out.println("total number of pairs considered: " + count);
 		return bestCands;
 	}
@@ -514,7 +518,9 @@ public class SpectrumLibSearcher {
 	
 	private void printTopCandidateInfo(Spectrum query, SpectrumScorePair match){
 		//TheoreticalSpectrum th = (TheoreticalSpectrum)match.s;
-		TheoreticalSpectrum th = new TheoreticalSpectrum(match.s.getPeptide());
+		//System.out.println(((TheoreticalSpectrum)match.s).p);
+		//System.out.println("peptide " + match.s.peptide);
+		TheoreticalSpectrum th = new TheoreticalSpectrum(match.s.peptide+"."+match.s.charge);
 		double[] stat = th.analyzeAnnotation(query, match.s.peptide, 0.3, false);
 		if(match.s instanceof ArrayTheoreticalSpectrum){
 			ArrayTheoreticalSpectrum arry = (ArrayTheoreticalSpectrum)match.s;
@@ -525,7 +531,9 @@ public class SpectrumLibSearcher {
 					+ (match.score/match.s.peptide.length()) + "\t" + stat[0] + "\t" + stat[1] + "\t" + stat[2] + "\t" 
 					+ stat[3] + "\t" + stat[4] + "\t" + stat[5]);
 		}else{
-			System.out.println(this.spectrumFile +"\t" + query.getPeptide() +  "\t" +  th.p 
+			FastaSequence seq = ((TheoreticalSpectrum)match.s).p.getFastaseq();
+			String annot = seq.getAnnotation(((TheoreticalSpectrum)match.s).p.getBeginIndex()).split("\\s+")[0];
+			System.out.println(this.spectrumFile +"\t" + query.getPeptide() +  "\t" +  th.p + "\t" + annot
 			+"\t" + query.parentMass + "\t"  + query.charge + "\t" + match.s.parentMass + "\t" + th.charge + "\t" + match.score + "\t" 
 			+ (match.score/match.s.peptide.length()) + "\t" + stat[0] + "\t" + stat[1] + "\t" + stat[2] + "\t" 
 			+ stat[3] + "\t" + stat[4] + "\t" + stat[5]);
@@ -628,7 +636,7 @@ public class SpectrumLibSearcher {
 	}
 	
 	/**
-	 * Print results for top candidates. Various mathc statistics are printed
+	 * Print results for top candidates. Various match statistics are printed
 	 * @param query
 	 * @param match
 	 */

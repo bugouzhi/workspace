@@ -355,8 +355,7 @@ public class MZXMLReader implements Iterator<Spectrum>{
 		currentScan += 1;
 		for(; currentScan < this.parser.getScanCount(); currentScan++){
 			Scan scan = parser.rap(currentScan);
-			
-			if(scan.getHeader().getMsLevel() >= 2){
+			if(scan != null && scan.getHeader() != null && scan.getHeader().getMsLevel() >= 2){
 				this.current = getSpectrum(currentScan);
 				this.current.score = scan.getHeader().getPrecursorIntensity();
 				double totalInt = this.current.sumMagnitude();

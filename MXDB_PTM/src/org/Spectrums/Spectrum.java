@@ -2231,6 +2231,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		//	sb.append("TITLE=" + this.peptide + "\n");
 		//}else{
 			sb.append("TITLE=" + this.spectrumName + "\n");
+			//sb.append("TITLE=" + "mixture spectrum" + "\n");
 			//sb.append("TITLE=NIST spectral library entry: " + this.peptide.split("\\.")[0]  + "\n");
 		//}
 		sb.append("CHARGE=" + charge + "\n");

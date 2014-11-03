@@ -367,7 +367,7 @@ public class LinkedPeakScoreLearner implements PeakComparator{
 		String libfile2 = "..\\mixture_linked\\human_heck_training.mgf";
 		SpectrumLib lib2 = new SpectrumLib(libfile2, "MGF");
 		lib2.removeModSpectra();
-		lib2.createMix("..\\mixture_linked\\mixtures.mgf", 50000, 0.1, 0.00001, 1.0, 3, false, 5);
+		lib2.createMix("..\\mixture_linked\\mixtures.mgf", 100, 0.1, 0.00001, 1.0, 3, false, 5);
 //		for(int i = 0; i < 1; i++){
 //			SpectrumLib mixture = lib2.createRandomMix(5000, 0.1, 0.001, 1.0, 3, false);
 //			System.out.println("Generated library size: " + mixture.getAllSpectrums().size());
