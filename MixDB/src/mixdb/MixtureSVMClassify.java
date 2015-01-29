@@ -20,7 +20,7 @@ public class MixtureSVMClassify {
 			+File.separator;
 	private String currentPath= System.getProperty("user.dir")+File.separator;
 	//private String currentPath="../mixture_linked/MSPLIT_v1.0/";
-	private String SVM_LIGHT_PATH= currentBin + "svm_light_windows" +
+	private String SVM_LIGHT_PATH= currentBin + "svm_light_linux" +
 			"" + File.separator;
 	//private String svmPath1 = SVM_LIGHT_PATH + "mixdb_stage1.model";
 	private String svmPath1 = SVM_LIGHT_PATH + "human_simmixmixdb_stage1.model";
@@ -78,6 +78,11 @@ public class MixtureSVMClassify {
 		return inputFile + "_svmresult.txt";
 	}
 	
+	public boolean checkResultLine(String line, String[] tokens){
+		return !(line.contains("NaN") || tokens.length != this.totalColumns || line.startsWith("#") 
+				|| Double.parseDouble(tokens[this.rawScoreInd]) < this.minScore);
+	}
+	
 	private void generateSVMInput(){
 		try{
 			BufferedReader buff = new BufferedReader(new FileReader(this.resultFile));
@@ -88,8 +93,7 @@ public class MixtureSVMClassify {
 			while(line!=null){
 				String[] tokens = line.split("\\t");
 				//System.out.println("line: " + line);
-				if(line.contains("NaN") || tokens.length != this.totalColumns || line.contains("#") 
-						|| Double.parseDouble(tokens[this.rawScoreInd]) < this.minScore){
+				if(!checkResultLine(line, tokens)){
 					line = buff.readLine();
 					continue;
 				}
@@ -110,8 +114,8 @@ public class MixtureSVMClassify {
 	}
 	
 	private void runSVMClassify(){
-		String cmd1 = this.SVM_LIGHT_PATH +  "svm_classify.exe " + this.svmInFile + " " +  this.svmPath1 + " " + this.svmOutFile1;
-		String cmd2 = this.SVM_LIGHT_PATH +  "svm_classify.exe " + this.svmInFile + " " + this.svmPath2 + " " + this.svmOutFile2;
+		String cmd1 = this.SVM_LIGHT_PATH +  "svm_classify " + this.svmInFile + " " +  this.svmPath1 + " " + this.svmOutFile1;
+		String cmd2 = this.SVM_LIGHT_PATH +  "svm_classify " + this.svmInFile + " " + this.svmPath2 + " " + this.svmOutFile2;
 
 		try{
 			System.out.println(cmd1);
@@ -154,8 +158,7 @@ public class MixtureSVMClassify {
 			String line = buff.readLine();
 			while(line!=null){
 				String[] tokens = line.split("\\t");
-				if(line.contains("NaN") || tokens.length != this.totalColumns|| line.startsWith("#")
-						|| Double.parseDouble(tokens[this.rawScoreInd]) < this.minScore){
+				if(!checkResultLine(line, tokens)){
 					line = buff.readLine();
 					continue;
 				}

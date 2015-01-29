@@ -85,9 +85,6 @@ public class MixDBSearcher extends SimpleDBSearcher{
 			if(s.getPeak().size() < 10){
 				continue;
 			}
-			if(s.scanNumber != 5709){
-				//continue;
-			}
 			//s.windowFilterPeaks(topPeakKept, windowWidth);
 			s.windowFilterPeaks(12, 25);
 			s.computePeakRank();
@@ -167,7 +164,8 @@ public class MixDBSearcher extends SimpleDBSearcher{
 			searcher.spectrumFile = this.spectrumFile;
 			searcher.bw = out;
 			searcher.setSingleScorer(this.comp);
-			searcher.bestArrayCandidates(a, 1, Mix);
+			searcher.checkMixtureRanks(a);
+			//searcher.bestArrayCandidates(a, 1, Mix);
 			counter++;
 		}
 		try{
@@ -385,7 +383,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 				this.ptms.add(ptm);
 			}
 		}
-		this.ptmList = PTM.generatePTMList(this.ptms, 3);	
+		this.ptmList = PTM.generatePTMList(this.ptms, maxPtm);	
 		ptmList.add(new PTM[]{});
 		ptmList.addAll(this.ptmList);
 		this.ptmList = ptmList;
@@ -445,16 +443,16 @@ public class MixDBSearcher extends SimpleDBSearcher{
 	}
 	
 	public static void main(String[] args){
-		args[0] = "../mixture_linked/database/UPS_plusEcoli_plusDecoy.fasta";
-		args[1] = "../mixture_linked/2Mixtures.mgf";
+		args[0] = "../mixture_linked/database/Ecoli_genome_plusDecoy.fasta";
+		args[1] = "../../Downloads/ACG_Nuno-selected/New_Swath_3mu/SWATH_3amu_bin16_01.mzXML";
 		args[2] = "3.0";
-		args[3] = "0.03";
+		args[3] = "0.05";
 		args[4] = "../mixture_linked/ACG_14344_hardklorPrecursorsListmin07.txt";
 		//args[5] = "../mixture_linked/Mod_mixdb.txt";
 		args[5] ="../mixture_linked/testmixdb.txt";
 		args[6] = "1";
-		args[7] ="75000";
-		args[8] = "mixtures_alpha_generic_TOFmodels.o";
+		args[7] ="750000";
+		args[8] = "mixtures_TOF_alpha01-10_models.o";
 		if(args.length < 6 || args.length > 9){
 			System.out.println("usage: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <outfile>");
 			System.out.println("   or: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <modification file> <outfile>");
@@ -491,7 +489,8 @@ public class MixDBSearcher extends SimpleDBSearcher{
 				searcher.searchWithMultiPrecursors();
 			}else if(args.length == 9){
 				//searcher.searchWithMultiPrecursors();
-				searcher.searchDB(2);
+				//searcher.searchDB(3);
+				searcher.searchDB();
 			}
 		}catch(Exception e){
 			System.err.println(e.getMessage());

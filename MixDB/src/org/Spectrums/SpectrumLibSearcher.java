@@ -8,6 +8,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Arrays;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -448,7 +449,7 @@ public class SpectrumLibSearcher {
 		TreeMap<Double, List<Spectrum>> bestList = new TreeMap();
 		double bestScore = -1000000.0, currScore = 0.0;
 		int maxIndex = this.spectrumScorePairs.size()-1;
-		int topK = 20, topK2 = 2000;
+		int topK = 60, topK2 = 2000;
 		int firstIndex = maxIndex - 20, secondIndex = maxIndex - 500;
 		int count = 0;
 		firstIndex = firstIndex < 0 ? 0 : firstIndex;	
@@ -458,7 +459,7 @@ public class SpectrumLibSearcher {
 			List<Spectrum> cand = new ArrayList();
 			cand.add(this.spectrumScorePairs.get(maxIndex-i).s);
 			SpectrumScorePair curr = this.spectrumScorePairs.get(maxIndex-i);
-			System.out.println(((ArrayTheoreticalSpectrum)curr.s).getPeplite() +  "\t" + curr.s.parentMass + "\t score is: " + curr.score);
+			//System.out.println(((ArrayTheoreticalSpectrum)curr.s).getPeplite() +  "\t" + curr.s.parentMass + "\t score is: " + curr.score);
 			insertBestPair(cand, curr.score, bestListPrev, topK);
 		}
 
@@ -472,7 +473,7 @@ public class SpectrumLibSearcher {
 					Spectrum mix = MixTheoSpectrumFactory.getMixTheoSpectrum((ArrayTheoreticalSpectrum)s, (ArrayTheoreticalSpectrum)s2, m);
 					count++;
 					currScore = this.comparator.compare(mix, mixturequery);
-					System.out.println(mix.peptide + "\t" + currScore);
+					//System.out.println(mix.peptide + "\t" + currScore);
 					if(currScore > bestScore){
 						List<Spectrum> cand = new ArrayList();
 						cand.add(mix);
@@ -494,6 +495,33 @@ public class SpectrumLibSearcher {
 		return null;
 	}
 	
+	/**
+	 * check the ranks of the correct peptides in mixture spectra in
+	 * list ranked by scoring peptide to spectrum alone
+	 * @param mixturequery
+	 * @param topN
+	 * @param Mix
+	 * @return
+	 */
+	public int[] checkMixtureRanks(Spectrum mixturequery){
+		String[] peptides = mixturequery.peptide.split(" & ");
+		Set<String> peptideSet = new HashSet<String>();
+		int[] pepRanks = new int[peptides.length];
+		int rankInt = 0;
+		for(int i = 0; i < peptides.length; i++){
+			peptideSet.add(peptides[i]);
+		}
+		sortSpecListByScore(mixturequery);
+		for(int i = this.spectrumScorePairs.size()-1; i > 0; i--){
+			Spectrum s = this.spectrumScorePairs.get(i).s;
+			if(peptideSet.contains(s.peptide)){
+				pepRanks[rankInt] = this.spectrumScorePairs.size() - i;
+				rankInt++;
+			}
+		}
+		System.out.println(mixturequery.peptide + "\t" + Arrays.toString(pepRanks));
+		return pepRanks;
+	}
 
 	
 	private void printTopCandidateInfo(Spectrum query, SpectrumScorePair match){
