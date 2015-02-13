@@ -1,5 +1,8 @@
 package org.Spectrums;
 
+import java.io.File;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.GregorianCalendar;
@@ -10,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import IO.MZXMLReader;
+import Utils.ArrayUtils;
 import Utils.StringUtils;
 
 //compute spectral probability for mixture and linked spectrum
@@ -133,7 +138,7 @@ public class MXGF {
 		//System.out.println("max Score is: " + this.maxScore);
 		//System.out.println("min Score is: " + this.minScore);
 		double max = maxMass > maxMass2 ? maxMass : maxMass2;
-		System.out.println("table size: " + (int)Math.ceil(max) + "\t" + (int)Math.ceil(maxScore-minScore+1));
+		if(DEBUG) System.out.println("table size: " + (int)Math.ceil(max) + "\t" + (int)Math.ceil(maxScore-minScore+1));
 		this.table = new double[(int)Math.ceil(max)][2][(int)Math.ceil(maxScore-minScore+1)];		
 	}
 	
@@ -698,13 +703,6 @@ public class MXGF {
 		s.mergePeaks(s, 0.05);
 		s.windowFilterPeaks(15, 25);
 		s.computePeakRank();
-		//s.computePeakSector();
-		if(peptide.startsWith("r")){
-			peptide = peptide.substring(1);	
-		}
-		if(peptide2.startsWith("r")){
-			peptide2 = peptide2.substring(1);	
-		}
 		
 		Peptide p = new Peptide(peptide);
 		Peptide p2 = new Peptide(peptide2);
@@ -811,16 +809,6 @@ public class MXGF {
 //				(p2.getParentmass()*p2.getCharge()-Mass.PROTON_MASS*p2.getCharge()-Mass.WATER),
 //				(p.getParentmass()*p.getCharge()-Mass.PROTON_MASS*p.getCharge()-Mass.WATER));
 		double[] prob2=prob;
-		if(s.scanNumber > 0){
-			System.out.println("Scan " + s.scanNumber + "\t" + peptide + "\t" + peptide2 + "\t" + score +"\t" + score2 + "\t" 
-					+ totalScore[0] + "\t" + totalScore[1] + "\t" + totalScore[2] + "\t" + prob[0] + "\t" + prob[1] + "\t" + jProb + "\t" 
-					+ prob2[0] + "\t" +prob2[1]);
-		}else{
-			String id = s.spectrumName.replace(" & ", "&");
-			System.out.println(id + "\t" + s.spectrumName + "\t" + peptide + "\t" + peptide2 + "\t" + score +"\t" + score2 + "\t" 
-					+ totalScore[0] + "\t" + totalScore[1] + "\t" + totalScore[2] + "\t" + prob[0] + "\t" + prob[1] + "\t" + jProb + "\t"
-					+ prob2[0] + "\t" + prob2[1]);
-		}
 		return new double[]{score, score2, totalScore[0], totalScore[1], totalScore[2], prob[0], prob[1], jProb, prob2[0], prob2[1], end-start};
 	}
 	
@@ -1169,15 +1157,35 @@ public class MXGF {
 		System.out.println("matching " + 500 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
 	}
 	
-	
-	public static void testComputeMXGF(String resultFile, String spectrumFile, String scorerFile, int minScan, int maxScan, double tolerance){
+	//try to get the spectrum file from search result
+	//if given a directory we automatically extract spectrumFile from search result
+	//otherwise we assume the user specify the spectrum path correctly and try to use that directly
+	private static String getSpectrumFromResult(String spectPath, String result){
+		File f = new File(spectPath);
+		if(!f.isDirectory()){
+			return spectPath;
+		}
+		String[] tokens = result.split("\\s+");
+		String spectFile = Utils.FileIOUtils.getFileName(tokens[0]);
+		return spectPath+File.separator+spectFile;
+	}
+
+	public static void testComputeMXGF(String resultFile, String spectrumFile, String scorerFile, int minScan, int maxScan, double tolerance, String outfile){
 		int scanIndex = 1;
-		int pepIndex1 = 5;
-		int pepIndex2 = 6;
+		int pepIndex1 = 8;
+		int pepIndex2 = 9;
+		int chargeIndex1=6;
+		int chargeIndex2=7;
 		List<String> resultLines = Utils.FileIOUtils.createListFromFile(resultFile);
 		AAFreq aafreq = null;
-		//MZXMLReader iterator = new MZXMLReader(spectrumFile);	
-		LargeSpectrumLibIterator specIt = new LargeSpectrumLibIterator(spectrumFile);
+		PrintStream out = Utils.FileIOUtils.getOutStream(outfile);
+		//nothing to do when result is empty (only header)
+		if(resultLines.size() < 2){
+			return;
+		}
+		MZXMLReader iterator = new MZXMLReader(getSpectrumFromResult(spectrumFile, resultLines.get(1)));
+		
+		//LargeSpectrumLibIterator specIt = new LargeSpectrumLibIterator(spectrumFile);
 		//SpectrumLibMap reader = new SpectrumLibMap(spectrumFile, "MGF");
 		//PeakComparator comp = RankBaseScoreLearner.loadComparator(scorerFile);
 		PeakComparator comp = MixturePeakScoreLearner.loadComparator(scorerFile);
@@ -1196,34 +1204,38 @@ public class MXGF {
 		for(Iterator<String> it = resultLines.iterator(); it.hasNext();){
 			String line = it.next();
 			String[] tokens = line.split("\\t");
-			//Spectrum s = iterator.getSpectrum(Integer.parseInt(tokens[scanIndex]));
+			 s = iterator.getSpectrum(Integer.parseInt(tokens[scanIndex]));
 			//Spectrum s = reader.getSpecByScan(Integer.parseInt(tokens[scanIndex]));
-			while(specIt.hasNext() && specInd < Integer.parseInt(tokens[scanIndex])){
-				s = (Spectrum)specIt.next();
-				specInd++;
-			}
+			//while(specIt.hasNext() && specInd < Integer.parseInt(tokens[scanIndex])){
+			//s = (Spectrum)specIt.next();
+			//	specInd++;
+			//}
 			
 			if(s.scanNumber < minScan || s.scanNumber > maxScan){
 				continue;
 			}
 			String[] peptides = new String[]{tokens[pepIndex1], tokens[pepIndex2]};
 			//String[] peptides = tokens[5].split(" & ");
-			System.out.println("number of peptides " + peptides.length);
+			//System.out.println("number of peptides " + peptides.length);
+			String pep1 = tokens[pepIndex1]+"."+tokens[chargeIndex1];
+			String pep2 = tokens[pepIndex2]+"."+tokens[chargeIndex2];
 			//double[] scores;
-			double[] scores = computeMXGF(s, tokens[pepIndex1], tokens[pepIndex2], scorer, tolerance);
+			//System.out.println("peptide: " + pep1 + "\t" + pep2);
+			double[] scores = computeMXGF(s, pep1, pep2, scorer, tolerance);
 			time += scores[scores.length-1];
 			//scores = computeMMXGF(s, peptides, scorer, tolerance);
-			System.out.print(line +"\t");
-			System.out.println(ArrayUtils.getString(scores, "%G"));
+			out.print(line +"\t");
+			out.println(ArrayUtils.getString(scores, "%G"));
 			count++;
-			double[] scores2 = computeMXGF(s, tokens[pepIndex2], tokens[pepIndex1], scorer, tolerance);
+			//double[] scores2 = computeMXGF(s, pep2, pep1, scorer, tolerance);
 			//System.out.print(line +"\t");
+			//System.out.print(Utils.StringUtils.switchMixDBStat(line) + "\t");
 			//System.out.println(ArrayUtils.getString(scores2, "%G"));
-			if(count % 10 == 0){
-				System.out.println("Computing " + count + " mix-spectral probability in " + time/1000 + " seconds");
-			}
+			//if(count % 10 == 0){
+			//	System.out.println("Computing " + count + " mix-spectral probability in " + time/1000 + " seconds");
+			//}
 		}
-		System.out.println("matching " + 500 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+		System.out.println("Conputing  " + count+ " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
 	}
 	
 	public static double[] getSimulatedPRM(int pm){
@@ -1245,21 +1257,21 @@ public class MXGF {
 	public static void main(String[] args){
 		//testComputeSingleMXGF();
 		//testComputeMSGF();
-		args[0] = "../mixture_linked/MixDBv1.0/test_simulated_mixtures/simulated_mixalpha1.0_1000spec/mixDBResult/b789e45abeac4146b12430fe26dcccf0.out_sorted.txt";
-		args[1] = "../mixture_linked/MixDBv1.0/test_simulated_mixtures/simulated_mixalpha1.0_1000spec/2Mixturesalpha1.0.mgf";
-		//args[1] = "../mixture_linked/msdata/Fedor_Mixture_Cid_Hiaccuracy/Deconvolut/LOVO_2_5_decon.mgf";
-		args[2] = "../mixture_linked/yeast_simmix_alpha_generic_12_25.o";
-		//args[2] = "../mixture_linked/mixtures_TOF_alpha01-10_models.o";
-		args[3] = "1";
-		args[4] = "25000";	
-		args[5] = "0.5";
+//		args[0] = "../mixture_linked/MixDBv1.0/Testing/test_run_Mixdb/test.txt";
+//		args[1] = "../mixture_linked/yeast_data/klc_010908p_yeast-digest.mzXML";
+//		args[2] = "../mixture_linked/yeast_simmix_alpha_generic_12_25.o";
+//		//args[2] = "../mixture_linked/mixtures_TOF_alpha01-10_models.o";
+//		args[3] = "5158";
+//		args[4] = "200000";	
+//		args[5] = "0.5";
 		String resultFile = args[0];
 		String spectrumFile = args[1];
 		String scorerFile = args[2];
 		int minScan = Integer.parseInt(args[3]);
 		int maxScan = Integer.parseInt(args[4]);
 		double tolerance = Double.parseDouble(args[5]);
-		testComputeMXGF(resultFile, spectrumFile, scorerFile, minScan, maxScan, tolerance);
+		String outfile = args[6];
+		testComputeMXGF(resultFile, spectrumFile, scorerFile, minScan, maxScan, tolerance, outfile);
 //		args[0] = "../mixture_linked/yeast_data/klc_010908p_yeast-digest.mzXML";
 //		args[0] = "../mixture_linked/yeast_simulatedmixture_samecharge_alpha1.0.mgf";
 //		args[1] = "../mixture_linked/yeast_single_model_realannotated_win12_25.o";

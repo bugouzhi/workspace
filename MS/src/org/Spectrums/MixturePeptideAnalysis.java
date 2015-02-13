@@ -3,6 +3,8 @@ package org.Spectrums;
 import java.util.ArrayList;
 import java.util.List;
 
+import IO.MZXMLReader;
+
 /**
  * Contain various method that analyze mixtrure spectrum
  * @author jian wang

@@ -3,6 +3,8 @@ package org.Spectrums;
 import java.util.HashMap;
 import java.util.Map;
 
+import Utils.ArrayUtils;
+
 public class PeakRankBaseComparator implements PeakComparator{
 		private double[][] scoreModel;
 		private static final int MAXRANK = Integer.MAX_VALUE; 

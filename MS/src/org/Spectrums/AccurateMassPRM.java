@@ -6,6 +6,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedMap;
 
+import IO.MZXMLReader;
+import Utils.ArrayUtils;
+
 /**
  * PRM spectrum supporting accurate mass tolerance
  * @author Jian

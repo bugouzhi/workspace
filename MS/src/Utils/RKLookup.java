@@ -30,6 +30,10 @@ public class RKLookup {
            RLen = (R * RLen) % Q;
 		for(Iterator<String> it = patterns.iterator(); it.hasNext();){
 			String pattern = it.next();
+			//System.out.println("pattern " + pattern);
+			if(pattern.length() < prefixLen){
+				continue;
+			}
 			long key = hash(pattern, this.prefixLen);
 			List<String> patternlist;
 			if(this.table.containsKey(key)){

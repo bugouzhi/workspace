@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import IO.MZXMLReader;
+
 public class Spectrum implements Comparable<Spectrum>, Serializable{
 	//default value for vector representation
 	public static final long serialVersionUID = 1L;
@@ -30,19 +32,19 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 	private List <Peak> peaks;
 	public String spectrumName = "";
 	public String peptide;
-	String protein;
+	public String protein;
 	public double parentMass;
 	public int charge;
 	double modMass; //mass of any modification
 	int modPos; //the position of modification
-	double score = 0; //provide certain kind of score to this spectrum
+	public double score = 0; //provide certain kind of score to this spectrum
 	                  //we can utilize this field to order the spectrums
-	double upperBound = 0;// upper bound for searching
-	double rt = 0;
+	public double upperBound = 0;// upper bound for searching
+	public double rt = Double.MIN_VALUE;
 	public int scanNumber = 0; //scan number of the spectrum
 	public Spectrum(){ //create dummy spectrum
 			this.peaks =new Vector();
-			this.spectrumName = "DUMMYSPEC";
+			this.spectrumName = "";
 			this.peptide = "DUMMYSEQ";
 		    this.modMass = 0;
 			this.modPos = 0;
@@ -500,25 +502,25 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				}else if(line.startsWith("Comment:")){
 					temp = line.substring(line.indexOf("Parent")) ;
 	    			this.parentMass = Double.parseDouble((temp.split("[=, ]"))[1] ) ;
-	
-					temp = line.substring(line.indexOf("Mods")) ;
-			    	tokens = temp.split("[,,=, ,/]") ;
-			
-					mod = Integer.parseInt(tokens[1]) ;
-	    	
-			    	if (mod == 0) {
-			 
-			    		this.modPos = -1 ;
-			    		this.modMass = 0 ;
-			    			    	
+					temp = line.substring(line.indexOf("Mods"));
+					temp = temp.split(" ")[0];
+					//System.out.println("mod string " + temp);
+			    	tokens = temp.split("/") ;
+			    	StringBuffer modPep = new StringBuffer(this.peptide);
+			    	int modOffset=0;
+			    	for(int i = 1; i < tokens.length; i++){
+			    		String[] tokens2 = tokens[i].split(",");
+			    		if(tokens2.length < 3){
+			    			System.err.println("Warning: peptide modification may not have the right format: " + this.peptide + "\tModString: " + temp);
+			    			continue;
+			    		}
+			    		int ind = Integer.parseInt(tokens2[0]);
+			    		String modString = "["+tokens2[2]+"]";
+			    		modPep.insert(ind+modOffset+1, modString);
+			    		modOffset+=modString.length();
 			    	}
-			   
-			    	else {
-			    		
-			    		this.modPos = Integer.parseInt(tokens[2]) ;
-			    		this.modMass = 100.00 ;
-			    			 
-			    	}
+			    	this.peptide = modPep.toString();
+					
 			
 				}else if(line.startsWith("Num peaks:")){
 					isPeaks = true ;
@@ -572,8 +574,10 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 	   				this.parentMass = Double.parseDouble((line.split(" "))[1]);
 					
 				}else if(line.startsWith("Comment:")){
-					temp = line.substring(line.indexOf("Protein")) ;
-			    	String prot = temp.split("[=\\s+]")[1] ;
+					//parse protein
+					temp = line.substring(line.indexOf(" Protein")) ;
+			    	String prot = temp.split("[=\\s+]")[2];
+			    	//System.out.println("protein " + prot);
 			    	if(prot.startsWith("\"")){  //remove quotation at the beginning of protein name
 			    		prot = prot.substring(1);
 			    	}
@@ -582,6 +586,30 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 						//this.peptide = "X_" + peptide;
 						this.protein = "DECOY_"+this.protein;
 					}
+					
+					
+					//parse rt
+					temp = line.substring(line.indexOf(" RetentionTime")) ;
+					String RT = temp.split("[=\\s+]")[2];
+					//System.out.println(this.peptide + "\t" + this.charge + "\tRT is\t" + RT);
+					this.rt = Double.parseDouble(RT.split(",")[0]);
+					
+					
+					//parse irt
+					//when we have irt in lib always use it instead, since they are more well-aligned between one another
+					temp = line.substring(line.indexOf(" iRT")) ;
+					String iRT = temp.split("[=\\s+]")[2];
+					//System.out.println("iRT string: " + iRT);
+					String[] iRTs = iRT.split(",");
+					this.rt = 0;
+					for(int i = 0; i < iRTs.length; i++){
+						this.rt += Double.parseDouble(iRTs[i]);
+					}
+					this.rt = this.rt / iRTs.length;
+					//System.out.println(this.peptide + "\t" + this.charge + "\tiRT is\t" + this.rt);
+					
+					
+					//parse mods
 					temp = line.substring(line.indexOf("Mods")) ;
 			    	tokens = temp.split("[,,=, ,/]") ;
 			
@@ -598,6 +626,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			    		this.modMass = 100.00 ;
 			    			 
 			    	}
+			    	
 			
 				}else if(line.startsWith("NumPeaks:")){
 					int numPeaks = Integer.parseInt(line.split(": ")[1]);
@@ -724,6 +753,14 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				}else if(line.startsWith("SCAN")){
 					this.scanNumber = (Integer.parseInt(line.split("[=]")[1]));
 					//this.peptide = this.peptide + "." + this.charge;
+				}else if(line.startsWith("PROTEIN")){
+					this.protein = line.split("[=]")[1];
+					//System.out.println("protein: " + this.protein);
+					//this.peptide = this.peptide + "." + this.charge;
+				}else if(line.startsWith("RTINSECONDS")){
+					this.rt = Double.parseDouble(line.split("[=]")[1]);
+					//System.out.println("protein: " + this.protein);
+					//this.peptide = this.peptide + "." + this.charge;
 				}else if(line.startsWith("TITLE")){
 					String[] tokens = line.split("=");
 //					if(tokens.length > 1){
@@ -767,6 +804,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			List<Peak> pListSlim = new ArrayList(this.peaks.size());
 			pListSlim.addAll(this.peaks);
 			this.peaks = pListSlim;
+			//System.out.println("Number of peaks " + this.peaks.size());
 			if(line == null){
 				return false;
 			}
@@ -1299,6 +1337,62 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		//System.out.println("product: " + product  + "\t"  + "proj-norm: " + magnitude);
 		return product/magnitude;
 	}
+	
+	//with both Da and ppm matching
+	public double projectedCosine(Spectrum s1, double tolerance, int mode){
+		double product = 0;
+		double magnitude = this.magnitude();
+		//System.out.println("Tolerance specified: " + tolerance + " mode: " + mode);
+		//we do the dotproduct as above, but just calculates
+		//the norm for s1 vector differently, we only consider
+	 	//those values that are non-zero in this vector
+		double projectedNorm = 0.00000001; //very small number avoid div-by-zero error  
+		double mz1, mz2; 
+		int i = 0, j = 0;
+		//System.out.println("Matching  " + this.peptide + " with " + s1.peptide);
+		//System.out.println("Library is " + this);
+		while(i < this.peaks.size() && j < s1.peaks.size()){
+			mz1 = this.peaks.get(i).getMass();
+			mz2 = s1.peaks.get(j).getMass();
+			//System.out.println(i+ "\t" +j);
+			if(!Mass.checkMass(mz1, mz2, tolerance, mode)){
+				if(mz2 > mz1){
+					//System.out.println("missing " + mz1 + "\t" + this.peaks.get(i).getIntensity() +'\t' + 0 + "\t" + 0);
+					i++;
+					continue;
+				}
+				if(mz1 > mz2){
+					j++;
+					continue;
+				}
+			}
+			int p = i;
+			Peak best=null;
+			double bestIntensity = -1000;
+			while(p < this.peaks.size()){
+				double currMass = this.peaks.get(p).getMass();
+				double currInt = this.peaks.get(p).getIntensity();
+				//if(currMass - mz2 > 0.3){
+				if(!Mass.checkMass(currMass, mz2, tolerance, mode)){
+				//if(!SWATHUtils.checkMass(currMass, mz2, tolerance, mode)){
+					break;
+				}
+				//System.out.println("matched " + currMass + "\t" + this.peaks.get(p).getIntensity() + "\t" + mz2 + "\t" + s1.peaks.get(j).getIntensity());
+				//bestIntensity = bestIntensity < currInt ? currInt : bestIntensity;
+				product += this.peaks.get(p).getIntensity()
+					* s1.peaks.get(j).getIntensity();
+				projectedNorm += s1.peaks.get(j).getIntensity() * s1.peaks.get(j).getIntensity();
+				p++;
+			}
+			j++;
+		}
+		//System.out.println("this norm: " + this.magnitude());
+	
+		magnitude = magnitude * Math.pow(projectedNorm, 0.5);
+		//System.out.println("product: " + product  + "\t"  + "proj-norm: " + magnitude);
+		return product/magnitude;
+	}
+	
 	
 	//we are allowed to skip some peaks if there are intereference
 	public double projectedCosineWithSkip(Spectrum s1, double tolerance, int maxGap){
@@ -1926,7 +2020,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			Peak m1 = projected.getPeaks().get(i);
 			Peak m2 = s.getPeaks().get(j);
 			//if(Math.abs(m1.getMass()-m2.getMass()) < tolerance){
-			if(SWATHUtils.checkMass(m1.getMass(), m2.getMass(), 36, SWATHUtils.PPM)){
+			if(SWATHUtils.checkMass(m1.getMass(), m2.getMass(), 50, SWATHUtils.PPM)){
 				match = m1.getIntensity() > match.getIntensity() ? m1 : match;
 				projection[j] += m1.getIntensity();
 				i++;
@@ -2215,7 +2309,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		}
 		int before = this.peaks.size();
 		this.peaks.removeAll(noisePeaks);
-		System.out.println(this.spectrumName +  "\trank-score filtering\t" + before +"\t" + this.peaks.size());
+		//System.out.println(this.spectrumName +  "\trank-score filtering\t" + before +"\t" + this.peaks.size());
 
 	}
 	
@@ -2232,7 +2326,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		for(i = 0; i < index; i++){
 			lowIntPeaks.add(sortedPeakList.get(i));
 		}
-		if(lowIntPeaks.size() < 2){
+		if(lowIntPeaks.size() < 3){
 			return;
 		}
 		double mean = this.getMeanIntensity(lowIntPeaks);
@@ -2773,13 +2867,20 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		//if(peptide != null ){
 		//	sb.append("TITLE=" + this.peptide + "\n");
 		//}else{
+			if(this.protein != null){
+				this.spectrumName = this.spectrumName + " PROTEIN: " + this.protein;   
+			}
+			if(this.rt != Double.MIN_VALUE){
+				this.spectrumName = this.spectrumName + " Retention Time: " + this.rt;   
+			}
 			sb.append("TITLE=" + this.spectrumName + "\n");
 			//sb.append("TITLE=NIST spectral library entry: " + this.peptide.split("\\.")[0]  + "\n");
 		//}
 		if(charge >= 0){	
 			sb.append("CHARGE=" + charge + "+\n");
 		}else{
-			sb.append("CHARGE=" + charge + "-\n");
+			//sb.append("CHARGE=" + Math.abs(charge) + "-\n");
+			//sb.append("CHARGE=2\n");
 		}
 		sb.append("PEPMASS=" + parentMass + "\n");
 		if(this.peptide.equals("DUMMYSEQ")){
@@ -2794,10 +2895,16 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			//sb.append("SEQ=" + peptide.split("\\.")[0] + "\n");
 		}
 		//sb.append("PEPEXP=" + 0.00000001+ "\n"); //generic expect value
-		//sb.append("PEPMOD=" + modMass + "@" + modPos + "\n");
+		//sb.append("PEPMOD=" + modMass + "@" + modPos + "\n"); 
 		//sb.append("GPMp\n");	
 		if(this.scanNumber > 0){
 			sb.append("SCAN="+this.scanNumber+"\n");
+		}
+		if(this.protein != null){
+			sb.append("PROTEIN="+this.protein+"\n");
+		}
+		if(this.rt != Double.MIN_VALUE){
+			sb.append("RTINSECONDS=" + this.rt+"\n");
 		}
 		for(int i = 0; i < peaks.size(); i++){
 			sb.append(peaks.get(i)+"\n");

@@ -2,6 +2,8 @@ package org.Spectrums;
 
 import java.util.List;
 
+import IO.MZXMLReader;
+
 /**
  * Extract the matching peaks in a Spectrum-Spectrum Matches
  * from a spectral library search result and 

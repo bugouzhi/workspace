@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import IO.MZXMLReader;
+
 /**
  * Create decovuluted spectrum
  * @author Jian Wang

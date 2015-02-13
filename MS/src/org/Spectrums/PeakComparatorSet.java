@@ -1,4 +1,7 @@
 package org.Spectrums;
+
+import Utils.ArrayUtils;
+
 /**
  * A wrapper that contain multiple PeakComparator, it
  * can dispatch the appropriate comparator base-on the peptide

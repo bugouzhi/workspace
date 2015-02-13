@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import IO.MZXMLReader;
+
 //generate MSGF output for spectral library searches
 
 

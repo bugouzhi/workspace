@@ -40,6 +40,22 @@ public class ProteinIDExtractor {
 	private int pepIDIndex = 1;
 	private int pepIDIndex2 = 1;
 	
+	
+	
+	public Map<String, List<String>> getPeptideMap() {
+		return peptideMap;
+	}
+
+	public Map<String, List<String>> getProteinMap() {
+		return proteinMap;
+	}
+
+
+	public Map<String, List<Object>> getPositionMap() {
+		return positionMap;
+	}
+
+
 	public ProteinIDExtractor(String dbFile, String result){
 		this.proteinDBFile = dbFile;
 		this.searchResultFile = result;
@@ -52,7 +68,20 @@ public class ProteinIDExtractor {
 		//printProteins();
 	}
 	
-	public ProteinIDExtractor(List<Spectrum> IDs, String dbFile){
+	public ProteinIDExtractor(String dbFile, String result, int pepInd){
+		this.proteinDBFile = dbFile;
+		this.searchResultFile = result;
+		this.pepIDIndex = pepInd;
+		System.out.println("resultFile: " + this.searchResultFile);
+		this.outputFile = searchResultFile.split("\\.txt")[0]+".fasta";
+		System.out.println("out: " + this.outputFile);
+		init();
+		parseResultFile();
+		getPeptideProteinMap();
+		//printProteins();
+	}
+	
+	public ProteinIDExtractor(List IDs, String dbFile){
 		this.peptideIDs = new HashSet();
 		//System.out.println("Protein fasta: " + dbFile);
 		this.proteinDBFile = dbFile;
@@ -63,7 +92,7 @@ public class ProteinIDExtractor {
 		//System.out.println("out: " + this.outputFile);
 		//System.out.println("IDs-list size: " + IDs.size());
 		for(int i = 0; i < IDs.size(); i++){
-			Spectrum s = IDs.get(i);
+			Spectrum s = (Spectrum)IDs.get(i);
 			String peptide = s.peptide;
 			//System.out.println("peptide: " + peptide);
 			//peptide = getStrippedSeq(peptide);
@@ -72,8 +101,27 @@ public class ProteinIDExtractor {
 		init();
 		getPeptideProteinMap();
 		//getPeptideReport();
-		
 	}
+	
+	
+	public ProteinIDExtractor(Set<String> IDs, String dbFile){
+		this.peptideIDs = new HashSet();
+		//System.out.println("Protein fasta: " + dbFile);
+		this.proteinDBFile = dbFile;
+		this.seqDB = new FastaSequence(this.proteinDBFile);
+		this.seqStr = seqDB.getSubsequence(0, seqDB.getSize());
+		System.out.println("resultFile: " + this.searchResultFile);
+		//this.outputFile = searchResultFile.split("\\.txt")[0]+".fasta";
+		//System.out.println("out: " + this.outputFile);
+		//System.out.println("IDs-list size: " + IDs.size());
+		for(Iterator<String> it = IDs.iterator(); it.hasNext();){
+			this.peptideIDs.add(it.next());
+		}
+		init();
+		getPeptideProteinMap();
+		//getPeptideReport();
+	}
+	
 	
 	private void init(){
 		this.seqDB = new FastaSequence(this.proteinDBFile);
@@ -92,17 +140,28 @@ public class ProteinIDExtractor {
 			String line = results.get(i);
 			//System.out.println("line is: " + line);
 			String[] tokens = line.split("\\t");
-			if(tokens.length < this.pepIDIndex){
+			if(tokens.length < this.pepIDIndex || line.startsWith("#") || line.startsWith("SpectrumFile")){
 				continue;
 			}
 			String peptide = tokens[pepIDIndex];
-			 
-			//peptide = peptide.substring(1, peptide.length()-1);
-			//System.out.println("IDs is  : " + peptide);
-			peptideIDs.add(peptide);
-			String peptide2 = tokens[pepIDIndex2];
-			peptide2 = peptide2.replaceAll("[0-9\\+\\-\\.\\_]", "");
-			//peptideIDs.add(peptide2);
+			if(peptide.contains("!")){
+				String[] peptides = peptide.split("!");
+				for(int p = 0; p < peptides.length; p++){
+					peptide = Utils.StringUtils.getStrippedSeq(peptides[p]);
+					if(peptides.length > 1){
+						//System.out.println("adding peptide: " + peptide);
+					}
+					peptideIDs.add(peptide);
+				}
+			}else{
+				peptide = Utils.StringUtils.getStrippedSeq(peptide);
+				//peptide = peptide.substring(1, peptide.length()-1);
+				//System.out.println("IDs is  : " + peptide);
+				peptideIDs.add(peptide);
+				//String peptide2 = tokens[pepIDIndex2];
+				//peptide2 = peptide2.replaceAll("[0-9\\+\\-\\.\\_\\(\\)]", "");
+				//peptideIDs.add(peptide2);
+			}
 		}
 		//System.out.println("Done parsing results");
 	}
@@ -152,10 +211,12 @@ public class ProteinIDExtractor {
 				for(int j = 0; j < proteins.size(); j++){
 					this.proteinMap.get(proteins.get(j)).add(modSeq.get(i));
 				}
+				//System.out.println("putting mod " + modSeq.get(i));
 				this.peptideMap.put(modSeq.get(i), proteins);
 				this.positionMap.put(modSeq.get(i), pos);
 			}
 		}
+		System.out.println("checking pep2\t" + this.peptideMap.containsKey("+42.011MQNDAGEFVDLYVPR"));
 		
 		System.out.println("After constructing positionmap size: " + this.positionMap.keySet().size());
 		this.proteinIDs = this.proteinMap.keySet();

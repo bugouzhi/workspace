@@ -20,6 +20,9 @@ import java.util.TreeSet;
 import java.util.HashMap;
 import org.jgrapht.*;
 import org.jgrapht.graph.*;
+
+import IO.MZXMLReader;
+import Utils.ArrayUtils;
 import Utils.FileIOUtils;
 
 
@@ -31,8 +34,8 @@ import Utils.FileIOUtils;
  */
 public class TheoreticalSpectrum extends Spectrum{
 	public static int MAX_PROFILE_SPAN = 0;
-	protected static String[] prefixIons = {"b", "b-H20", "b-NH3", "b(iso)"};//, "a", "a-H20", "a-NH3"};
-	protected static  String[] suffixIons = {"y", "y-H20", "y-NH3", "y(iso)"};
+	public static String[] prefixIons = {"b", "b-H20", "b-NH3", "b(iso)"};//, "a", "a-H20", "a-NH3"};
+	public static  String[] suffixIons = {"y", "y-H20", "y-NH3", "y(iso)"};
 	public static boolean deconvolutedMode=false;
 	//protected static String[] prefixIons = Mass.standardPrefixes;
 	//protected static  String[] suffixIons = Mass.standardSuffixes;
@@ -93,7 +96,7 @@ public class TheoreticalSpectrum extends Spectrum{
 	public TheoreticalSpectrum(Peptide p, String[] prefixIons, String[] suffixIons){
 		super();
 		p = new Peptide(p);
-		System.out.println("peptide is " + p);
+		//System.out.println("peptide is " + p);
 		this.peptide = p.getPeptide()+"."+p.getCharge();
 		if(p.getCharge() == 4){
 			//p.setCharge((short)3);

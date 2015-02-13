@@ -7,27 +7,47 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import org.Spectrums.ArrayUtils;
 import org.apache.axis.utils.ArrayUtil;
+
+import IO.MZXMLReader;
+import Utils.ArrayUtils;
 
 public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 	private MZXMLReader reader;
 	private List<Spectrum> specList;
 	public int numNeighbors=1;
+	public int cycle;
 	private Spectrum  current;
 	private int MaxCacheSize = 300;
 	private SortedMap<Integer, Spectrum> cache; //we stored the neighbor scans so do not have to retrieve them constantly
 	public double minInt=20;
 	public boolean decoyMode = false;
+	public double tolerance = 0.05;
+	int minScan;
+	int maxScan;
+	Map<Integer,Spectrum> map;
 	
 	public ConsensusSpectrumReader(String spectrumFile){
 		this(new MZXMLReader(spectrumFile));
+//		int count = reader.getSpectrumCount();
+//		SortedMap<Integer, Spectrum> specMap = new TreeMap();
+//		for(int i = 0; i < count; i++){
+//			Spectrum s = reader.getSpectrum(i);
+//			if(s != null){
+//				s.windowFilterPeaks2(15, 20);
+//				specMap.put(s.scanNumber, s);
+//			}
+//		}
+//		this.cache = specMap;
+//		System.out.println("Done loading specMap");
 	}
 	
 	public ConsensusSpectrumReader(MZXMLReader reader){
 		this.reader = reader;
 		this.specList = new ArrayList<Spectrum>();
 		this.cache = new TreeMap<Integer, Spectrum>();
+		this.minScan = 0;
+		this.maxScan = this.reader.getSpectrumCount();
 	}
 	
 	public Spectrum getSpectrum(int scan){
@@ -52,31 +72,37 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 	
 	private void getNeighborScans(Spectrum s){
 		this.specList.clear();
-		this.specList = getNeighborScans(s.scanNumber, this.numNeighbors, this.numNeighbors);
+		this.specList = getNeighborScans(s.scanNumber, this.numNeighbors, this.numNeighbors, this.cycle);
 	}
 	
-	
 	public List<Spectrum> getNeighborScans(int scanNum, int leftSpan, int rightSpan){
-		int minScan = 0;
-		int maxScan = this.reader.getSpectrumCount();
-		int Cycle = 35;
+		return getNeighborScans(scanNum, leftSpan, rightSpan, this.cycle);
+	}
+	
+	public List<Spectrum> getNeighborScans(int scanNum, int leftSpan, int rightSpan, int cycle){
+		//System.out.println("Cycle: " + this.cycle);
+		//int Cycle = 35;
 		List<Spectrum> specList = new ArrayList<Spectrum>();
 		//System.out.println("current Scan: " + currentScan);
 		this.specList.clear();
 		for(int i = -1*leftSpan; i <= rightSpan; i++){
-			int scan = i*Cycle + scanNum;
+			int scan = i*cycle + scanNum;
 			if(scan > minScan && scan < maxScan){
 				if(this.cache.containsKey(scan)){
 					specList.add(this.cache.get(scan));
 				}else{
+					//System.out.println("cannot find it");
 					Spectrum s = this.reader.getSpectrum(scan);
-					s.windowFilterPeaks2(15, 25);
-					s.mergePeaks(s, 0.05);
-					this.cache.put(s.scanNumber, s);
-					if(this.cache.keySet().size() > this.MaxCacheSize){
-						this.cache.remove(this.cache.firstKey());
+					//s.mergePeaks(s, 0.032);
+					if(s!=null){
+						s.windowFilterPeaks2(15, 20);		
+						s.mergePeaks(s, tolerance);
+						this.cache.put(s.scanNumber, s);
+						if(this.cache.keySet().size() > this.MaxCacheSize){
+							this.cache.remove(this.cache.firstKey());
+						}
+						specList.add(s);
 					}
-					specList.add(s);
 				}
 			}
 		}
@@ -84,12 +110,12 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		return specList;
 	}
 	
-	public double[][] getProjections(Spectrum s, List<Spectrum> specList){
+	public double[][] getProjections(Spectrum s, List<Spectrum> specList, double tolerance){
 		double[][] projections = new double[s.getPeak().size()][specList.size()];
 		for(int i = 0; i < specList.size(); i++){
 			Spectrum neigh = specList.get(i);
 			//System.out.println(neigh);
-			double[] projection = neigh.projectArray(s, 0.05);
+			double[] projection = neigh.projectArray(s, tolerance);
 			for(int j = 0; j < projection.length; j++){
 				projections[j][i] = projection[j];
 			}
@@ -106,11 +132,8 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		return ArrayUtils.dotProd(sarry, tarry);
 	}
 	
-	public double[] getProjectCosine(Spectrum s, List<Spectrum> specList){
+	public double[] getProjectCosine(Spectrum s, List<Spectrum> specList, double tolerance){
 		boolean DEBUG = false;
-		if(s.peptide.equals("VVLESLGSIK")){
-			DEBUG = true;
-		}
 		//finding the middle/'apex' spectrum
 		int targetInd = (int)Math.floor((specList.size()/2.0));
 		
@@ -124,19 +147,19 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		//s.parentMass = p.getParentmass();
 		pList.add((new Peak(s.parentMass, 10000)));
 		precur.setPeaks(pList);
-		int MS1Scan = this.reader.getPrevScan(specList.get(targetInd).scanNumber, 1);
+		int MS1Scan = 0;//this.reader.getPrevScan(specList.get(targetInd).scanNumber, 1);
 		int K = (specList.size()-1)/2;
 		//System.out.println("width: " + K);
-		List<Spectrum> surveyScanList = this.getNeighborScans(MS1Scan, 5, 5);
+		List<Spectrum> surveyScanList = this.getNeighborScans(MS1Scan, 5, 5, this.cycle);
 
 		
-		double[][] precursorProjection1 = getProjections(precur, surveyScanList);
-		double[][] projections = getProjections(s, specList);
-		double[][] rawprojections = getProjections(s, specList);  //raw intensity can get raw intensity without being normalize 
+		double[][] precursorProjection1 = getProjections(precur, surveyScanList, tolerance);
+		double[][] projections = getProjections(s, specList, tolerance);
+		double[][] rawprojections = getProjections(s, specList, tolerance);  //raw intensity can get raw intensity without being normalize 
 		if(DEBUG){
 			System.out.println(s);
 		}
-		double[][] precursorProjection2 = getProjections(precur, specList);
+		double[][] precursorProjection2 = getProjections(precur, specList, tolerance);
 		ArrayUtils.normalize(precursorProjection1[0]);
 		ArrayUtils.normalize(precursorProjection2[0]);
 

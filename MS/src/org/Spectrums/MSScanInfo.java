@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.systemsbiology.jrap.stax.Scan;
 
+import IO.MZXMLReader;
 import Utils.FileIOUtils;
 
 /**

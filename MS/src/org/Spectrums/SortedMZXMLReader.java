@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 import org.systemsbiology.jrap.stax.*;
+
+import IO.MZXMLReader;
 public class SortedMZXMLReader extends MZXMLReader{
 	private int currentIndex = 0;
 	private Spectrum current;

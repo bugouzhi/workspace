@@ -24,6 +24,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import IO.MZXMLReader;
 import Utils.FileIOUtils;
 
 
@@ -107,6 +108,7 @@ public class FeatureXMLParser {
 			ioe.printStackTrace();
 		}
 	}
+	
 	private void parseDocument(){
 		//get the root element
 		Element docEle = dom.getDocumentElement();
@@ -332,11 +334,12 @@ public class FeatureXMLParser {
 	//map IDs to MSfeatures
 	//take search results in simple tabullar format separated by tabs
 	//note MS2 spectra first has to mappped to feature first
-	public void mapIDToFeature(String resultFile, int scanInd, int IDInd){
+	public void mapIDToFeature(String resultFile, String spectrumFile, int scanInd, int IDInd, int chargeInd){
 		if(!this.mapMS2Yet){
 			System.err.println("Warning: MS2 scans has not been mapped to MSFeatures");
 			return;
 		}
+		MZXMLReader reader = new MZXMLReader(spectrumFile);
 		List<String> results =Utils.FileIOUtils.createListFromFile(resultFile);
 		Map<Integer, String> idMap = new HashMap<Integer, String>();
 		for(int i = 0; i < results.size(); i++){
@@ -344,6 +347,7 @@ public class FeatureXMLParser {
 			idMap.put(Integer.parseInt(tokens[scanInd]), tokens[IDInd].substring(2, tokens[IDInd].length()-3));
 		}
 		Map<Integer, String> mapped = new HashMap<Integer, String>();
+		Map<String, String> mappedPep = new HashMap<String, String>();
 		for(int i = 0; i < featureList.size(); i++){
 			MSFeatureAcq acqFeature = (MSFeatureAcq)featureList.get(i);
 			List<Spectrum> specList = acqFeature.getAcqInfo();
@@ -352,14 +356,19 @@ public class FeatureXMLParser {
 				if(idMap.containsKey(s.scanNumber)){
 					s.peptide = idMap.get(s.scanNumber);
 					mapped.put(s.scanNumber, " ");
-					System.out.println("mapped ID: " + s.scanNumber + "\t" + s.peptide + "\t"  + s.charge +  "\tto feature\t" + acqFeature);	
+					mappedPep.put(s.peptide, "");
+					System.out.println("mapped ID: " + s.scanNumber + "\t" + s.peptide + "\t"  
+							+ s.charge + "\t" + s.upperBound +  "\tto feature\t" + acqFeature);	
 				}
 			}
 		}
 		for(Iterator<Integer> it = idMap.keySet().iterator(); it.hasNext();){
 			int scan = it.next();
-			if(!mapped.containsKey(scan)){
-				System.out.println("Not-mapped-ID:\t" + scan + "\t" + idMap.get(scan));
+			String pep = idMap.get(scan);
+			Spectrum s = reader.getSpectrum(scan);
+			//if(!mapped.containsKey(scan)){
+			if(!mappedPep.containsKey(pep)){
+				System.out.println("Not-mapped-ID:\t" + scan + "\t" + idMap.get(scan) + "\t" + s.upperBound);
 			}
 		}
 		
@@ -394,16 +403,16 @@ public class FeatureXMLParser {
 	
 	
 	public static void testMapMS2ToFeature(){
-		String peptidePairFile = "..//mixture_linked//3UNE_pairs_mis2.txt";
-		String spectrumFile = "..//mixture_linked//msdata//proteasome_crosslinks//aleitner_M1108_136.mzXML";
-		String featureFile = "..//mixture_linked//openMS//feature_detection\\TOPPAS_out\\005-FeatureFinderCentroided\\";
-		String resultFile = "..//mixture_linked//testAnnotation.txt1";
-		FeatureXMLParser parser = new FeatureXMLParser(featureFile, "aleitner_M1108_136.*");
-		double offset = 12.0759;
+		//String peptidePairFile = "..//mixture_linked//3UNE_pairs_mis2.txt";
+		String spectrumFile = "..//mixture_linked//ProteinQIDs/FeatureDetection//20080313_CPTAC6_16_6D014.mzXML";
+		String featureFile = "..//mixture_linked///ProteinQIDs/FeatureDetection//20080313_CPTAC6_16_6D014_binalrecommdParams.FeatureXML";
+		String resultFile = "..//mixture_linked//ProteinQIDs/FeatureDetection//20080313_CPTAC6_16_6D014_IDs.txt";
+		FeatureXMLParser parser = new FeatureXMLParser(featureFile);
+		//double offset = 12.0759;
 		//offset = Math.random()*50;
-		System.out.println("offset: " + offset);
+		//System.out.println("offset: " + offset);
 		parser.mapMS2ToFeature(spectrumFile);
-		parser.mapIDToFeature(resultFile, 2, 7);
+		parser.mapIDToFeature(resultFile, spectrumFile, 2, 7, 6);
 	}
 	
 	public static void testMapMSFeatureToPeptide(){
@@ -561,7 +570,7 @@ public class FeatureXMLParser {
 		SortedMap<Double, MSFeature> featureMap = parser.getFeatureMapByMass();
 		Map<Peptide, String> siteMap = new HashMap<Peptide, String>();
 		parser.mapMS2ToFeature(spectrumFile);
-		parser.mapIDToFeature(resultFile, 1, 7);
+		parser.mapIDToFeature(resultFile, spectrumFile, 1, 7, 6);
 		for(int i = 0; i < peptides.size(); i++){
 			String[] tokens = peptides.get(i).split("\\s+");
 			double linkerMass = 138.068;
@@ -623,7 +632,7 @@ public class FeatureXMLParser {
 		//offset = Math.random()*50;
 		System.out.println("offset: " + offset);
 		parser.mapMS2ToFeature(spectrumFile);
-		parser.mapIDToFeature(resultFile, 2, 7);
+		parser.mapIDToFeature(resultFile, spectrumFile, 2, 7, 6);
 		List<MSFeature[]> pairs = parser.getFeaturePair(offset, 30, 30, 2);
 		for(int i = 0; i < pairs.size(); i++){
 			MSFeature[] featurePair = pairs.get(i);
@@ -647,15 +656,15 @@ public class FeatureXMLParser {
 	
 	
 	public static void main(String[] args){
-		//String featureFile = "..\\mixture_linked\\SWATH\\FeaturesDetect\\400fmolUPS1_1ugHumanLysate_IDA.featureXMl";
-		String featureFile = args[0];
+		String featureFile = "..\\mixture_linked\\ProteinQIDs/FeatureDetection\\CPTACT_featureFinder_0.featureXML";
+		//String featureFile = args[0];
 		//testFeatureParser(featureFile);
-		//testMapMS2ToFeature();
+		testMapMS2ToFeature();
 		//testMapMSFeatureToPeptide();
 		//testMapPeptideToMSFeature();
 		//testFindFeaturePair();
 		//testMapPeptidePairToMSFeature();
-		 testMapLinkedPeptideToFeature();
+		// testMapLinkedPeptideToFeature();
 	}
 }
 

@@ -13,6 +13,9 @@ import java.util.TreeMap;
 import org.systemsbiology.jrap.stax.MSXMLParser;
 import org.systemsbiology.jrap.stax.Scan;
 
+import IO.MZXMLReader;
+import Utils.ArrayUtils;
+
 
 
 /**
@@ -844,59 +847,77 @@ public class SWATHStatistics {
 		int count = 0;
 		for(Iterator<String> it = resultMap.keySet().iterator(); it.hasNext();){
 			String key = it.next();
-			if(key.contains("+")){
+			if(key.contains("+1")){
 				String[] tokens = resultMap.get(key);
+				//System.out.println("pep is: " + tokens[4]);
 				String pep = tokens[4];
 				String stripSeq = pep.replaceAll("[0-9\\.\\+]", "");
 				//System.out.println(stripSeq + " " + tokens[6]);
 				String unmod = stripSeq+"."+tokens[6];
 				if(resultMap.containsKey(unmod)){
 					String[] tokens2 = resultMap.get(unmod);
-					Spectrum swath1 = reader.getSpectrum(Integer.parseInt(tokens[1]));
-					Spectrum swath2 = reader.getSpectrum(Integer.parseInt(tokens2[1]));
-					swath1.windowFilterPeaks2(15, 25);
-					swath2.windowFilterPeaks2(15, 25);
-					swath1.mergePeaks(swath1, 0.05);
-					swath2.mergePeaks(swath2, 0.05);
-					//System.out.println(tokens[4]);
-					Spectrum lib1 = lib.getSpectra(tokens[4]+"." + tokens[6]).get(0);
+					Spectrum swathMod = reader.getSpectrum(Integer.parseInt(tokens[1]));
+					Spectrum swathUnmod = reader.getSpectrum(Integer.parseInt(tokens2[1]));
+					swathMod.windowFilterPeaks2(15, 25);
+					swathUnmod.windowFilterPeaks2(15, 25);
+					swathMod.mergePeaks(swathMod, 0.05);
+					swathUnmod.mergePeaks(swathUnmod, 0.05);
+					swathMod.sqrtSpectrum();
+					swathUnmod.sqrtSpectrum();
+					System.out.println(tokens[4]);
+					Spectrum libMod=null;
+					if(lib.getSpectra(tokens[4]+"."+tokens[6]) != null){
+						libMod = lib.getSpectra(tokens[4]+"." + tokens[6]).get(0);
+						//libMod.filterPeaks(30);
+						libMod.mergePeaks(libMod, 0.05);
+						libMod.sqrtSpectrum();
+					}
+					Spectrum libUnmod = lib.getSpectra(tokens2[4]+"." + tokens2[6]).get(0);
+					libUnmod.filterPeaks(30);
+					libUnmod.mergePeaks(libUnmod, 0.05);
+					libUnmod.sqrtSpectrum();
 					if(tokens[4].length() - tokens[4].replaceAll("\\+", "").length() > 1){
 						continue;
 					}
-					double massShift = Double.parseDouble(tokens[4].replaceAll("[A-Z]", ""));
-					Spectrum lib2 = lib.getSpectra(tokens2[4]+"." + tokens2[6]).get(0);
-					Spectrum proj1 = swath1.project(lib1, 0.05);
-					Spectrum proj2 = swath2.project(lib2, 0.05);
-					Spectrum shiftLib2= new Spectrum(lib2);
-					Spectrum combined= new Spectrum(lib2);
-					Spectrum shiftProj2= new Spectrum(proj2);
-					Spectrum combinedProj2= new Spectrum(proj2);
-					shiftLib2.shiftSpectrum(massShift);
-					shiftProj2.shiftSpectrum(massShift);
-					combined.getPeak().addAll(shiftLib2.getPeak());
-					combinedProj2.getPeak().addAll(shiftProj2.getPeak());
-					Collections.sort(combined.getPeak(), PeakMassComparator.comparator);
-					Collections.sort(combinedProj2.getPeak(), PeakMassComparator.comparator);
-					lib1.mergePeaks(lib1, 0.05);
-					lib2.mergePeaks(lib2, 0.05);
-					shiftLib2.mergePeaks(shiftLib2, 0.05);
-					combined.mergePeaks(combined, 0.05);
-					//System.out.println(lib1);
-					//System.out.println(lib2);
-					System.out.println(lib1.peptide  + "\t" + lib2.peptide  + "\t" +  lib1.charge 
-							+ "\tsim:\t" + lib1.projectedCosine(lib2, 0.05) + "\t" +lib1.projectedCosine(shiftLib2, 0.05)
-							+"\t" + lib1.projectedCosine(combined, 0.05)
-							+ "\t" + lib1.cosine(proj1, 0.05) + "\t" + lib2.cosine(proj2, 0.05)
-							+ "\t" + lib1.projectedCosine(swath1, 0.05) + "\t" + lib2.projectedCosine(swath2, 0.05)
-							+ "\t" + proj1.projectedCosine(combinedProj2, 0.05));
+					//double massShift = Double.parseDouble(tokens[4].replaceAll("[A-Z]", ""));
+					Peptide p = new Peptide(tokens[4]+"." + tokens[6]);
+					ModifiedSpectrum mod = new ModifiedSpectrum(libUnmod);
+					//System.out.println("pos: " + p.getPos()[0] +"\t" + p.getPtmmasses()[0]);
+					Spectrum modSpect = mod.shiftSpectrum(p.getPos()[0], p.getPtmmasses()[0]);
+					if(libMod==null){
+						libMod = modSpect;
+					}
+					Spectrum project = swathUnmod.project(libUnmod, 0.05);
+					project.peptide = libUnmod.peptide;
+					project.charge = libUnmod.charge;
+					ModifiedSpectrum mod2 = new ModifiedSpectrum(project);
+					//System.out.println("pos: " + p.getPos()[0] +"\t" + p.getPtmmasses()[0]);
+					Spectrum modProject = mod2.shiftSpectrum(p.getPos()[0], p.getPtmmasses()[0]);
+					if(modSpect != null && modProject != null)
+						System.out.println(libUnmod.peptide  + "\t" + swathUnmod.scanNumber + "\t" + swathMod.scanNumber 
+									+ "\tsim:\t" + libUnmod.projectedCosine(swathUnmod, 0.05)
+									+ "\t" + libMod.projectedCosine(swathMod, 0.05) 
+									+ "\t" + modSpect.projectedCosine(swathMod, 0.05) 
+									+ "\t" + libUnmod.projectedCosine(swathMod,0.05)
+									+ "\t" + modProject.projectedCosine(swathMod,0.05)
+									+ "\t" + libMod.cosine(libUnmod, 0.05)
+									+ "\t" + libMod.projectedCosine(libUnmod, 0.05));
 					count++;
 				}
 			}
 		}
 		System.out.println("total paired: " + count);
-		
-		
-		
+	}
+	
+	public static void getLibraryPepRT(){
+		String libraryFile = "../mixture_linked/UPS_EcoliREP3_newstock2lib_plusDecoy2.mgf";
+		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
+		List<Spectrum> specList = lib.getAllSpectrums();
+		SWATHMSPLITSearch.getLibRT(lib);
+		for(int i = 0; i < specList.size(); i++){
+			Spectrum s = specList.get(i);
+			System.out.println(s.peptide + "\t" + s.charge + "\t" + s.rt +"\t" + s.parentMass +"\t" + s.scanNumber);
+		}
 	}
 	
 	public static void main(String[] args){
@@ -906,7 +927,8 @@ public class SWATHStatistics {
 		//getSWATHRangesFromResult();
 		//getSWATHRangesFromLib();
 		//getSWATHInterference();
-		getPairedModSpectrum();
+		getLibraryPepRT();
+		//getPairedModSpectrum();
 		//testProjCosine();
 		//testProjCosineOnSpec();
 		//tofSpecStat();

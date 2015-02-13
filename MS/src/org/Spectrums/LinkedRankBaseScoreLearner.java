@@ -11,6 +11,8 @@ import java.util.Set;
 
 import org.jgrapht.graph.SimpleGraph;
 
+import Utils.ArrayUtils;
+
 public class LinkedRankBaseScoreLearner implements PeakComparator{
 	private String[] ionsType = Mass.standardIonsType;
 	private static int MAXRANK = 2000;

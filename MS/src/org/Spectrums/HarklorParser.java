@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import IO.MZXMLReader;
 import Utils.FileIOUtils;
 
 public class HarklorParser {

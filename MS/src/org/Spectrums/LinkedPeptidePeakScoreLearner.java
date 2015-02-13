@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 //fully featured score learner for linked peptides
 
+import Utils.ArrayUtils;
+
 public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializable{
 	private static final long serialVersionUID = 234823048028349320L;
 	private String[] ionsType = Mass.standardIonsType;

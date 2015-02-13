@@ -12,6 +12,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 
 import org.systemsbiology.jrap.stax.*;
+
+import IO.MZXMLReader;
 import Utils.FileIOUtils;
 //a combinatoric peptide library, represent by some constant
 //positions and some variable positions

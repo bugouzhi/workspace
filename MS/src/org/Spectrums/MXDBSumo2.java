@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import IO.MZXMLReader;
+
 public class MXDBSumo2 {
 	public double windowWidth = 25;
 	public int topPeaksKept = 10;

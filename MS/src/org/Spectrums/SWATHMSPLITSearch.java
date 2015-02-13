@@ -1,5 +1,8 @@
 package org.Spectrums;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,8 +15,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import IO.MZXMLReader;
+import UI.CommandLineParser;
 import org.systemsbiology.jrap.stax.MSXMLParser;
 import org.systemsbiology.jrap.stax.Scan;
+
 
 
 /**
@@ -22,19 +28,265 @@ import org.systemsbiology.jrap.stax.Scan;
  *
  */
 public class SWATHMSPLITSearch {
-	public static void testMSPLITSearch(int minScan, int maxScan, String queryFile, String libraryFile){
+	public static int CENTROID = 1;
+	public static int PROFILE = 0;
+	public double parent = 25; //Da
+	public double fragment = 50; //ppm
+	public int topPeakKept = 15;
+	public double windowWidth = 25;
+	public int topLibPeaks = 30;
+	public double minCos = 0.705;
+	public static double maxSelfCos = 0.708;
+	public int SWATHCycle = 35;
+	public int minMatchedPeaks = 8;
+	public int neighborWin = 5;
+	public int maxRTDiff = 42000000;
+	int dataMode = SWATHMSPLITSearch.CENTROID;
+	List<PTM[]> ptmList;
+	public String queryFile;
+	public String libraryFile;
+	public String outFile;
+
+	public void startMSPLITSearch(int minScan, int maxScan){
+		Iterator<Spectrum> reader = new MZXMLReader(queryFile, minScan);
+		ConsensusSpectrumReader reader2 = new ConsensusSpectrumReader(queryFile);
+//		ConsensusSpectrumReader reader2 = new ConsensusSpectrumReader((MZXMLReader)reader);
+		reader2.cycle = this.SWATHCycle;
+		reader2.tolerance = this.fragment / 1000; 
+		BufferedWriter bo;
+		//parameters for searching	
+		Double libTolDa = this.fragment / 1000; //tolerance in Da for library spectrum
+		try{		
+		bo = new BufferedWriter(new FileWriter(outFile));
+		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
+		//generateSimpliedSpectLib(lib);
+		lib.mergeSpectrum(libTolDa);
+		lib.filterPeaks(topLibPeaks);
+		lib.normIntensity();
+		getLibRT(lib);
+		//swapRT(lib);
+		Iterator<Spectrum> iter;
+		iter=reader;
+		int counter = 0;
+		long start = 0;
+		boolean go = true;
+		bo.write("#File\tScan#\tMz\tz\tPeptide\tMz\tz\tcosine\tName\t#Peak(Query)\t#Peaks(match)\t#shared\tfraction-matched\trelative-alpha\tIonCount");
+		for(int i = 0; i < 20; i++){
+			bo.write("\tstat"+i);
+		}
+		bo.write("\n");
+		Spectrum MS1 = null;
+		SpectrumMap MSMap = null;
+		List<Spectrum> libSpectList = lib.getAllSpectrums();
+		if(this.ptmList != null){
+			//lib.removeModSpectra();
+			libSpectList = lib.getAllSpectrums();
+			ModifiedSpectrum.addModToLibrary(libSpectList, this.ptmList);
+			//ModifiedSpectrum.addModToLibrary(libSpectList);
+		}
+		while(iter.hasNext()){
+			Spectrum s = iter.next();
+			if(s.scanNumber < minScan || s.scanNumber > maxScan){
+				continue;
+			}else{
+				if(go){
+					start = (new GregorianCalendar()).getTimeInMillis();
+					go = false;
+				}				
+			}
+			//System.out.println(s.scanNumber);
+			if(dataMode == PROFILE){
+			//	s.mergePeaks(s, 0.032);
+			}
+			
+			s.windowFilterPeaks2(topPeakKept, windowWidth);
+			double tolerance = libTolDa;
+			s.mergePeaks(s, tolerance);
+			s.sqrtSpectrum();
+			//System.out.println("Spectrum is: " + s + "\n");
+			TreeMap<Double,Spectrum> bestCands = bestPsimSpec(libSpectList, s, MSMap, minCos, parent, this.fragment, maxRTDiff, Mass.DIFF_PPM);
+			Iterator it = bestCands.descendingKeySet().iterator();
+			double maxInt = 0.0; //matches with maximum abundance
+			while(it.hasNext()){
+				Double psim = (Double)it.next();
+				Spectrum cand = bestCands.get(psim);
+				double projectInt = cand.projectedPeakIntensity(s, tolerance);
+				maxInt = projectInt > maxInt ? projectInt : maxInt;
+			}
+						
+			it = bestCands.descendingKeySet().iterator();
+			boolean DEBUG = false;
+			while(it.hasNext()){	
+				Double psim = (Double)it.next();
+				Spectrum cand = bestCands.get(psim);
+				if(cand.protein == null){
+					cand.protein = cand.spectrumName;
+				}
+				
+				double sharePeaks = cand.sharePeaks(s, tolerance, DEBUG);
+				if(sharePeaks >= minMatchedPeaks){
+					double projectInt = cand.projectedPeakIntensity(s, tolerance);
+					double projectInt2 = s.projectedPeakIntensity(cand, tolerance);
+					double libInt = cand.magnitude();
+					libInt = libInt*libInt;
+					//System.out.println("name is: " + s.spectrumName);
+					cand.filterPeaksByMass(180, 2500);
+					List<Spectrum> neighs = reader2.getNeighborScans(s.scanNumber, neighborWin, neighborWin);
+//					neighs.add(new Spectrum());
+//					for(int i = 0; i < neighs.size(); i++){
+//						Spectrum neigh = neighs.get(i);
+//						neigh.mergePeaks(s, 0.032);
+//						neigh.windowFilterPeaks2(topPeakKept, windowWidth);
+//						neigh.mergePeaks(s, 0.05);
+//					}
+					double[] simTwoD = reader2.getProjectCosine(cand, neighs, fragment);		
+					bo.write(queryFile + "\t" +  s.scanNumber + "\t" + s.parentMass +"\t" + s.charge +"\t" 
+							+ cand.peptide + "\t"  + cand.parentMass + "\t" + cand.charge + "\t" + psim 
+							+ "\t" + cand.protein + "\t" + s.getPeaks().size() + "\t" + cand.getPeak().size()
+							+"\t" + sharePeaks + "\t" + projectInt2 + "\t" + projectInt/maxInt + "\t" + s.upperBound +"\t" + libInt
+							+"\t" + s.rt + "\t" + cand.rt + "\t");
+					
+					//double projCosTop = libSpect.projectedCosine(query, 0.05);
+					for(int i = 0; i < simTwoD.length; i++){
+						bo.write(simTwoD[i] + "\t");
+					}
+					bo.write(psim*simTwoD[5] +"\t" + simTwoD[1]*simTwoD[5]);
+					bo.write("\n");
+					//System.out.println();
+				}
+			}
+			counter++;
+			if(counter % 1000 == 0){
+				System.out.println("Finish searched: " + counter);
+			}
+		}
+		bo.flush();
+		bo.close();
+		//System.out.println("start second pass " + s.scanNumber);	
+			System.out.println("matching " + 100 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+		}catch(IOException IOE){
+			System.out.println(IOE.getMessage());
+			IOE.printStackTrace();
+		}
+
+	}
+	
+	/**
+	 * More for older legacy spectral library format
+	 * where RT information store in headers, set the
+	 * RT fields in spectrum to actual RT 
+	 * @param lib
+	 */
+	public static void getLibRT(SpectrumLib lib){
+		List<Spectrum> specList = lib.getSpectrumList();
+		for(int i = 0; i < specList.size(); i++){
+			Spectrum s1 = specList.get(i);
+			if(s1.spectrumName.split("\\s+").length > 5 && s1.spectrumName.contains("Retention Time: ")){  //check if retention time is in lib
+				//System.out.println("SpectruMName: " + s1.spectrumName + "\t" + s1.spectrumName.split("\\s+")[5]);
+				String RT = s1.spectrumName.split("Retention Time: ")[1].split("\\s+")[0];
+				//String RT = s1.spectrumName.split("Retention Time: ")[5];
+				RT=RT.replaceAll("[PTS]", "");
+				s1.rt = Double.parseDouble(RT);
+			}	
+
+		}
+	}
+	
+	/**
+	 * Swap the retention time of decoy library spectrum,
+	 * so they do not stay at the same RT region as the target peptides
+	 * we swap with another spectrum fall within the same SWATH window to keep
+	 * the overall distribution of RT the same as target and the distribution of
+	 * the candidate peptide per swath window roughly the same
+	 * @param lib
+	 */
+	public static void swapRT(SpectrumLib lib){
+		List<Spectrum> specList = lib.getSpectrumList();
+		TreeMap<Double, Spectrum> sortedList = new TreeMap<Double, Spectrum>();
+		for(int i = 0; i < specList.size(); i++){
+			Spectrum s = specList.get(i);
+			//s.parentMass = s.parentMass+Math.random()*65;
+			//s.parentMass = s.parentMass-1*Math.random()*65;
+			if(s.spectrumName.contains("DECOY")){
+				sortedList.put(s.parentMass+Math.random(), s);
+			}
+		}
+		for(int i = 0; i < specList.size(); i++){
+			Spectrum s = specList.get(i);
+			if(s.spectrumName.contains("DECOY")){
+				s.rt = s.rt + 500;
+//				Map<Double, Spectrum> submap = sortedList.subMap(s.parentMass - 12, s.parentMass + 12);
+//				List<Spectrum> values = new ArrayList<Spectrum>();
+//				values.addAll(submap.values());
+//				int ind = (int)Math.floor(Math.random()*values.size());
+//				if(submap.size() > 0){
+//					Spectrum swap = values.get(ind);
+//					double rt = s.rt;
+//					s.rt = swap.rt;
+//					swap.rt = rt;
+//					System.out.println("swapping rt: "  + s.spectrumName + "\t" + swap.spectrumName);
+//				}
+			}
+		}
+	}
+	
+	/**
+	 * Generated a simplified version of the library spectrum by keeping
+	 * only b/y ions of the library spectrum, test its effect on identification
+	 * @return
+	 */
+	public static void generateSimpliedSpectLib(SpectrumLib lib){
+		DecoySpectrumGenerator gen = new DecoySpectrumGenerator();
+		String[] prefixIons = new String[]{"b"};//, "b-H20", "b-NH3"};
+		String[] suffixIons = new String[]{"y"};//, "y-H20", "y-NH3"};
+		List<Spectrum> specList = lib.getAllSpectrums();
+		for(int i = 0; i < specList.size(); i++){
+			Spectrum s = specList.get(i);
+			Spectrum simplified = gen.generateTarget(s, prefixIons, suffixIons);
+			System.out.println("Full spect size: " + s.getPeak().size());
+			s.setPeaks(simplified.getPeak());
+			System.out.println("Simplified spect size: " + s.getPeak().size());
+		}
+		TheoreticalSpectrum.prefixIons = new String[]{"b", "b-H20", "b-NH3"};//, "b(iso)"};
+		TheoreticalSpectrum.suffixIons = new String[]{"y", "y-H20", "y-NH3"};//, "y(iso)"};
+		
+	}
+	
+	private int getSWATHCycle(){
+		MZXMLReader reader = new MZXMLReader(this.queryFile);
+		int counter = 0;
+		Spectrum first = null;
+		while(reader.hasNext()){
+			if(first == null){
+				first = reader.next();
+			}else{
+				Spectrum next = reader.next();
+				if(Math.abs(next.parentMass - first.parentMass) < 0.05){
+					counter = next.scanNumber - first.scanNumber;
+					break;
+				}
+			}
+		}
+		System.out.println("DIA cycle from file: " + counter);
+		return counter;
+	}
+	
+	public static void testMSPLITSearch(int minScan, int maxScan, 
+			double parentMassWindow, double fragmentMassTol, String queryFile, String libraryFile, String outFile){
 		//queryFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18482_REP3_500ng_Ecoli_NewStock2_SWATH_2.mzXML";
-		//String queryFile = "../mixture_linked/swath_expanded.mgf";
-		//String libraryFile = "../mixture_linked/leftOneLib_plusDecoy2_test2.mgf";
-		//libraryFile = "../mixture_linked/ACG_swathdevelopment_UPSEcoli_REP234_IDA_plusDecoy2.mgf";
+     	//libraryFile = "../mixture_linked/ACG_swathdevelopment_UPSEcoli_REP234_IDA_plusDecoy2.mgf";
+		//outFile = "../mixture_linked/swath_msplit_out.txt";
 		Iterator<Spectrum> reader = new MZXMLReader(queryFile);
 		ConsensusSpectrumReader reader2 = new ConsensusSpectrumReader(queryFile);
+		BufferedWriter bo;
+		try{		
+			bo = new BufferedWriter(new FileWriter(outFile));
 		//reader.minInt=40;
 		//reader.numNeighbors=2;
 		SpectrumLib lib = new SpectrumLib(libraryFile, "MGF");
 		//lib.windowFilterPeaks(6, 50);
 		//lib.removePeakByMass(10, 400);
-		lib.removeModSpectra();
+		//lib.removeModSpectra();
 		lib.filterPeaks(30);
 		lib.mergeSpectrum(0.05);
 		//SpectrumLib lib = new SpectrumLib(libraryFile, "splib");
@@ -48,13 +300,13 @@ public class SWATHMSPLITSearch {
 		int counter = 0;
 		long start = 0;
 		boolean go = true;
-		System.out.println("#File\tScan#\tMz\tz\tPeptide\tMz\tz\tcosine\tName\t#Peak(Query)\t#Peaks(match)\t#shared\tfraction-matched\trelative-alpha\tIonCount");
+		bo.write("#File\tScan#\tMz\tz\tPeptide\tMz\tz\tcosine\tName\t#Peak(Query)\t#Peaks(match)\t#shared\tfraction-matched\trelative-alpha\tIonCount\n");
 		Spectrum MS1 = null;
 		SpectrumMap MSMap = null;
 		List<Spectrum> libSpectList = lib.getAllSpectrums();
-		System.out.println("Unmod lib size: " + libSpectList.size());
-		ModifiedSpectrum.addModToLibrary(libSpectList);
-		System.out.println("Modded lib size: " + libSpectList.size());
+		//System.out.println("Unmod lib size: " + libSpectList.size());
+		//ModifiedSpectrum.addModToLibrary(libSpectList);
+		//System.out.println("Modded lib size: " + libSpectList.size());
 		while(iter.hasNext()){
 			Spectrum s = iter.next();
 			minScan = 300;
@@ -134,8 +386,8 @@ public class SWATHMSPLITSearch {
 					double libRT = Double.parseDouble(RT);
 					cand.filterPeaksByMass(180, 2500);
 					List<Spectrum> neighs = reader2.getNeighborScans(s.scanNumber, 5, 5);
-					double[] simTwoD = reader2.getProjectCosine(cand, neighs);		
-					System.out.print(queryFile + "\t" +  s.scanNumber + "\t" + s.parentMass +"\t" + s.charge +"\t" 
+					double[] simTwoD = reader2.getProjectCosine(cand, neighs, 50);		
+					bo.write(queryFile + "\t" +  s.scanNumber + "\t" + s.parentMass +"\t" + s.charge +"\t" 
 							+ cand.peptide + "\t"  + cand.parentMass + "\t" + cand.charge + "\t" + psim 
 							+ "\t" + cand.protein + "\t" + s.getPeaks().size() + "\t" + cand.getPeak().size()
 							+"\t" + sharePeaks + "\t" + projectInt2 + "\t" + projectInt/maxInt + "\t" + s.upperBound +"\t" + libInt
@@ -143,9 +395,10 @@ public class SWATHMSPLITSearch {
 					
 					//double projCosTop = libSpect.projectedCosine(query, 0.05);
 					for(int i = 0; i < simTwoD.length; i++){
-						System.out.print(simTwoD[i] + "\t");
+						bo.write(simTwoD[i] + "\t");
 					}
-					System.out.println(psim*simTwoD[5] +"\t" + simTwoD[1]*simTwoD[5]);
+					bo.write(psim*simTwoD[5] +"\t" + simTwoD[1]*simTwoD[5]);
+					bo.write("\n");
 					//System.out.println();
 				}
 			}
@@ -201,13 +454,22 @@ public class SWATHMSPLITSearch {
 			//System.out.println("best score: " + bestCands.lastKey());
 
 			counter++;
-			if(counter == 5){
-				//break;
+			if(counter % 1000 == 0){
+				System.out.println("Finish searched: " + counter);
 			}
 		}
 		System.out.println("matching " + 100 + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
+		}catch(IOException IOE){
+			System.out.println(IOE.getMessage());
+			IOE.printStackTrace();
+		}
+
 	}
 	
+	/**
+	 * Use parrelel DDA run to help make ID
+	 * RT information is used to restrict search, the best matching SWATH is considered match
+	 */
 	public static void targetedIdentification(){
 		String diaFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18488_REP3_40fmol_UPS1_1ug_Ecoli_NewStock2_SWATH_1.mzXML";
 		String ddaFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/IDA_combine/18487_REP3_40fmol_UPS1_1ug_Ecoli_NewStock2_IDA_1.mzXML";
@@ -568,7 +830,7 @@ public class SWATHMSPLITSearch {
 					//continue;
 				}
 				List<Spectrum> neighs = reader2.getNeighborScans(scan, 5, 5);
-				double[] simTwoD = reader2.getProjectCosine(libSpect, neighs);		
+				double[] simTwoD = reader2.getProjectCosine(libSpect, neighs, 50);		
 				double score = reader2.getProjectCosine(libSpect, query);
 				double projCos = libSpect.projectedCosine(query, 0.05);
 				libSpect.filterPeaks(10);
@@ -585,11 +847,22 @@ public class SWATHMSPLITSearch {
 	}
 	
 	public static TreeMap<Double,Spectrum> bestPsimSpec(List<Spectrum> specList, Spectrum s, SpectrumMap MSMap, double minCos, double parentMassTol, double fragMassTol){
+		return bestPsimSpec(specList, s, MSMap, minCos, parentMassTol, fragMassTol, Double.MAX_VALUE);
+	}
+	
+	public static TreeMap<Double,Spectrum> bestPsimSpec(List<Spectrum> specList, Spectrum s, SpectrumMap MSMap, double minCos, double parentMassTol, double fragMassTol, double maxRTDiff){
+		return bestPsimSpec(specList, s, MSMap, minCos, parentMassTol, fragMassTol, maxRTDiff, Mass.DIFF_DA);
+	}
+	
+	public static TreeMap<Double,Spectrum> bestPsimSpec(List<Spectrum> specList, Spectrum s, SpectrumMap MSMap, double minCos, double parentMassTol, double fragMassTol, double maxRTDiff, int mode){
 		TreeMap<Double, Spectrum> bestList = new TreeMap();
 		double bestScore = -1000000.0, currScore = 0.0;
 		int count=0;
 		Iterator<Spectrum> specIter = specList.iterator();
 		List<Double> redundance = new ArrayList<Double>();
+		double left= 0.25*parentMassTol;
+		double right=0.9*parentMassTol;
+		int candCount=0;
 		while(specIter.hasNext()){
 			Spectrum s1 = specIter.next();
 			if(s1.peptide.contains("0.9")){
@@ -599,20 +872,26 @@ public class SWATHMSPLITSearch {
 //			if(Math.abs(s1.parentMass - s.parentMass) < parentMassTol 
 //					|| Math.abs(s1.parentMass - offSetC13 - s.parentMass) < parentMassTol
 //					|| Math.abs(s1.parentMass + offSetC13 - s.parentMass) < parentMassTol){
-//			if(Math.abs(s1.parentMass - s.parentMass) < 25){
-			if(s1.parentMass > s.parentMass -5 &&  
-					(s1.parentMass  - s.parentMass + 5 < parentMassTol)){
+//			if(Math.abs(s1.parentMass - s.parentMass) < 3){
+//			if(s1.parentMass > s.parentMass - 5 &&  
+//					(s1.parentMass  - s.parentMass  < parentMassTol - 5)){
+			double libRT = 0.0;
+			if(s1.parentMass > s.parentMass - left &&  
+						(s1.parentMass  - s.parentMass  < right)  && 
+						(Math.abs(s1.rt - s.rt ) < maxRTDiff)){
+
 				//if(MSMap.checkPeak(s1.parentMass, 0.03)){
 					//Spectrum s2 = new Spectrum(s1);
 					//for(int i = 0; i < s1.getPeak().size(); i++){
 					//	s2.getPeak().get(i).setIntensity(10);
 					//}
 					//s1.removePeaksInMass(s.parentMass-4, s.parentMass+21);
-					currScore = s1.projectedCosine(s, fragMassTol);
+					currScore = s1.projectedCosine(s, fragMassTol, mode);
 					//currScore = s2.projectedCosine(s, fragMassTol);
 					//currScore = s1.projectedCosineWithSkip(s, fragMassTol, 1);
 					
 				//}
+				candCount++;
 			}else{
 				currScore = 0;
 			}
@@ -625,9 +904,23 @@ public class SWATHMSPLITSearch {
 					//System.out.println("self-match " + cand.peptide + "\t" + s1.peptide + "\t" + 
 					//+ cand.projectedCosine(s1, fragMassTol) + "\t" + s1.projectedCosine(cand, fragMassTol));
 					//double shared = cand.sharePeaks(s1, fragMassTol);
-					if((cand.projectedCosine(s1, fragMassTol) > 0.708
-							|| s1.projectedCosine(cand, fragMassTol) > 0.708)){
-						isFound = true;
+					if((cand.projectedCosine(s1, fragMassTol, mode) > maxSelfCos
+							|| s1.projectedCosine(cand, fragMassTol, mode) > maxSelfCos)){
+						isFound = true;						
+						if(Math.abs(currScore  - currBest) < 0.05){ //when indistinguishable, be conservative and don't call mod-peptide ID
+							String seq1 = Utils.StringUtils.getStrippedSeq(s1.peptide);
+							String seq2 = Utils.StringUtils.getStrippedSeq(cand.peptide);
+							if(seq1.equals(seq2)){
+								if(s1.peptide.contains("+")){
+									break;
+								}
+								if(cand.peptide.contains("+")){
+									redundance.add(currBest);
+									isFound=false;
+									break;
+								}
+							}
+						}
 						if(currScore > currBest){
 							redundance.add(currBest);
 							isFound = false;
@@ -641,6 +934,7 @@ public class SWATHMSPLITSearch {
 				}
 			}			
 		}
+		//System.out.println("Number of candidates: " + candCount);
 		for(int i = 0; i < redundance.size(); i++){
 			bestList.remove(redundance.get(i));
 		}
@@ -817,7 +1111,7 @@ public class SWATHMSPLITSearch {
 		//MZXMLReader reader = new MZXMLReader(queryFile);
 		SpectrumLib lib = new SpectrumLib(queryFile, "MGF");
 		MZXMLReader reader2 = new MZXMLReader(queryFile2);
-		//Spectrum s1 = reader.getSpectrum(1631);
+		//Spectrum s1 = reader.getSpectrum(1631); 
 		System.out.println("lib size: " + lib.getSpectrumList().size());
 		Spectrum s1 = lib.getSpectrumList().get(0);
 		Spectrum s2 = reader2.getSpectrum(5000);
@@ -831,15 +1125,49 @@ public class SWATHMSPLITSearch {
 		System.out.println(" cosine: " + s1.projectedCosine(s2, 0.05));
 	}
 	
+	
+	
+	
+	public static void testSearch(String[] args){
+//		String queryFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18452_REP3_500ng_Ecoli_SWATH_1.mzXML";
+//		String outFile = "../mixture_linked/test_swath_ppm.txt";
+//		String libraryFile = "../mixture_linked/ACG_swathdevelopment_UPSEcoli_REP234_IDA_plusDecoy2.mgf";
+//		//String modFile = "../mixture_linked/Mod_MSPLIT-DIA.xml";
+//		args = new String[]{"25", "45", "0", queryFile, libraryFile, outFile};
+		CommandLineParser cmdParser = new CommandLineParser(args);
+		SWATHMSPLITSearch search = new SWATHMSPLITSearch();
+		search.parent = cmdParser.getDouble(0);
+		search.fragment = cmdParser.getDouble(1);
+		search.queryFile = cmdParser.getString(3);
+		search.SWATHCycle = cmdParser.getInteger(2);
+		if(search.SWATHCycle <= 0){
+			search.SWATHCycle = search.getSWATHCycle();//cmdParser.getInteger(2);
+		}
+		if(args.length == 7){
+			String ptmFile = cmdParser.getString(6);
+			List<PTM[]> ptmList=null;
+			if(ptmFile.endsWith(".xml")){
+				ptmList = PTM.parsePTMFromXML(ptmFile);
+			}else{
+				ptmList = PTM.parsePTMs(ptmFile);
+			}
+			search.ptmList = ptmList;
+		}
+		search.libraryFile = cmdParser.getString(4);
+		String out = cmdParser.getString(5);
+		search.outFile = Utils.FileIOUtils.generateOutFile(out, search.queryFile, "_msplitout.txt");
+		search.startMSPLITSearch(3, 3000000);
+	}
+	
 	public static void main(String[] args){
-		//argetedIdentification();
-		testMSPLITSearch(10, 1000000, args[0], args[1]);
+		testSearch(args);
+		//targetedIdentification();
+		//testMSPLITSearch(10, 1000000, Double.parseDouble(args[0]), Double.parseDouble(args[1]), args[2], args[3], args[4]);
 		//testReverseMSPLITSearch(100, 100000);
 		//testHybridLibrarySearch(10,100000);
-		//test2DSim(10, 90000);
-		//getSWATHSpectrum(5000, "../mixture_linked/msdata/gringar/swath_development/14345_UPS2-4pm_IDA_5600.mzXML");
-		//simpleCosTest();
+
 		//testCrossLibrarySimilarity();
+		
 	}
 
 }

@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,6 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import IO.GenericSpectrumReader;
+import IO.MZXMLReader;
+import Utils.SpectrumFilter;
 import Utils.FileIOUtils;
 
 
@@ -158,6 +162,9 @@ public class SpectrumUtil {
 		}
 		return list;
 	}
+	
+	
+	
 	
 	public static void computePeakRanks(List<Peak> peaks){
 		List<Peak> sortedList = new Vector<Peak>();
@@ -507,18 +514,21 @@ public class SpectrumUtil {
 		printSpectraToFile(outfile, specList);
 	}
 	
-	public static void annotateSpectrumLibFromMzXMLs(String spectrumDir, String annotationFile, String outfile){
-		spectrumDir = "j:/workspace/mixture_linked/msdata/gringar/APSWATH/PPP2R1A/DDA/";
-		annotationFile = "..\\mixture_linked/APSWATH_PPP2RA_MSGFDB_IDs_1pepFDR.txt";
-		outfile = "..\\mixture_linked\\test.mgf";
+	public static void annotateSpectrumLibFromMzXMLs(String spectrumDir, String annotationFile, String outfile, String logFile){
+		annotateSpectrumLibFromMzXMLs(spectrumDir, annotationFile, outfile, logFile, new SpectrumFilter(), 0.05);
+	}
+	
+	public static void annotateSpectrumLibFromMzXMLs(String spectrumDir, String annotationFile, String outfile, String logFile, SpectrumFilter filter, double tolerance){
 		List<Spectrum> specList = new ArrayList<Spectrum>();
-		Map<String, MZXMLReader> readers = new HashMap<String, MZXMLReader>();
+		Map<String, GenericSpectrumReader> readers = new HashMap<String, GenericSpectrumReader>();
 		try{
 			BufferedReader buff = new BufferedReader(new FileReader(annotationFile));
 			BufferedWriter out = new BufferedWriter(new FileWriter(outfile));
+			PrintStream log = Utils.FileIOUtils.getOutStream(logFile);
 			String line;
 			String prevFile= "";
-			MZXMLReader reader = null;
+			//MZXMLReader reader = null;
+			GenericSpectrumReader reader = null;
 			int counter = 1; //one base index
 			int pepInd = 7;
 			int chargeInd = 6;
@@ -527,32 +537,29 @@ public class SpectrumUtil {
 				String file = tokens[0];
 				file = file.replaceAll("\\s+", "");
 				file = FileIOUtils.getFileName(file);
+				if(line.startsWith("#")){
+					log.print(line + "\tMedianNoise\tSNR\tAnnotSig\tfractSig_Annotated\tfractAnnotated_isSig\tAnnotNoise\tunAnnotNoise\n");
+					continue;
+				}
 				if(!readers.containsKey(file)){
-					MZXMLReader newreader = new MZXMLReader(spectrumDir+"\\" + file);
+					GenericSpectrumReader newreader = new GenericSpectrumReader(spectrumDir+File.separator + file);
 					readers.put(file, newreader);
 				}
 				reader = readers.get(file);
-				System.out.println("line\t"+line);
-				Spectrum s = reader.getSpectrum(Integer.parseInt(tokens[1]));
+				//System.out.println("line\t"+line);
+				Spectrum s = reader.readSpectrumByIndex(Integer.parseInt(tokens[1]));
 				String peptide = tokens[pepInd];
 				int charge = Integer.parseInt(tokens[chargeInd]);
 				peptide = peptide.substring(2, peptide.length()-2);
 				Peptide p = new Peptide(peptide, charge);
 				s.peptide=peptide;
 				s.charge = charge;
-				//s.protein = tokens[8];
-//				if(Math.abs(p.getParentmass() - s.parentMass) > 1.2){
-//					s = reader.getSpectrum(Integer.parseInt(tokens[1])-1); //try to fix off-1 difference in scan number in proteowiz conversion
-//				}
-//				if(Math.abs(p.getParentmass() - s.parentMass) > 1.2){
-//					s = reader.getSpectrum(Integer.parseInt(tokens[1])-2); //try to fix off-1 difference in scan number in proteowiz conversion
-//				}
-//				if(Math.abs(p.getParentmass() - s.parentMass) > 1.2){
-//					s = reader.getSpectrum(Integer.parseInt(tokens[1])-6); //try to fix off-1 difference in scan number in proteowiz conversion
-//				}
-//				if(Math.abs(p.getParentmass() - s.parentMass) > 1.2){
-//					s = reader.getSpectrum(Integer.parseInt(tokens[1])-4); //try to fix off-1 difference in scan number in proteowiz conversion
-//				}
+				log.print(line + "\t");
+				double[] stats = filter.computeAnnotatedSNR(s, SpectrumFilter.MODE_GLOBAL, tolerance);
+				for(int i = 0; i < stats.length; i++){
+					log.print(stats[i] +"\t");
+				}
+				log.println();
 				if(Math.abs(p.getParentmass() - s.parentMass) > 1.2){
 					//System.out.println(s);
 					System.out.println("warning: parent mass not matching");
@@ -565,6 +572,9 @@ public class SpectrumUtil {
 				out.write("\n");
 				if(counter > 50){
 					//break;
+				}
+				if(counter % 10000 == 0){
+					System.out.println("Processed spectra: " + counter);
 				}
 			}
 			out.flush();
@@ -927,8 +937,8 @@ public class SpectrumUtil {
 	}
 	
 	public static int getSNR(Spectrum s, double tolerance){
-		Peptide pep = new Peptide(s.peptide, s.charge);
-		String[] prefixIons = {"b", "b-H20", "b-NH3"};//, "b(iso)"};//"a", "a-H20", "a-NH3"};
+		Peptide pep = new Peptide(s.peptide, 2);//s.charge);
+		String[] prefixIons = {"b", "b-H20", "b-NH3", "a"};//, "b(iso)"};//"a", "a-H20", "a-NH3"};
 		String[] suffixIons = {"y", "y-H20", "y-NH3"};//, "y(iso)"};
 		TheoreticalSpectrum.prefixIons = prefixIons;
 		TheoreticalSpectrum.suffixIons = suffixIons;
@@ -941,6 +951,9 @@ public class SpectrumUtil {
 		List<Peak> unAnnotated = new ArrayList();
 		List<Peak> allPeaks = new ArrayList();
 		allPeaks.addAll(s.getPeak());
+		if(allPeaks.size() == 0){
+			return 0;
+		}
 		for(Iterator<LabelledPeak> it = g.vertexSet(g.Observed).iterator(); it.hasNext();){
 			Peak p = it.next();
 			List neighs = g.getNeighbors(p);
@@ -955,16 +968,16 @@ public class SpectrumUtil {
 		Collections.sort(unAnnotated, PeakIntensityComparator.comparator);
 		double mean = 0.0;
 		double topFract = 0.01;
-		double minZ = 220;
+		double minZ = 250;
 		int length = unAnnotated.size();
 		int count=0;
 		for(int i = length-1; i > (int)(length*topFract); i--){
 			mean+=unAnnotated.get(i).getIntensity();
 			count++;
 		}
-		
+		double lowfract = 0.25;
 		mean = mean / count;
-		mean = allPeaks.get((int)(allPeaks.size()*0.25)).getIntensity();
+		mean = allPeaks.get((int)(allPeaks.size()*lowfract)).getIntensity();
 		s.mergePeaks(s, 0.05);
 		g = t.getMatchGraph(s, tolerance);
 		unAnnotated.clear();
@@ -980,11 +993,16 @@ public class SpectrumUtil {
 		}
 		
 		int bigSignal = 0;
+		double expInt = 0, unexpInt=0;
+		double expInt2 = 0, unexpInt2=0;
 		for(int i = 0; i < annotated.size(); i++){
 			double z = (annotated.get(i).getIntensity() / mean)*100;
+			//System.out.println(x)
 			//annotated.get(i).setRank((int)z);
+			expInt += annotated.get(i).getIntensity();
 			if(z > minZ){
 				bigSignal++;
+				expInt2 += annotated.get(i).getIntensity();
 				//System.out.println("big signal: " + annotated.get(i));
 			}
 		}
@@ -992,14 +1010,16 @@ public class SpectrumUtil {
 		int bigNoise = 0;
 		for(int i = 0; i < unAnnotated.size(); i++){
 			double z = (unAnnotated.get(i).getIntensity() / mean)*100;
+			unexpInt += unAnnotated.get(i).getIntensity();
 			//unAnnotated.get(i).setRank((int)z);
 			if(z > minZ){
 				bigNoise++;
+				unexpInt2 += unAnnotated.get(i).getIntensity();
 				//System.out.println("big nosie: " + unAnnotated.get(i));
 			}
 		}
 
-		double medianNoi = allPeaks.get((int)(allPeaks.size()*0.25)).getIntensity();
+		double medianNoi = allPeaks.get((int)(allPeaks.size()*lowfract)).getIntensity();
 		//double medianNoi = unAnnotated.get((int)(unAnnotated.size()*0.5)).getIntensity();
 		if(annotated.size() == 0){
 			System.out.println("warining: ");
@@ -1007,17 +1027,21 @@ public class SpectrumUtil {
 		}
 		double medianSig = annotated.get((int)(annotated.size()/2.0)).getIntensity();
 		double totalInt = s.sumMagnitude();
-		System.out.println(s.spectrumName + "\t" + s.peptide + "\t" + s.charge + "\ttotal peaks:\t" 
+		System.out.println(s.spectrumName + "\t" + s.peptide + "\t" + s.charge + "\ttotal peaks:\t" + 
 				+ annotated.size() + "\t" + unAnnotated.size() + "\tmean-noise level:\t" 
 				+ mean + "\tmedian:\t" + medianNoi + "\tabove-" +minZ + "%:\t" + bigSignal + "\t" + bigNoise + "\ts2n-ratio:\t" + (medianSig/medianNoi)
-				+ "\tabundance:\t" + s.score +"\t" + s.upperBound + "\t" + totalInt);
+				+ "\tabundance:\t" + s.score +"\t" + s.upperBound + "\t" + totalInt + "\t" 
+				+ expInt / (expInt+unexpInt) + "\t" + expInt2/expInt + "\t" + expInt2/(expInt2 + unexpInt2));
 		return bigSignal;
 	}
 	
+	
+	
+	
 	public static void computeS2NR(){
-		String spectrumDir = "../mixture_linked/msdata/EIF";
-		String annotationFile = "..\\mixture_linked/test.txt";
-		String outfile = "..\\mixture_linked\\test.mgf";
+		String spectrumDir = "../mixture_linked/Genentech_speclib_search";
+		String annotationFile = "..\\mixture_linked/Genentech_speclib_search/MSGFDB-52e97abd-group_by_spectrum-main.tsv";
+		String outfile = "..\\mixture_linked\\test.txt";
 		List<Spectrum> specList = new ArrayList<Spectrum>();
 		Map<String, MZXMLReader> readers = new HashMap<String, MZXMLReader>();
 		try{
@@ -1025,6 +1049,7 @@ public class SpectrumUtil {
 			BufferedWriter out = new BufferedWriter(new FileWriter(outfile));
 			String line;
 			String prevFile= "";
+			buff.readLine();
 			MZXMLReader reader = null;
 			int counter = 1; //one base index
 			while((line=buff.readLine()) != null){
@@ -1036,7 +1061,7 @@ public class SpectrumUtil {
 					readers.put(file, newreader);
 				}
 				reader = readers.get(file);
-				System.out.println("line\t"+line);
+				//System.out.println("line\t"+line);
 				Spectrum s = reader.getSpectrum(Integer.parseInt(tokens[1]));
 				String peptide = tokens[7];
 				peptide = peptide.substring(2, peptide.length()-2);
@@ -1044,7 +1069,7 @@ public class SpectrumUtil {
 				s.peptide=peptide;
 				s.charge = Integer.parseInt(tokens[6]);
 				s.scanNumber = counter++;
-				int signals = SpectrumUtil.getSNR(s, 0.05);
+				int signals = SpectrumUtil.getSNR(s, 0.1);
 				System.out.println(line + "\tsignals\t" + signals);
 				//s.spectrumName = s.spectrumName + " PROTEIN: " + tokens[8]; 
 				//out.write(s.toString());
@@ -1062,6 +1087,100 @@ public class SpectrumUtil {
 		//printSpectraToFile(outfile, specList);
 	}
 	
+	public static void computeS2NRFromSpecs(){
+		String spectrumFile = "..//mixture_linked//Genentech_speclib_search//20140707_Elite2_QLK562std_new_Mclass_column_01.mzXML";
+		MZXMLReader reader = new MZXMLReader(spectrumFile);
+		while(reader.hasNext()){
+			Spectrum s = reader.next();
+			//s.peptide = "AAAAAAAAAA.2";
+			//SpectrumUtil.getSNR(s, 0.05);
+			//System.out.println()
+		}
+	}
+	
+	//distribution of signals peaks in spectral library
+	public static void getLibrarySignalStat(){
+		String libFile = "../mixture_linked/UPS_Human_lysateREP123_IDA_1pepFDR.mgf";
+		SpectrumLib lib = new SpectrumLib(libFile, "MGF");
+		List<Spectrum> specList = lib.getAllSpectrums();
+		for(int i = 0; i < specList.size(); i++){
+			Spectrum s = specList.get(i);
+			SpectrumUtil.getSNR(s, 0.05);
+		}
+		
+	}
+	
+	public static void getSubSpecLib(){
+		String libFile = "../mixture_linked/ACG_swathdevelopment_UPSEcoli_REP234_IDA.mgf";
+		String peps = "../mixture_linked/keptpep.txt";
+		SpectrumLib lib = new SpectrumLib(libFile, "MGF");
+		List<String> pepList = Utils.FileIOUtils.createListFromFile(peps);
+		PrintStream out = Utils.FileIOUtils.getOutStream("../mixture_linked/ACG_swathdevelopment_UPSEcoli_REP234_IDA_removeSimToAPLib.mgf");
+		Map<String, Spectrum> decoyMap = new HashMap<String, Spectrum>();
+		List<Spectrum> specList = lib.getAllSpectrums();
+		for(int i = 0; i < specList.size(); i++){
+			Spectrum s = specList.get(i);
+			if(s.spectrumName.contains("DECOY_")){
+				String key = s.spectrumName.replace("DECOY_", "");
+				decoyMap.put(key, s);
+			}
+		}
+		for(int i = 0; i < pepList.size(); i++){
+			String pep = pepList.get(i);
+			if(lib.getSpectra(pepList.get(i)) != null){
+				List<Spectrum> libSpects = lib.getSpectra(pep);
+				for(int j = 0; j < libSpects.size(); j++){
+					Spectrum target = lib.getSpectra(pep).get(j);
+					Spectrum decoy = decoyMap.get(target.spectrumName);
+					out.println(target.toString());
+					if(decoy!=null){
+					//	out.println(decoy.toString());
+					}else{
+						System.out.println("cannot find decoy spect");
+					}
+				}
+			}
+		}
+		
+	}
+	
+	//spectrum similarity between mod-unmod peptide pairs
+	public static void getModPairSim(){
+		String libFile = "../mixture_linked/human_heck_1pepFDR_msgfdb.mgf";
+		SpectrumLib lib = new SpectrumLib(libFile, "MGF");
+		List<Spectrum> specList = lib.getAllSpectrums();
+		Map<String, List<Spectrum>> pepMap = new HashMap<String, List<Spectrum>>();
+		for(int i = 0; i < specList.size(); i++){
+				Spectrum s = specList.get(i);
+				String pep = s.peptide;
+				pep = Utils.StringUtils.getStrippedSeq(pep) + "@" + s.charge;			
+				List<Spectrum> spects;
+				if(pepMap.containsKey(pep)){
+					spects = pepMap.get(pep);
+				}else{
+					spects = new ArrayList<Spectrum>();
+				}
+				spects.add(s);
+				pepMap.put(pep, spects);
+		}
+		for(Iterator<String> it = pepMap.keySet().iterator(); it.hasNext();){
+			List<Spectrum> spects = pepMap.get(it.next());
+			if(spects.size() > 1){
+				for(int i = 0 ; i < spects.size(); i++){
+					for(int j = i+1 ; j < spects.size(); j++){
+						Spectrum s1 = spects.get(i);
+						Spectrum s2 = spects.get(j);
+						if(!s1.peptide.contains("+")){
+							Spectrum temp = s1;
+							s1=s2;
+							s2=temp;
+						}
+						System.out.println(s1.spectrumName + "\t" + s2.spectrumName + "\t" +  s1.peptide+"@"+s1.charge + "\t" + s2.peptide + "@" + s2.charge +  "\t" + s1.projectedCosine(s2, 0.05) + "\t" + s2.projectedCosine(s1, 0.05) + "\t" + s1.sharePeaks(s2, 0.05));
+					}
+				}
+			}
+		}
+	}
 	
 	public static void main(String[] args){
 		//printLibPeptides();
@@ -1069,10 +1188,13 @@ public class SpectrumUtil {
 		//String filename = ".\\MSPLib\\Lib\\yeast.msp";
 		///convertMSPToMGF(filename);
 		//annotateSpectrumLib();
-		annotateSpectrumLibFromMzXML();
-		if(Integer.parseInt(args[3]) == 7){
-			annotateSpectrumLibFromMzXMLs(args[0], args[1], args[2]);
+		//annotateSpectrumLibFromMzXML();
+		if(args[0].equals("CREATE-LIB")){
+		//	annotateSpectrumLibFromMzXMLs(args[1], args[2], args[3], args[4]);
 		}
+		//getLibrarySignalStat();
+		getSubSpecLib();
+		//getModPairSim();
 		//annotateSpectrumLibFromMGF();
 		//removeAnnotateFromMzXMLs();
 		//getUniqueSpectrum("../mixture_linked/MSGFDBSearches/human_heck_e10_annotated_spectra.mgf");
@@ -1082,5 +1204,6 @@ public class SpectrumUtil {
 		//generateMixSpectra();
 		//precursorFraction();
 		//computeS2NR();
+		//computeS2NRFromSpecs();
 	}
 }

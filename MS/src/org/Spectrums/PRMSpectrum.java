@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
+import IO.MZXMLReader;
 import Utils.FileIOUtils;
 
 /**
@@ -60,7 +61,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 	protected void computePRMSpectrum(){
 		double mass = MinMass;
 		double parentMass = (this.spectrum.parentMass*this.charge - this.charge*Mass.PROTON_MASS - Mass.WATER)*scaleFactor;
-		System.out.println("parentmass is: " + parentMass);
+		//System.out.println("parentmass is: " + parentMass);
 		this.scoredSpectrum = new double[3][(int)Math.ceil(((parentMass-MinMass+tolerance)/resolution)+1)];
 		double interval = resolution;
 		int counter=0;
@@ -134,8 +135,9 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 			for(int i = 0; i < annotations.size(); i++){
 				LabelledPeak annot = (LabelledPeak)annotations.get(i);
 				int massInt = (int)(Math.round(this.scaleFactor*getPRMInd(p, annot))); 
-				currScore = currScore > prm1[massInt] ? currScore: prm1[massInt];
+				massInt = massInt < 0 ? 0 : massInt; //not exactly sure what happen, but it seem in some case rounding can make this go below zero, when peak very close to precursor
 				if(DEBUG){System.out.println("peak " +  annot + "\tscore\t" + prm1[massInt] +"\tat\t" + massInt);};
+				currScore = currScore > prm1[massInt] ? currScore: prm1[massInt];
 			}
 			for(int i = 0; i < t.prefixIons.length; i++){
 				for(int c = 1; c <= 2; c++){
@@ -187,6 +189,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 	}
 	//get PRM mass Ind for a suffix ions
 	public double getPRMInd(Peak p, double parentMass, int parentCharge, String ionType, int charge){
+		//System.out.println(parentMass + "\t" + parentCharge + "\t");
 		return (parentMass*parentCharge - Mass.WATER - parentCharge*Mass.PROTON_MASS 
 				- (p.getMass()*charge - Mass.getIonMod(ionType) - (charge-1)*Mass.PROTON_MASS));
 	}

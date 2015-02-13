@@ -5,6 +5,8 @@ import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
 
+import IO.MZXMLReader;
+
 public class testSpectrumLibSearch {
 	public static void testRank(){
 		String spectrumFile = ".\\MSPLib\\Lib\\ecoli.msp";

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.ArrayList;
 
+import Utils.ArrayUtils;
+
 public class SpectrumIonRankLearner {
 	private static final int MAXLENGTH = Integer.MAX_VALUE;
 	private SpectrumLib lib;

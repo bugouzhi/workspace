@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import IO.MZXMLReader;
+import Utils.ArrayUtils;
+
 /**
  * print out some summary for mzxml file
  * @author Jian Wang

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import IO.MZXMLReader;
+
 /**
  * Perform MXDBSearch for SUMOylated peptides
  * @author Jian Wang

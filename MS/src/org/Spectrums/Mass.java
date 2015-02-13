@@ -114,8 +114,9 @@ public class Mass {
 		if(aa == 'U'){
 			return 100000;
 		}
-		if((int)aa-'A' < 0){
+		if((int)aa-'A' < 0 || (int)aa-'A' > Mass.aaMap.length){
 			System.out.println("warning: " + aa + " might not be a valide aa");
+			return 0;
 		}
 		return aaMap[(int)aa-'A'];
 	}
@@ -173,7 +174,8 @@ public class Mass {
 	public static boolean checkMass(double mass1, double mass2, double tolerance, int mode){
 		 double diff = mass1 - mass2;
 		 diff = Math.abs(diff);
-		//System.out.println("diff: " + diff + "\t" + diff*1000000/precursor +"\t" + tolerance + "\t" + (diff < tolerance));
+		 //System.out.println("diff: " + diff + "\t" + mass1);
+		 //System.out.println("ppm tolerance + " + diff*1000000/mass1);
 		 if(mode == DIFF_DA){
 			 return diff < tolerance;
 		 }

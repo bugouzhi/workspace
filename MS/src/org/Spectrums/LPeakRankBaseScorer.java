@@ -9,6 +9,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+import Utils.ArrayUtils;
+
 public class LPeakRankBaseScorer implements PeakComparator, Serializable{
 	private static final long serialVersionUID = 193712381028301L;
 	private RankBaseScoreLearner core;

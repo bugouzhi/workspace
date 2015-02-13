@@ -30,6 +30,8 @@ import java.util.GregorianCalendar;
 import java.util.Set;
 import java.util.List;
 import java.util.Map;
+
+import IO.MZXMLReader;
 //this class contain two "view" on the library of spectrum
 //a hashtable and a list perspective, any function that modify 
 //spectra in the library should take care to update both contruct 
@@ -41,6 +43,7 @@ public class SpectrumLib implements Iterable, Serializable{
 	private double parentMassTolerance = 2000;
 	private int topSpectraKept = 500;
 	private Map<String, List<Spectrum>> spectrumLibrary; 
+	public boolean useCharge = true;
 	
 	private List<Spectrum> spectrumList;
 	public SpectrumLib(){
@@ -63,7 +66,7 @@ public class SpectrumLib implements Iterable, Serializable{
 			this.readSpectrumsFromMGF(file);
 		}else if(format.equals("MSP")){
 			this.readSpectrumsFromMSP(file);
-		}else if(format.equals("splib")){
+		}else if(format.equals("sptxt")){
 			this.readSpectrumsFromSplib(file);
 		}else if(format.equals("MS2")){
 			this.readSpectrumsFromMS2(file);
@@ -89,7 +92,6 @@ public class SpectrumLib implements Iterable, Serializable{
 				}else{
 					v = new Vector();
 				}
-				s.windowFilterPeaks2(5, 25);
 				v.add(s);
 				//System.out.println(getPeptideKey(s));
 				spectrumLibrary.put(getPeptideKey(s), v);
@@ -111,7 +113,7 @@ public class SpectrumLib implements Iterable, Serializable{
 	private String getPeptideKey(Spectrum s){
 		String pep = s.peptide;
 		//System.out.println(pep.charAt(pep.length()-3));
-		if(pep.charAt(pep.length()-3) == '.'){
+		if(pep.charAt(pep.length()-3) == '.' || !this.useCharge){
 			return s.peptide;
 		}else{
 			return s.peptide+"."+s.charge;
@@ -407,7 +409,9 @@ public class SpectrumLib implements Iterable, Serializable{
 			for(index = 0; index < v.size(); index++){
 				if(v.get(index).modMass > 0 
 						|| v.get(index).peptide.contains("+") 
-						|| v.get(index).peptide.contains("-")){
+						|| v.get(index).peptide.contains("-")
+						|| v.get(index).peptide.contains("[")
+						|| v.get(index).peptide.contains("(")){
 					v.remove(index);
 					index--; //since we just remove one element, backtrack one pointer
 				}
@@ -476,7 +480,7 @@ public class SpectrumLib implements Iterable, Serializable{
 	}
 	
 	//filter peaks that explained intFract of the total intensity
-	public void filterPeaks(double intFract){
+	public void filterPeaksByIntFract(double intFract){
 		Iterator<Spectrum> it = this.iterator();
 		while(it.hasNext()){
 			Spectrum s = it.next();
@@ -2045,9 +2049,11 @@ public Spectrum filterAndSearch(Spectrum mix) {
 			BufferedWriter bo = new BufferedWriter(new FileWriter(outfile));
 			Iterator<Spectrum> it = this.iterator();
 			Spectrum curr;
+			int count=0;
 			while(it.hasNext()){
 				bo.write(it.next().toString());
 				bo.write("\n");
+				//System.out.println("printing: " + count++);
 			}
 			bo.flush();
 			bo.close();

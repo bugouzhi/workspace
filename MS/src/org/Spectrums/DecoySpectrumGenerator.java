@@ -8,9 +8,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -23,7 +23,7 @@ public class DecoySpectrumGenerator {
 	public DecoySpectrumGenerator(){
 	}
 	
-	public Spectrum generateDecoy(Spectrum s){
+	public Spectrum generateDecoy1(Spectrum s){
 		this.s = s;
 		Spectrum d = new Spectrum();
 		d.spectrumName = s.spectrumName;
@@ -59,13 +59,84 @@ public class DecoySpectrumGenerator {
 		Collections.sort(pList, PeakMassComparator.comparator);
 		d.setPeaks(pList);
 		d.spectrumName = "DECOY_" + d.spectrumName;
+		d.protein = "DECOY_" + s.protein;
 		//d.peptide = "X_"+shufflePeptide(s.peptide);
 		return d;
 	}
 	
+	public Spectrum generateDecoy(Spectrum s){
+		this.s = s;
+		Spectrum d = new Spectrum();
+		d.spectrumName = s.spectrumName;
+		d.scanNumber = s.scanNumber;
+		d.charge = this.s.charge;
+		d.parentMass = this.s.parentMass;
+		d.rt = s.rt;
+		Peptide pep = new Peptide(s.peptide, s.charge);
+		d.peptide = shufflePeptide(pep.getPeptide());
+		Peptide decoyPep = new Peptide(d.peptide, s.charge);
+		TheoreticalSpectrum.prefixIons = new String[]{"b", "b-H20", "b-NH3"};//, "b(iso)"};
+		TheoreticalSpectrum.suffixIons = new String[]{"y", "y-H20", "y-NH3"};//, "y(iso)"};
+		TheoreticalSpectrum t = new TheoreticalSpectrum(pep);
+		TheoreticalSpectrum.addIsotopicPeaks(t, 1);
+		SimpleMatchingGraph g = t.getMatchGraph(s, tolerance);
+		MultiMap map = generateAnnotationMap(g);
+		TheoreticalSpectrum t2 = new TheoreticalSpectrum(decoyPep);
+		TheoreticalSpectrum.addIsotopicPeaks(t2, 1);
+		List<Peak> pList = new ArrayList<Peak>();
+		Map<String, LabelledPeak> map2 = new HashMap<String, LabelledPeak>();
+		for(Iterator<Peak> it = t2.getPeak().iterator(); it.hasNext();){
+			LabelledPeak lp = (LabelledPeak)it.next();
+			String key = lp.getPeakType();
+			map2.put(key, lp);
+		}
+		
+		for(Iterator<LabelledPeak> it = g.vertexSet(g.Observed).iterator(); it.hasNext();){
+			Peak p = it.next();
+			List neighs = g.getNeighbors(p);
+			LabelledPeak closestP = null;
+			double smallestErr = 10000;
+			for(int i = 0; i < neighs.size(); i++){
+				LabelledPeak currPeak = (LabelledPeak)neighs.get(i);
+				double currDiff = Math.abs(currPeak.getMass()-p.getMass());
+				closestP = currDiff < smallestErr ? currPeak : closestP;
+				smallestErr = currDiff < smallestErr ? currDiff : smallestErr;
+			}
+			if(closestP != null){
+				LabelledPeak lp = closestP;
+				String key = lp.getPeakType();
+				if(map2.containsKey(key)){
+					LabelledPeak newlp = map2.get(key);
+					Peak newPeak = new Peak(newlp.getMass(), p.getIntensity());
+					pList.add(newPeak);
+					//System.out.println("DECOY Peaks: " + newPeak + "\t" + newlp);
+				}
+			}
+			
+		}
+		
+		
+		//System.out.println(s.spectrumName + "\t" + s.peptide + " number of annotated: " + pList.size());
+		addUnannotatedPeaks(g, pList);
+		//s.getPeak().removeAll(getUnAnnotatedPeak(g));
+		Collections.sort(pList, PeakMassComparator.comparator);
+		d.setPeaks(pList);
+		d.spectrumName = "DECOY_" + d.spectrumName;
+		d.protein = "DECOY_" + s.protein;
+		//d.peptide = "X_"+shufflePeptide(s.peptide);
+		return d;
+	}
+	
+	
+	
 	//generate a spectrum for target, but correct all observed masses
 	//to theoretical masses position
+	
 	public Spectrum generateTarget(Spectrum s){
+		return generateTarget(s, new String[]{"b", "b-H20", "b-NH3"}, new String[]{"y", "y-H20", "y-NH3"});
+	}
+	
+	public Spectrum generateTarget(Spectrum s, String[] prefixIons, String[] suffixIons){
 		this.s = s;
 		Spectrum t = new Spectrum();
 		t.spectrumName = s.spectrumName;
@@ -73,10 +144,12 @@ public class DecoySpectrumGenerator {
 		t.charge = this.s.charge;
 		t.parentMass = this.s.parentMass;
 		t.peptide = s.peptide;
-		Peptide pep = new Peptide(s.peptide, s.charge);
-		TheoreticalSpectrum.prefixIons = new String[]{"b", "b-H20", "b-NH3"};//, "b(iso)"};
-		TheoreticalSpectrum.suffixIons = new String[]{"y", "y-H20", "y-NH3"};//, "y(iso)"};
-		TheoreticalSpectrum th = new TheoreticalSpectrum(pep);
+		t.protein = s.protein;
+		t.rt = s.rt;
+		Peptide pep = new Peptide(s.peptide, s.charge); 
+		//TheoreticalSpectrum.prefixIons = prefixIons;
+		//TheoreticalSpectrum.suffixIons = suffixIons;
+		TheoreticalSpectrum th = new TheoreticalSpectrum(pep, prefixIons, suffixIons);
 		TheoreticalSpectrum.addIsotopicPeaks(th, 1);
 		SimpleMatchingGraph g = th.getMatchGraph(s, tolerance);
 		List<Peak> pList = new ArrayList<Peak>();
@@ -100,10 +173,11 @@ public class DecoySpectrumGenerator {
 			}
 			if(closestP != null){
 				Peak theo = new Peak(closestP.getMass(), p.getIntensity());
+				//System.out.println("Target Peak: " + theo + "labelledP\t" + closestP);
 				pList.add(theo);
 			}
 		}
-		System.out.println(s.spectrumName + "\t" + s.peptide + " number of annotated: " + pList.size() + "\t" + s.getPeak().size());
+		//System.out.println(s.spectrumName + "\t" + s.peptide + " number of annotated: " + pList.size() + "\t" + s.getPeak().size());
 		addUnannotatedPeaks(g, pList);
 		//s.getPeak().removeAll(getUnAnnotatedPeak(g));
 		Collections.sort(pList, PeakMassComparator.comparator);
@@ -126,7 +200,7 @@ public class DecoySpectrumGenerator {
 			}
 		}
 		//Collections.sort(unAnnotated, PeakIntensityComparator.comparator);
-		System.out.println("number of unannotated: " + (pList.size() - annotated) + " total: " + pList.size());
+		//System.out.println("number of unannotated: " + (pList.size() - annotated) + " total: " + pList.size());
 	}
 	
 	
@@ -174,7 +248,7 @@ public class DecoySpectrumGenerator {
 			}
 		}
 		if(index.size() == 0){
-			return null;
+			return pep;
 		}
 		for(int i = 0; i < 50; i++){
 			int j = (int)Math.floor(Math.random()*index.size());
@@ -235,38 +309,41 @@ public class DecoySpectrumGenerator {
 		//System.out.println("Cannot generate decoy: " + noDecoy);
 	}
 	
-	public static void testShuffleSpectra(String spectrumFile){
-		//spectrumFile = "..\\mixture_linked\\APSWATH_PPP2RA_MSGFDB_IDs_1pepFDR.mgf";
+	public static void testShuffleSpectra(String spectrumFile, String decoyFileName, double tolerance){
+		//spectrumFile = "..\\mixture_linked\\SWATH-MSPLITv1.0/Testing/test_buildlib/Spectral_library.txt";
+		//tolerance = 0.33;
 		LargeSpectrumLibIterator<Spectrum> iter = new LargeSpectrumLibIterator(spectrumFile);
 		int index = spectrumFile.lastIndexOf('.');
-		String decoyName = spectrumFile.substring(0, index) + "_plusDecoy2.mgf";
-		double tolerance = 0.05;
+		if(decoyFileName == null || decoyFileName.length() < 1){
+			decoyFileName = spectrumFile.substring(0, index) + "_plusDecoy.mgf";
+		}
 		try{
-			BufferedWriter bo = new BufferedWriter(new FileWriter(decoyName));
+			BufferedWriter bo = new BufferedWriter(new FileWriter(decoyFileName));
 			int fail=0;
 			for(;iter.hasNext();){
 				Spectrum s = iter.next();
+				//System.out.println("Spectrum is : " + s.spectrumName);
 				//s.shiftSpectrumPPM(100);
-				s.windowFilterPeaks(10, 25);
-				if(s.peptide.contains("+") || s.peptide.contains("(") || s.peptide.contains("-")){
+				//s.windowFilterPeaks(10, 25);
+				//if(s.peptide.contains("+") || s.peptide.contains("(") || s.peptide.contains("-")){
 					//continue;
-				}
-				if(s.peptide.contains("+0.9")){
-					continue;
+				//}
+				if(s.peptide.contains("+")){
+					//continue;
 				}
 				DecoySpectrumGenerator generator = new DecoySpectrumGenerator();
 				generator.tolerance = tolerance;
-				double signals = SpectrumUtil.getSNR(s, tolerance);
+				//double signals = SpectrumUtil.getSNR(s, tolerance);
 				//s.filterPeaksByRankScore(120);
 				//if(signals < 8){
 					//continue;
 				//}
 				Spectrum target = generator.generateTarget(s);
-				if(target.getPeak().size() < 15){
+				if(target.getPeak().size() < 10){
 					continue;
 				}
 				
-				Spectrum decoy = generator.generateDecoy(s);
+				Spectrum decoy = generator.generateDecoy1(s);
 				
 				double sim = s.cosine(decoy, tolerance);
 				int count=0;
@@ -289,8 +366,8 @@ public class DecoySpectrumGenerator {
 					bo.write(target.toString());
 					//bo.write(s.toString());
 					bo.write("\n");
-					System.out.println("target similarity to theo-target: " + s.cosine(target, tolerance));
-					System.out.println("decoy similarity to target: " + s.cosine(decoy, tolerance));
+					//System.out.println("target similarity to theo-target: " + s.cosine(target, tolerance));
+					//System.out.println("decoy similarity to target: " + s.cosine(decoy, tolerance));
 					//System.out.println("decoy projected-similarity to target: " + s.projectedCosine(decoy, 0.05));
 					bo.write(decoy.toString());
 					bo.write("\n");
@@ -359,7 +436,7 @@ public class DecoySpectrumGenerator {
 	public static void main(String[] args){
 		//testShufflePeptide();
 		//testDecoyGenerator();
-		testShuffleSpectra("..//mixture_linked//gringar_swath_SLRIACG01_msgfdb_ids.mgf");
+		testShuffleSpectra(args[0], args[1], Double.parseDouble(args[2]));
 		//testShufflePeptides();
 		//runSearchWithDecoyLib(args[0], args[1]);
 	}
