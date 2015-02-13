@@ -26,6 +26,16 @@ import org.Spectrums.SortedMZXMLReader;
 import org.Spectrums.Spectrum;
 import org.Spectrums.SpectrumComparator;
 import org.Spectrums.SpectrumLibSearcher;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.MissingOptionException;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Parser;
+
 import Utils.FileIOUtils;
 
 public class MixDBSearcher extends SimpleDBSearcher{
@@ -71,7 +81,7 @@ public class MixDBSearcher extends SimpleDBSearcher{
 		}
 		
 		if(this.spectrumFile.toLowerCase().endsWith("mzxml")){
-			reader = new SortedMZXMLReader(this.spectrumFile);
+			reader = new SortedMZXMLReader(this.spectrumFile, this.minScan, this.maxScan);
 		}
 		
 		RankBaseScoreLearner pcomp = RankBaseScoreLearner.loadComparatorLocal(this.singleScorer);
@@ -99,12 +109,12 @@ public class MixDBSearcher extends SimpleDBSearcher{
 				double tolerance = this.parentTolerance*c;
 				cands.addAll(this.theoDB.getCandidates(s, this.parentTolerance));
 			}
-			System.out.println("Number of candidates: " + cands.size());
+			//System.out.println("Number of candidates: " + cands.size());
 			SpectrumLibSearcher searcher = new SpectrumLibSearcher(cands, this.comp, this.mixScorer);
 			searcher.spectrumFile = this.spectrumFile;
 			searcher.bw = out;
 			searcher.setSingleScorer(this.comp);
-			searcher.bestArrayCandidates(a, 2);
+			searcher.bestArrayCandidates(a, 1);
 			counter++;
 		}
 		try{
@@ -442,60 +452,145 @@ public class MixDBSearcher extends SimpleDBSearcher{
 		return null;
 	}
 	
-	public static void main(String[] args){
-		args[0] = "../mixture_linked/database/Ecoli_genome_plusDecoy.fasta";
-		args[1] = "../../Downloads/ACG_Nuno-selected/New_Swath_3mu/SWATH_3amu_bin16_01.mzXML";
-		args[2] = "3.0";
-		args[3] = "0.05";
-		args[4] = "../mixture_linked/ACG_14344_hardklorPrecursorsListmin07.txt";
-		//args[5] = "../mixture_linked/Mod_mixdb.txt";
-		args[5] ="../mixture_linked/testmixdb.txt";
-		args[6] = "1";
-		args[7] ="750000";
-		args[8] = "mixtures_TOF_alpha01-10_models.o";
-		if(args.length < 6 || args.length > 9){
-			System.out.println("usage: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <outfile>");
-			System.out.println("   or: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <modification file> <outfile>");
-			System.out.println("   or: java -Xmx2000M -jar MixDB.jar <database> <spectraFile> <parentmass tolerance> <fragment mass tolerance> <precursor list> <modification file> <outfile>");
-			return;
-		}
-		MixDBSearcher searcher;
-		if(args.length == 7 && args[4].length() > 1){
-			searcher = new MixDBSearcher(args[0], args[1], 
-					Double.parseDouble(args[2]), Double.parseDouble(args[3]), args[6]);
-			searcher.precursorsFile = args[4];
-		}else{
-			searcher = new MixDBSearcher(args[0], args[1], 
-				Double.parseDouble(args[2]), Double.parseDouble(args[3]), args[5]);
-			searcher.precursorsFile = args[4];
-		}
-		searcher.spectrumFile = args[1];
-		if(args.length > 7){
-			searcher.minScan = Integer.parseInt(args[6]);
-			searcher.maxScan = Integer.parseInt(args[7]);
-		}
-		if(args.length > 8){
-			searcher.mixScorerPath = "/resources/"+args[8];
-		}
-		//searcher.ptmFile = args[5];
-		System.out.println("Start running");
-		try{
-			if(args.length == 5){
-				//searcher.searchWithMultiPrecursors();
-				searcher.searchDB();
-			}else if(args.length == 7){
-				searcher.searchDBWithPTM();
-			}else if(args.length == 8){
-				searcher.searchWithMultiPrecursors();
-			}else if(args.length == 9){
-				//searcher.searchWithMultiPrecursors();
-				//searcher.searchDB(3);
-				searcher.searchDB();
-			}
+	public static void initSearch(String[] args){
+		Parser parser = new GnuParser();
+    	Options options = createOptions();
+    	try{
+    		CommandLine line = parser.parse( options, args);
+    		if(line.hasOption("help")){
+    			HelpFormatter formatter = new HelpFormatter();
+    			formatter.printHelp( "MixDB", options );
+    			return;
+    	     }	
+    		
+    	    String spectFile = line.getOptionValue("s");
+ 	        String dbFile = line.getOptionValue("d");
+ 	        String outFile = line.getOptionValue("o");
+ 	        double pmTol = Double.parseDouble(line.getOptionValue("p"));
+ 	        double fmTol = Double.parseDouble(line.getOptionValue("f"));
+ 	        if(fmTol > 0.5){
+ 	        	System.err.println("Warning : fragment mass tolerance should be less than 0.5, using 0.5 as fragment mass tolerance");
+ 	        	fmTol = 0.5;
+ 	        }
+ 	        MixDBSearcher searcher = new MixDBSearcher(dbFile, spectFile, pmTol, fmTol, outFile);
+    	    if(line.hasOption("m")){
+    	    	searcher.mixScorerPath = line.getOptionValue("m");
+    	    }
+ 	        if(line.hasOption("minScan")){
+ 	        	searcher.minScan = Integer.parseInt(line.getOptionValue("minScan"));
+ 	        }
+ 	        if(line.hasOption("maxScan")){
+ 	        	searcher.maxScan = Integer.parseInt(line.getOptionValue("maxScan"));
+ 	        }
+    	    if(line.hasOption("precursorList")){
+    	    	searcher.precursorsFile	= line.getOptionValue("precursorList");
+    	    	searcher.searchWithMultiPrecursors();
+    	    }else if(line.hasOption("ptmList")){
+    	    	searcher.ptmFile = line.getOptionValue("ptmList");
+    	    	searcher.searchDBWithPTM();
+    	    }else{ 	   	    
+    	    	searcher.searchDB();
+    	    }
+    		
+    	}catch( ParseException exp ) {
+	        // oops, something went wrong
+	        System.err.println( "Parsing failed.  Reason: " + exp.getMessage() );
+	        HelpFormatter formatter = new HelpFormatter();
+        	formatter.printHelp( "MixDB", options);
+	    }catch( NumberFormatException e){
+	    	System.err.println("Mass tolerance or scan parameters must be a valid number");
+	    	e.getMessage();
+	    	e.printStackTrace();
 		}catch(Exception e){
-			System.err.println(e.getMessage());
+	    	System.err.println(e.getMessage());
 			e.printStackTrace();
 			System.exit(-1);
-		}
+	    }
+    	
+   }
+	
+	private static Options createOptions(){
+		Option help = new Option("help", "help");
+		Option fastaFile = OptionBuilder.withArgName( "fasta file" )
+                .hasArg()
+                .withDescription(  "sequence database file in fasta" )
+                .isRequired()
+                .create( "d" );
+		
+		Option spectrumFile = OptionBuilder.withArgName( "spectrum file" )
+                .hasArg()
+                .withDescription(  "spectrum file" )
+                .isRequired()
+                .create( "s" );
+		
+		Option pmTol = OptionBuilder.withArgName( "parent mass tolerance" )
+                .hasArg()
+                .withDescription(  "A window of +/- K Da around observed mass to consider peptide candidate matches" )
+                .isRequired()
+                .create( "p" );
+		
+		Option fmTol = OptionBuilder.withArgName( "fragment mass tolerance" )
+                .hasArg()
+                .withDescription(  "A window of +/- K Da around observed mass to consider fragment ions matches" )
+                .isRequired()
+                .create( "f" );
+		
+		
+		Option minScan = OptionBuilder.withArgName( "min Scan" )
+                .hasArg()
+                .withDescription(  "minimum scan to search" )
+                .create( "minScan" );
+		
+		Option maxScan = OptionBuilder.withArgName( "max Scan" )
+                .hasArg()
+                .withDescription(  "maximum scan to search" )
+                .create( "maxScan" );
+		
+		Option outFile = OptionBuilder.withArgName( "output file" )
+                .hasArg()
+                .withDescription(  "output for search result" )
+                .isRequired()
+                .create( "o" );
+		
+		Option precursorList = OptionBuilder.withArgName( "precursor list" )
+                .hasArg()
+                .withDescription(  "specificy list of precursors for each spectrum" )
+                .create( "precursorList" );
+		
+		Option ptmList = OptionBuilder.withArgName( "ptm list" )
+                .hasArg()
+                .withDescription(  "specificy list of ptm to search" )
+                .create( "precursorList" );
+		
+		Option scoreModel = OptionBuilder.withArgName( "model" )
+                .hasArg()
+                .withDescription(  "scoring model file" )
+                .create( "m" );
+		
+		Options options = new Options();
+		options.addOption(help);
+		options.addOption(outFile);
+		options.addOption(fastaFile);
+		options.addOption(spectrumFile);
+		options.addOption(pmTol);
+		options.addOption(fmTol);
+		options.addOption(minScan);
+		options.addOption(maxScan);
+		options.addOption(scoreModel);
+		return options;
+	}
+	
+	public static void main(String[] args){
+		//args[0] = "../mixture_linked/database/Ecoli_genome_plusDecoy.fasta";
+		//args[1] = "../../Downloads/ACG_Nuno-selected/New_Swath_3mu/SWATH_3amu_bin16_01.mzXML";
+		//args[2] = "3.0";
+		//args[3] = "0.05";
+		//args[4] = "../mixture_linked/ACG_14344_hardklorPrecursorsListmin07.txt";
+		//args[5] = "../mixture_linked/Mod_mixdb.txt";
+		//args[5] ="../mixture_linked/testmixdb.txt";
+		//args[6] = "1";
+		//args[7] ="750000";
+		//args[8] = "mixtures_TOF_alpha01-10_models.o";
+		initSearch(args);
 	}
 }

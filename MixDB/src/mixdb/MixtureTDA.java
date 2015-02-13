@@ -225,15 +225,19 @@ public class MixtureTDA {
 	}
 	
 	public static void MixGFfilter(String resultFile, String outFile, double FDR){
-		String header="#SpectrumFile\tScan#\tAnnotation\tProtein\tscore\tscore-1pep\texpl-Int\tb-fract\ty-fract\tb-series\ty-series\tSingle-Prob\tCond-Prob\n";
-		int[] singleInds = new int[]{1,2,6,8,10,11,15,16,17,20,21,32,33};
-		int[] pairInds = new int[]{7,9,12,18,19,22,23};
-		int[] pairOutInds = new int[]{3,4,6,8,9,10,11};
+		String header="#SpectrumFile\tScan#\tPrecMZ\tCharge\tAnnotation\tProtein\tscore\tscore-1pep\texpl-Int\tb-fract\ty-fract\tb-series\ty-series\tSingle-Prob\tCond-Prob\n";
+		int[] singleInds = new int[]{1,2,3,6,9,11,13,14,18,19,20,23,24,36,37};
+		int[] pairInds = new int[]{10,12,15,21,22,25,26};
+		int[] pairOutInds = new int[]{5,6,8,10,11,12,13};
 		MixtureTDA mixTDA = new MixtureTDA(resultFile);
 		mixTDA.minScore = 0;
-		mixTDA.scoreInd1 = 32;
-		mixTDA.scoreInd2 = 33;
+		mixTDA.scoreInd1 = 35;
+		mixTDA.scoreInd2 = 36;
 		mixTDA.sortMode = -1;
+		mixTDA.protInd1= 10;
+		mixTDA.protInd2 = 11;
+		mixTDA.rawScoreInd = 12;
+		mixTDA.minScore = 0;
 		mixTDA.filterByTDA(FDR);
 		mixTDA.printOutFile(outFile, header, singleInds, pairInds, pairOutInds);
 	}
@@ -244,7 +248,7 @@ public class MixtureTDA {
 	
 	public static void main(String[] args){
 		if(args.length != 3 && args.length != 4){
-			System.out.println("usage: java -Xmx1000M -jar MixDB/GFFilter.jar <mixdb results> <output> <fdr>");
+			System.out.println("usage: java -Xmx1000M -jar MixDB/MiGFFilter.jar <mixdb results> <output> <fdr>");
 			return;
 		}
 		//String resultFile = "../mixture_linked/2MixturesApha1.0_mixgfout.txt";

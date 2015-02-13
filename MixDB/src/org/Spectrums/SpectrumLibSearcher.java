@@ -435,7 +435,7 @@ public class SpectrumLibSearcher {
 				}
 			}
 		}
-		System.out.println("best has size: " + bestList.size());
+		//System.out.println("best has size: " + bestList.size());
 		printTopCandidatesInfo(mixturequery, bestList);
 		//System.out.println("total number of pairs considered: " + count);
 		return null;
@@ -711,7 +711,7 @@ public class SpectrumLibSearcher {
 	}
 	
 	private void sortSpecListByScore(Spectrum query){
-		System.out.println("Scan: " + query.scanNumber +  "\tlibrary has size: " + this.specList.size());
+		//System.out.println("Scan: " + query.scanNumber +  "\tlibrary has size: " + this.specList.size());
 		for(Iterator<SpectrumScorePair> it = spectrumScorePairs.iterator(); it.hasNext();){
 			SpectrumScorePair curr = it.next();
 			curr.score = this.filter.compare(curr.s, query);
