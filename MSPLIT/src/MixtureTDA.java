@@ -21,8 +21,8 @@ public class MixtureTDA {
 	private String resultFile;
 	private int protInd1=4;//7;
 	private int protInd2=5;//8;
-	private int scoreInd1 = 27;
-	private int scoreInd2 = 28;
+	private int scoreInd1 = 29;
+	private int scoreInd2 = 30;
 	private int rawScoreInd = 8;//9;
 	private double minScore = 0.4;//0;
 	private List<String> results;
@@ -71,8 +71,8 @@ public class MixtureTDA {
 	public void printOutFile(String outfile){
 		try{
 			BufferedWriter out = new BufferedWriter(new FileWriter(outfile));
-			String header="#SpectrumFile\tScan#\tAnnotation\tProtein\tCharge\tcosine(M, A+B)\tcosine(M,A)\tcosine(A,B)\talpha\tres-alpha\t#Peak-0.85Intensity\tsimBias(M,A+B)\tsimBias(A)\tprojCos(M,A+B)\tprojCos(M,A)\tmeanCos\tmeanDeltaCos\tPrecusor(M)\tPrecursor(A)\tspectrumIndex\tsvm1-score\tsvm2-score\n";
-			int[] singleInds = new int[]{1,2,3,5,7,9,10,12,13,14,15,16,17,19,21,22,23,24,25,27,28,29};
+			String header="#SpectrumFile\tScan#\tAnnotation\tProtein\tCharge\tcosine(M, A+B)\tcosine(M,A)\tcosine(A,B)\talpha\tres-alpha\t#Peak-0.85Intensity\tsimBias(M,A+B)\tsimBias(A)\tprojCos(M,A+B)\tprojCos(M,A)\tmeanCos\tmeanDeltaCos\tPrecusor(M)\tPrecursor(A)\tspectrumIndex\tlibIndex1\tlibIndex2\tsvm1-score\tsvm2-score\n";
+			int[] singleInds = new int[]{1,2,3,5,7,9,10,12,13,14,15,16,17,19,21,22,23,24,25,27,28,29,30,31};
 			int[] pairInds = new int[]{4,6,8,11,18,21,26};
 			int[] pairOutInds = new int[]{3,4,5,7,13,14,19};
 			out.write(header);
@@ -122,6 +122,8 @@ public class MixtureTDA {
 	
 	
 	private double getThreshold(List<Double> target, List<Double> decoy, double fdr){
+		target.add(-1000.0);
+		target.add(-1000.0);
 		int totalTarget = target.size();
 		int totalDecoy = decoy.size();
 		System.out.println("Total numbers of targets: " + target.size());
@@ -141,6 +143,9 @@ public class MixtureTDA {
 				break;
 			}
 		}
+		if(decoy.size() == 0){
+			i=target.size()-1;
+		}
 		System.out.println("threshold is: " + target.get(i-1) + " Accepted targets: " + (totalTarget - i));
 		return target.get(i);
 	}
@@ -154,8 +159,8 @@ public class MixtureTDA {
 		MixtureTDA mix = new MixtureTDA("../mixture_linked/MixDBv1.0/Human_heck_trypsin_mixdb_1_topHit_svmresult.txt");
 		mix.filterByTDA(0.01);
 	}
-	public static void MixtureFilter(String resultFile, String outFile, double FDR, String tempDir){
-		MixtureSVMClassify classify = new MixtureSVMClassify(resultFile, tempDir);
+	public static void MixtureFilter(String resultFile, String outFile, double FDR, String tempDir, String SVMPath){
+		MixtureSVMClassify classify = new MixtureSVMClassify(resultFile, tempDir, SVMPath);
 		classify.spectrumMatchClassify();
 		String svmOut = classify.getSvmResultFile();
 		MixtureTDA mixTDA = new MixtureTDA(svmOut);
@@ -164,7 +169,7 @@ public class MixtureTDA {
 	}
 	
 	public static void main(String[] args){
-		if(args.length != 3 && args.length != 4){
+		if(args.length < 3 || args.length > 5){
 			System.out.println("usage: java -Xmx1000M -jar MixDBFilter.jar <mixdb results> <output> <fdr>");
 			return;
 		}
@@ -176,10 +181,14 @@ public class MixtureTDA {
 			double FDR = Double.parseDouble(args[2]);
 			//double FDR = 0.01;
 			String svmtempDir = System.getProperty("user.dir")+File.separator;
-			if(args.length == 4){
+			String svmPath= MixtureSVMClassify.getDefaultSVMPath();
+			if(args.length >= 4){
 				svmtempDir = args[3];
 			}
-			MixtureFilter(resultFile, outFile, FDR, svmtempDir);
+			if(args.length == 5){
+				svmPath = args[4];
+			}
+			MixtureFilter(resultFile, outFile, FDR, svmtempDir, svmPath);
 		}catch(Exception e){
 			System.err.println(e.getMessage());
 			e.printStackTrace();

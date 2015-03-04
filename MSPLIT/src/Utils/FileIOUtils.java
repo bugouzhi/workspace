@@ -91,4 +91,12 @@ public class FileIOUtils {
 		return filename.substring(0, index);
 	}
 	
+	public static String getFileExtension(String filename){
+		int index = filename.lastIndexOf(".");
+		if(index > 0 && index < filename.length()){
+			return filename.substring(index+1);
+		}else{
+			return "";    //return empty string if there is no extension
+		}
+	}
 }
