@@ -1129,11 +1129,11 @@ public class SWATHMSPLITSearch {
 	
 	
 	public static void testSearch(String[] args){
-//		String queryFile = "../mixture_linked/msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18452_REP3_500ng_Ecoli_SWATH_1.mzXML";
-//		String outFile = "../mixture_linked/test_swath_ppm.txt";
-//		String libraryFile = "../mixture_linked/ACG_swathdevelopment_UPSEcoli_REP234_IDA_plusDecoy2.mgf";
+//		String queryFile = "../mixture_linked/Emily_Toni_DIA_vs_DDA/WiSIM/tk141003_MSerExo_24hrs_01_WiSIM.mzXML";
+//		String outFile = "../mixture_linked/test_EmilyToni_withNISTLib.txt";
+//		String libraryFile = "../mixture_linked/mouse_lib_plusDecoy.mgf";
 //		//String modFile = "../mixture_linked/Mod_MSPLIT-DIA.xml";
-//		args = new String[]{"25", "45", "0", queryFile, libraryFile, outFile};
+//		args = new String[]{"25", "300", "0", queryFile, libraryFile, outFile};
 		CommandLineParser cmdParser = new CommandLineParser(args);
 		SWATHMSPLITSearch search = new SWATHMSPLITSearch();
 		search.parent = cmdParser.getDouble(0);
@@ -1156,7 +1156,7 @@ public class SWATHMSPLITSearch {
 		search.libraryFile = cmdParser.getString(4);
 		String out = cmdParser.getString(5);
 		search.outFile = Utils.FileIOUtils.generateOutFile(out, search.queryFile, "_msplitout.txt");
-		search.startMSPLITSearch(3, 3000000);
+		search.startMSPLITSearch(30, 1000000000);
 	}
 	
 	public static void main(String[] args){

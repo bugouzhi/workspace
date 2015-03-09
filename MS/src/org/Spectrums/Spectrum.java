@@ -2020,7 +2020,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			Peak m1 = projected.getPeaks().get(i);
 			Peak m2 = s.getPeaks().get(j);
 			//if(Math.abs(m1.getMass()-m2.getMass()) < tolerance){
-			if(SWATHUtils.checkMass(m1.getMass(), m2.getMass(), 50, SWATHUtils.PPM)){
+			if(Mass.checkMass(m1.getMass(), m2.getMass(), tolerance, Mass.DIFF_PPM)){
 				match = m1.getIntensity() > match.getIntensity() ? m1 : match;
 				projection[j] += m1.getIntensity();
 				i++;

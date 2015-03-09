@@ -87,6 +87,7 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 		this.specList.clear();
 		for(int i = -1*leftSpan; i <= rightSpan; i++){
 			int scan = i*cycle + scanNum;
+			//System.out.println("Getting scan " + scan);
 			if(scan > minScan && scan < maxScan){
 				if(this.cache.containsKey(scan)){
 					specList.add(this.cache.get(scan));
@@ -97,6 +98,8 @@ public class ConsensusSpectrumReader implements Iterator<Spectrum>{
 					if(s!=null){
 						s.windowFilterPeaks2(15, 20);		
 						s.mergePeaks(s, tolerance);
+						//System.out.println("tolerance: " + tolerance);
+						//System.out.println(s);
 						this.cache.put(s.scanNumber, s);
 						if(this.cache.keySet().size() > this.MaxCacheSize){
 							this.cache.remove(this.cache.firstKey());
