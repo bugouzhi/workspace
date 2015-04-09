@@ -43,6 +43,7 @@ public class SWATHMSPLITSearch {
 	public int maxRTDiff = 42000000;
 	int dataMode = SWATHMSPLITSearch.CENTROID;
 	List<PTM[]> ptmList;
+	List<double[]> swathwindows=new ArrayList<double[]>();
 	public String queryFile;
 	public String libraryFile;
 	public String outFile;
@@ -105,6 +106,13 @@ public class SWATHMSPLITSearch {
 			s.sqrtSpectrum();
 			//System.out.println("Spectrum is: " + s + "\n");
 			TreeMap<Double,Spectrum> bestCands = bestPsimSpec(libSpectList, s, MSMap, minCos, parent, this.fragment, maxRTDiff, Mass.DIFF_PPM);
+			if(this.swathwindows.size() > 0){
+				double[] window = this.swathwindows.get(counter % this.swathwindows.size());
+				//System.out.println("Precursor " + s.parentMass + "\twindow:\t" + window[0] + "\t" + window[1]);
+				bestCands = bestPsimSpec(libSpectList, s, MSMap, minCos, window[0], window[1], this.fragment, maxRTDiff, Mass.DIFF_PPM);
+			}else{
+				bestCands = bestPsimSpec(libSpectList, s, MSMap, minCos, parent, this.fragment, maxRTDiff, Mass.DIFF_PPM);
+			}
 			Iterator it = bestCands.descendingKeySet().iterator();
 			double maxInt = 0.0; //matches with maximum abundance
 			while(it.hasNext()){
@@ -855,13 +863,16 @@ public class SWATHMSPLITSearch {
 	}
 	
 	public static TreeMap<Double,Spectrum> bestPsimSpec(List<Spectrum> specList, Spectrum s, SpectrumMap MSMap, double minCos, double parentMassTol, double fragMassTol, double maxRTDiff, int mode){
+		double left= s.parentMass-0.25*parentMassTol;
+		double right=s.parentMass+0.9*parentMassTol;
+		return bestPsimSpec(specList, s, MSMap, minCos, left, right, fragMassTol, maxRTDiff, mode);
+	}
+	public static TreeMap<Double,Spectrum> bestPsimSpec(List<Spectrum> specList, Spectrum s, SpectrumMap MSMap, double minCos, double left, double right, double fragMassTol, double maxRTDiff, int mode){
 		TreeMap<Double, Spectrum> bestList = new TreeMap();
 		double bestScore = -1000000.0, currScore = 0.0;
 		int count=0;
 		Iterator<Spectrum> specIter = specList.iterator();
 		List<Double> redundance = new ArrayList<Double>();
-		double left= 0.25*parentMassTol;
-		double right=0.9*parentMassTol;
 		int candCount=0;
 		while(specIter.hasNext()){
 			Spectrum s1 = specIter.next();
@@ -876,8 +887,8 @@ public class SWATHMSPLITSearch {
 //			if(s1.parentMass > s.parentMass - 5 &&  
 //					(s1.parentMass  - s.parentMass  < parentMassTol - 5)){
 			double libRT = 0.0;
-			if(s1.parentMass > s.parentMass - left &&  
-						(s1.parentMass  - s.parentMass  < right)  && 
+			if(s1.parentMass >= left &&  
+						s1.parentMass  <= right  && 
 						(Math.abs(s1.rt - s.rt ) < maxRTDiff)){
 
 				//if(MSMap.checkPeak(s1.parentMass, 0.03)){
@@ -1065,6 +1076,41 @@ public class SWATHMSPLITSearch {
 	}
 	
 	
+	public List<double[]> parseSWATHWindows(String file){
+		List<String> lines = Utils.FileIOUtils.createListFromFile(file);
+		List<double[]> windows = new ArrayList<double[]>(lines.size());
+		System.out.println("parsing swath window file");
+		int cycle = 0;
+		for(int i = 0; i < lines.size(); i++){
+			System.out.println(lines.get(i));
+			String[] tokens = lines.get(i).split("\\s+");
+			if(lines.get(i).startsWith("#")){
+				continue;
+			}
+			double[] window = new double[2];
+			try{
+				if(tokens.length >= 3){
+					if(tokens[0].equals("MS2")){
+						window[0] = Double.parseDouble(tokens[1]);
+						window[1] = Double.parseDouble(tokens[2]);
+						windows.add(window);
+					}
+					cycle++;
+				}
+			}catch(NumberFormatException e){
+				System.err.println("Invalid format in the swath window file");
+				e.printStackTrace();
+				System.exit(1);
+			}
+		}
+		if(windows.size() > 0){
+			System.out.println("Parsed " + windows.size() + " isolation windows from file: " + file);
+			this.swathwindows = windows;
+			this.SWATHCycle = cycle;
+			System.out.println("Cycle: " + cycle);
+		}
+		return windows;
+	}
 	
 	public static void testCrossLibrarySimilarity(){
 		String libFile1 = "../mixture_linked/gringar_swath_SLRIACG01_msgfdb_ids.mgf";
@@ -1129,21 +1175,19 @@ public class SWATHMSPLITSearch {
 	
 	
 	public static void testSearch(String[] args){
-//		String queryFile = "../mixture_linked/Emily_Toni_DIA_vs_DDA/WiSIM/tk141003_MSerExo_24hrs_01_WiSIM.mzXML";
+//		String queryFile = "../mixture_linked//msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18482_REP3_500ng_Ecoli_NewStock2_SWATH_2.mzXML";
 //		String outFile = "../mixture_linked/test_EmilyToni_withNISTLib.txt";
-//		String libraryFile = "../mixture_linked/mouse_lib_plusDecoy.mgf";
-//		//String modFile = "../mixture_linked/Mod_MSPLIT-DIA.xml";
-//		args = new String[]{"25", "300", "0", queryFile, libraryFile, outFile};
+//		String libraryFile = "../mixture_linked/ACG_swathdevelopment_UPSEcoli_REP234_IDA_plusDecoy2.mgf";
+//		String modFile = "../mixture_linked/Mod_MSPLIT-DIA.txt";
+//		String swathWindowsFile = "../mixture_linked\\test_swath_windows.txt";
+//		args = new String[]{"25", "50", "0", queryFile, libraryFile, outFile};
 		CommandLineParser cmdParser = new CommandLineParser(args);
 		SWATHMSPLITSearch search = new SWATHMSPLITSearch();
 		search.parent = cmdParser.getDouble(0);
 		search.fragment = cmdParser.getDouble(1);
 		search.queryFile = cmdParser.getString(3);
 		search.SWATHCycle = cmdParser.getInteger(2);
-		if(search.SWATHCycle <= 0){
-			search.SWATHCycle = search.getSWATHCycle();//cmdParser.getInteger(2);
-		}
-		if(args.length == 7){
+		if(args.length > 6){
 			String ptmFile = cmdParser.getString(6);
 			List<PTM[]> ptmList=null;
 			if(ptmFile.endsWith(".xml")){
@@ -1153,10 +1197,17 @@ public class SWATHMSPLITSearch {
 			}
 			search.ptmList = ptmList;
 		}
+		if(args.length > 7){
+			String windowsFile = cmdParser.getString(7);
+			search.parseSWATHWindows(windowsFile);
+		}
+		if(search.SWATHCycle <= 0){
+			search.SWATHCycle = search.getSWATHCycle();//cmdParser.getInteger(2);
+		}
 		search.libraryFile = cmdParser.getString(4);
 		String out = cmdParser.getString(5);
 		search.outFile = Utils.FileIOUtils.generateOutFile(out, search.queryFile, "_msplitout.txt");
-		search.startMSPLITSearch(30, 1000000000);
+		search.startMSPLITSearch(0, 1000000000);
 	}
 	
 	public static void main(String[] args){

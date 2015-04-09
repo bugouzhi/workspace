@@ -43,12 +43,13 @@ public class SpectrumLib implements Iterable, Serializable{
 	private double parentMassTolerance = 2000;
 	private int topSpectraKept = 500;
 	private Map<String, List<Spectrum>> spectrumLibrary; 
-	public boolean useCharge = true;
+	public static boolean USECHARGE_DEFAULT = true;
+	private boolean useCharge = SpectrumLib.USECHARGE_DEFAULT;
 	
 	private List<Spectrum> spectrumList;
 	public SpectrumLib(){
 		this.spectrumLibrary = new Hashtable();
-		this.spectrumList = null;
+		this.spectrumList = new ArrayList();
 	}
 		
 	public SpectrumLib(Map<String, List<Spectrum>> lib){
@@ -58,6 +59,24 @@ public class SpectrumLib implements Iterable, Serializable{
 	
 	public SpectrumLib(String file){
 		this(file, file.substring(file.lastIndexOf(".")+1));		
+	}
+	
+	public SpectrumLib(Collection<Spectrum> spectrumList, boolean useCharge){
+		this();
+		Iterator<Spectrum> it = spectrumList.iterator();
+		while(it.hasNext()){
+			Spectrum s = it.next();
+			String key = this.getPeptideKey(s);
+			List<Spectrum> spects;
+			if(this.spectrumLibrary.containsKey(key)){
+				spects = this.spectrumLibrary.get(key);
+			}else{
+				spects = new Vector<Spectrum>();
+			}
+			spects.add(s);
+			this.spectrumLibrary.put(key, spects);
+		}
+		this.spectrumList = this.getAllSpectrums();
 	}
 	
 	public SpectrumLib(String file, String format){
@@ -280,13 +299,13 @@ public class SpectrumLib implements Iterable, Serializable{
 	
 	public void addSpectrum(Spectrum s){
 		Vector v;
-		if(spectrumLibrary.containsKey(s.peptide)){
-			v = (Vector)spectrumLibrary.get(s.peptide);
+		if(spectrumLibrary.containsKey(this.getPeptideKey(s))){
+			v = (Vector)spectrumLibrary.get(this.getPeptideKey(s));
 		}else{
 			v = new Vector();
 		}
 		v.add(s);
-		spectrumLibrary.put(s.peptide, v);
+		spectrumLibrary.put(this.getPeptideKey(s), v);
 		this.spectrumList.add(s);
 	}
 	

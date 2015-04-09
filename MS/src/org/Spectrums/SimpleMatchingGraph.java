@@ -318,4 +318,34 @@ public class SimpleMatchingGraph implements UndirectedGraph{
 		return neighbors;
 	}
 	
+	public static SimpleMatchingGraph getBipartiteMatching(Spectrum s1, Spectrum s2, double tolerance){
+		SimpleMatchingGraph g = SpectrumUtil.constructMatchingGraph(s1, s2, tolerance);
+		SimpleMatchingGraph bg = new SimpleMatchingGraph();
+		for(Iterator<LabelledPeak> it = g.vertexSet(g.Observed).iterator(); it.hasNext();){
+			Peak p = it.next();
+			List neighs = g.getNeighbors(p);
+			Peak closestP = null;
+			double smallestErr = 10000;
+			for(int i = 0; i < neighs.size(); i++){
+				Peak currPeak = (Peak)neighs.get(i);
+				double currDiff = Math.abs(currPeak.getMass()-p.getMass());
+				closestP = currDiff < smallestErr ? currPeak : closestP;
+				smallestErr = currDiff < smallestErr ? currDiff : smallestErr;
+			}
+			if(neighs.size() > 0){
+				//System.out.println("annotated peaks\t" + p);
+				//pList.add(p);
+			}
+			if(neighs.size() == 0){
+				//System.out.println("unannotated peaks\t" + p);
+			}
+			bg.addVertex(p, SimpleMatchingGraph.Observed);
+			if(closestP != null){
+				//System.out.println("Target Peak: " + theo + "labelledP\t" + closestP);
+				bg.addVertex(closestP, SimpleMatchingGraph.Theoretical);
+				bg.addEdge(p, closestP);
+			}
+		}
+		return bg;
+	}
 }

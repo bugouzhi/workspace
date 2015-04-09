@@ -6,7 +6,8 @@ public class StringUtils {
 		return seq.replaceAll("[^A-Z]", "");
 	}
 	
-	public static String getPepSeq(String seq){
+	
+	public static String stripNeighborRes(String seq){
 		if(seq.charAt(1) == '.' && seq.charAt(seq.length()-2) == '.'){
 			return seq.substring(2, seq.length()-2);
 		}else{

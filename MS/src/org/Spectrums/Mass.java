@@ -14,7 +14,7 @@ public class Mass {
 	public static double PROTON_MASS = 1.007276;
 	public static double DSPLINKER_MASS = 138.0680;//173.9809;
 	public static double DSPDANGLE_MASS = 145.0198;
-	public static double DSSLINKER_MASS = -18.0106;//138.0680; //150.1439;
+	public static double DSSLINKER_MASS = 138.0680;//-18.0106;//138.0680; //150.1439;
 	public static double DSSDANGLE_MASS = 156.08;
 	public static double DSSDANGLE_MASS_D12 = 168.1559;	
 	public static double DEUTERIUM = 2.0136;

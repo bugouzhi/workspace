@@ -228,7 +228,7 @@ public class TDAStat{
 					s.charge = Integer.parseInt(tokens[chargeInd]);
 				}
 				//s.peptide = tokens[pepInd];
-				s.peptide = Utils.StringUtils.getPepSeq(tokens[pepInd]);
+				s.peptide = Utils.StringUtils.stripNeighborRes(tokens[pepInd]);
 				s.protein = tokens[protInd];
 				s.score = Double.parseDouble(tokens[scoreInd])*sortMode;
 				if(this.logMode){

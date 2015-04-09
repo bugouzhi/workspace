@@ -15,6 +15,8 @@ import java.util.Map;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 
+import IO.GenericSpectrumReader;
+
 public class DecoySpectrumGenerator {
 	public static char[] StaticResidues = {'K', 'R', 'P'}; 
 	private static String DECOY="DECOY";
@@ -310,9 +312,9 @@ public class DecoySpectrumGenerator {
 	}
 	
 	public static void testShuffleSpectra(String spectrumFile, String decoyFileName, double tolerance){
-		//spectrumFile = "..\\mixture_linked\\SWATH-MSPLITv1.0/Testing/test_buildlib/Spectral_library.txt";
+		//spectrumFile = "..\\mixture_linked\\MSPLIT_v1.0\\test_Blibospec_libs/Acidiphilium_cryptum_JF-5.ms2";
 		//tolerance = 0.33;
-		LargeSpectrumLibIterator<Spectrum> iter = new LargeSpectrumLibIterator(spectrumFile);
+		Iterator<Spectrum> iter = new GenericSpectrumReader(spectrumFile);
 		int index = spectrumFile.lastIndexOf('.');
 		if(decoyFileName == null || decoyFileName.length() < 1){
 			decoyFileName = spectrumFile.substring(0, index) + "_plusDecoy.mgf";

@@ -304,7 +304,7 @@ public class SWATHStatistics {
 		List<String> results = Utils.FileIOUtils.createListFromFile(resultFile);
 		for(int i = 0; i < results.size(); i++){
 			String[] tokens = results.get(i).split("\\s+");
-			String pepSeq =Utils.StringUtils.getPepSeq(tokens[4]);
+			String pepSeq =Utils.StringUtils.stripNeighborRes(tokens[4]);
 			//System.out.println(pepSeq);
 			if(tokens.length < 7  || lib.getSpectra(pepSeq + "." + tokens[6]) == null){
 				continue; //skipping non-formatted lines

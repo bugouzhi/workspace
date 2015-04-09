@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Map.Entry;
-
 import IO.MZXMLReader;
+
 
 public class Spectrum implements Comparable<Spectrum>, Serializable{
 	//default value for vector representation
@@ -664,15 +664,24 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 			String[] tokens;
 		   	line = bf.readLine() ;
 		   
-   			while (line != null && !(isPeaks && line.startsWith("S"))) {
-	   			
+   			while (line != null  && !(isPeaks && line.startsWith("S"))) {
+   				//System.out.println("line is " + line);
+   				tokens = line.split("\\s+");
 	   			if(line.startsWith("S")){
-	   				tokens = line.split("\\s+");
 	   				this.scanNumber = Integer.parseInt(tokens[1]);
-	   				this.peptide = "Scan Number: " + this.scanNumber;
+	   				//this.peptide = "Scan Number: " + this.scanNumber;
 	   				this.spectrumName = "Scan Number: " + this.scanNumber;
 	   				this.parentMass = Double.parseDouble(tokens[3]);
-	   				this.charge = 0; //unknown charge
+	   				this.charge = -1; //unknown charge
+				}else if(line.startsWith("Z")){
+					this.charge = Integer.parseInt(tokens[1]);
+					if(this.parentMass <= 0){ //somehow when generate ms2 file from blib, no precursor m/z info is added, we back-calculated it from the singly charged parentmass from the 'Z' line
+						this.parentMass = (Double.parseDouble(tokens[2]) + Mass.PROTON_MASS*(this.charge-1))/this.charge;
+					}
+				}else if(line.startsWith("D")){
+					if(tokens[1].equals("seq")){
+						this.peptide = tokens[2];
+					}
 				}else if(Character.isDigit(line.charAt(0))){
 					isPeaks=true;
 				}	
@@ -690,9 +699,9 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				//System.out.println("line is null");
 				return false;
 			}
-		System.out.println("read in peaks: " + this.peaks.size() + " for spectrum " + this.peptide);			
+		//System.out.println("read in peaks: " + this.peaks.size() + " for spectrum " + this.peptide +"\t" + this.parentMass + "\t" + this.charge);			
    		}catch(IOException ioe){
-			System.out.println("Cannot Open splib file");
+			System.out.println("Cannot Open ms2 file");
 			System.out.println(ioe.getMessage());
 			return false;
 		}

@@ -202,7 +202,7 @@ public class SearchResultReporter {
 			if(protID.peptideMap.containsKey(s.peptide)){
 				protein = protID.peptideMap.get(s.peptide).get(0);
 			}
-			System.out.println("PepList\t" + this.resultsFile + "\t" + Utils.StringUtils.getPepSeq(s.peptide) + "\t"
+			System.out.println("PepList\t" + this.resultsFile + "\t" + Utils.StringUtils.stripNeighborRes(s.peptide) + "\t"
 					+ s.score + "\t" + s.getAnnotation().get("pepfdr") +"\t" + unique + "\t" + protein + "\t" + s.protein + "\t" + s.getAnnotation().get("specCount"));
 		}
 		//Set<String> peps = protID.peptideIDs;

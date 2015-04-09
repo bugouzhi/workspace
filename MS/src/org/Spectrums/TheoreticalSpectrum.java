@@ -439,6 +439,7 @@ public class TheoreticalSpectrum extends Spectrum{
 		this.parentMass= t1.parentMass;
 		this.charge = charge;
 	}
+	
 	public static TheoreticalSpectrum getLinkedTheoreticalSpectrum(String pep1, String pep2, short charge, int linkedPosition1, int linkedPosition2){
 		Peptide p1 = new Peptide(pep1, 1);
 		Peptide p2 = new Peptide(pep2, 1);

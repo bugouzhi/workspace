@@ -12,38 +12,64 @@ public class LinkedPeptide extends Peptide{
 	}
 	
 	public LinkedPeptide(String pep, int charge){
+		//format from specplot
+		pep=LinkedPeptide.reformatLinkedPeptide(pep);
+		//System.out.println("peptide is: " + pep);
 		String[] peps = pep.split("--");
-		int pos1 = peps[0].indexOf('K')+1;
-		int pos2 = peps[1].indexOf('K')+1;
-		createLinkedPeptide(pep, charge, pos1, pos2);
+		int position1 = peps[0].indexOf('+');
+		int position2 = peps[1].indexOf('+');
+		//peps[0] = peps[0].replaceAll("[0-9\\.\\+]", "");
+		//peps[1] = peps[1].replaceAll("[0-9\\.\\+]", "");
+		//System.out.println(pep);
+		createLinkedPeptide(peps[0]+"--"+peps[1], charge, position1, position2);
 	}
 	
 	public LinkedPeptide(String pep, int charge, int position1, int position2){
 		createLinkedPeptide(pep, charge, position1, position2);
 	}
 	
+	
+	
 	private void createLinkedPeptide(String pep, int charge, int position1, int position2){
+		createLinkedPeptide(pep, charge, position1, position2, Mass.DSSLINKER_MASS);
+	}
+	
+	/**
+	 * Main internal method to create linked peptide
+	 * @param pep
+	 * @param charge
+	 * @param position1
+	 * @param position2
+	 * @param linkerMassOffSet
+	 */
+	//note for the format that the two peptides already contain the PTMs, the PTM mass has to be accurate
+	//otherwise pass in two unmod peptide sequence to automatically calculate the PTM mass
+	private void createLinkedPeptide(String pep, int charge, int position1, int position2, double linkerMassOffSet){
 		String[] peps = pep.split("--");
 		Peptide p1 = new Peptide(peps[0], 1);
 		Peptide p2 = new Peptide(peps[1], 1);
-		
+		//System.out.println("peptide is : " + p1 + "\t" + p2);
 		this.peptides = new Peptide[2];
 		this.peptides[0] = p1;
 		this.peptides[1] = p2;
-		double mass = (p1.getParentmass() + p2.getParentmass()
-				+ Mass.DSSLINKER_MASS 
-				+ Mass.PROTON_MASS*(charge-2))/charge;	
+		//System.out.println(p1 + "\t" + p2);
+		
 		double massShift1 = p1.getParentmass();
 		double massShift2 = p2.getParentmass();
 		//this is for case where the linked-mass is not encoded in the peptide string
 		//probably should deprecated this format of encoding the linked peptides
 		if(p1.getPtmmasses().length == 0 || p2.getPtmmasses().length == 0){
-			p1.insertPTM(position1, massShift2+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
-			p2.insertPTM(position2, massShift1+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
+			p1.insertPTM(position1, massShift2+linkerMassOffSet-Mass.PROTON_MASS);
+			p2.insertPTM(position2, massShift1+linkerMassOffSet-Mass.PROTON_MASS);
 		}
 		p1.setLinkedPos(position1);
-		p2.setLinkedPos(position2);
-//		System.out.println("we have ptms: " + p1.getPos().length);
+		p2.setLinkedPos(position2);		
+//		double mass = (p1.getParentmass() + p2.getParentmass()
+//				+ Mass.DSSLINKER_MASS 
+//				+ Mass.PROTON_MASS*(charge-2))/charge;	
+		double mass = (p1.getParentmass() + p2.getParentmass())/2;
+		mass = (mass + (charge - 1)*Mass.PROTON_MASS) / charge;
+		//		System.out.println("we have ptms: " + p1.getPos().length);
 //		System.out.println("we have ptms: " + p2.getPos().length);
 		this.setCharge((short)charge);
 //		System.out.println("peptides is " + pep);
@@ -53,30 +79,14 @@ public class LinkedPeptide extends Peptide{
 //				+ Mass.DSSLINKER_MASS 
 //				+ Mass.PROTON_MASS*(charge))/charge;	
 		this.setParentmass(mass);
+		//System.out.println(peptides[0] + "--" + peptides[1]);
 	}
 	
 	public LinkedPeptide(Peptide pep1, Peptide pep2, int charge, int position1, int position2){
-		Peptide p1 = new Peptide(pep1);
-		Peptide p2 = new Peptide(pep2);
-		this.peptides = new Peptide[2];
-		this.peptides[0] = p1;
-		this.peptides[1] = p2;
-		double mass = (p1.getParentmass() + p2.getParentmass()
-				+ Mass.DSSLINKER_MASS 
-				+ Mass.PROTON_MASS*(charge-2))/charge;	
-		double massShift1 = p1.getParentmass();
-		double massShift2 = p2.getParentmass();
- 		p1.insertPTM(position1, massShift2+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
-		p2.insertPTM(position2, massShift1+Mass.DSSLINKER_MASS-Mass.PROTON_MASS);
-		p1.setLinkedPos(position1);
-		p2.setLinkedPos(position2);
-		//System.out.println("we have ptms: " + p1.getPos().length);
-		//System.out.println("we have ptms: " + p2.getPos().length);
-		this.setCharge((short)charge);
-		//this.setPeptide(p1.getPeptide() + "--" + p2.getPeptide());	
-		this.setParentmass(mass);
+		this(pep1, pep2, charge, position1, position2, Mass.DSSLINKER_MASS);
 	}
 	
+	//for two regular peptides
 	public LinkedPeptide(Peptide pep1, Peptide pep2, int charge, int position1, int position2, double linkerMass){
 		Peptide p1 = new Peptide(pep1);
 		Peptide p2 = new Peptide(pep2);
@@ -99,7 +109,7 @@ public class LinkedPeptide extends Peptide{
 		this.setParentmass(mass);
 	}
 	
-	
+	//for two half-linked peptide
 	public LinkedPeptide(Peptide p1, Peptide p2, int charge){
 		this.peptides = new Peptide[2];
 		this.peptides[0] = p1;
@@ -145,6 +155,11 @@ public class LinkedPeptide extends Peptide{
 	}
 
 	public static LinkedPeptide createLinkedPeptide(String pep, int charge){
+		if(pep.contains("|")){
+			pep=pep.replaceAll("\\|",  "--");
+			pep=pep.replaceAll("[\\[\\]]", "");
+		}
+		//System.out.println("peptide is: " + pep);
 		String[] peps = pep.split("--");
 		int position1 = peps[0].indexOf('+');
 		int position2 = peps[1].indexOf('+');
@@ -199,6 +214,44 @@ public class LinkedPeptide extends Peptide{
 	public String toString(){
 		return peptides[0] + "--" + peptides[1];
 	}
+	
+	/**
+	 * Reformat the linked peptide string from other formats into a compatible
+	 * format that we can parse
+	 * @param pep
+	 * @return
+	 */
+	public static String reformatLinkedPeptide(String pep){
+		if(pep.contains("|")){
+			pep=pep.replaceAll("\\|",  "--");
+			pep=pep.replaceAll("[\\[\\]]", "");
+			pep=pep.replaceAll("\\(C,57\\.02\\)", "C");
+		}
+		return pep;
+	}
+	
+	
+	public static int getLinkedCharge(String pep, double mass){
+		return 0;
+	}
+	
+	public static int guessCharge(LinkedPeptide lp, double mass){
+		return guessCharge(lp, mass, 1, 10);
+	}
+	
+	public static int guessCharge(LinkedPeptide lp, double mass, int minCharge, int maxCharge){
+		//the uncharged parent mass
+		double parentmass = lp.getParentmass()*lp.getCharge() - Mass.PROTON_MASS*lp.getCharge();
+		double minDiff=Double.MAX_VALUE;
+		int minInd = minCharge;
+		for(int i = minCharge; i < maxCharge; i++){
+			double diff = Math.abs(mass-(parentmass+Mass.PROTON_MASS*i)/i);
+			minInd = diff < minDiff ? i : minInd;
+			minDiff = diff < minDiff ? diff : minDiff;
+		}		
+		return minInd;
+	}
+	
 	
 	public static int transformPeakCharge(int peakCharge, int pepCharge){
 		if(pepCharge == 2){

@@ -21,6 +21,7 @@ public class LargeSpectrumLibIterator<T> implements Iterator<T>{
 	private boolean isProceed=true;
 	private boolean hasNext = false;
 	private int count = 1;
+	
 	public LargeSpectrumLibIterator(String filename){
 		this.spectrumFile = filename;
 		try{

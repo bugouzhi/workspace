@@ -115,11 +115,21 @@ public class ProteinIDExtractor {
 		//System.out.println("out: " + this.outputFile);
 		//System.out.println("IDs-list size: " + IDs.size());
 		for(Iterator<String> it = IDs.iterator(); it.hasNext();){
-			this.peptideIDs.add(it.next());
+			String pep = it.next();
+			//System.out.println("ID is: " + pep);
+			this.peptideIDs.add(pep);
 		}
 		init();
 		getPeptideProteinMap();
 		//getPeptideReport();
+	}
+	
+	public List<String> getProteins(String pep){
+		if(this.peptideMap.containsKey(pep)){
+			return this.peptideMap.get(pep);
+		}else{
+			return new ArrayList<String>();
+		}
 	}
 	
 	
@@ -184,6 +194,7 @@ public class ProteinIDExtractor {
 				modSeqMap.put(stripped, mods);
 			}
 		}
+		//System.out.println(this.peptideIDs.size() + "\t"  + modSeqMap.keySet().size());
 		RKLookup strMatcher = new RKLookup(modSeqMap.keySet(), 5);
 		Map<String, List<Integer>> matches = strMatcher.matches(this.seqStr);
 		for(Iterator<String> it = matches.keySet().iterator(); it.hasNext();){
