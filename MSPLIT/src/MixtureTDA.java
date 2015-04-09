@@ -144,7 +144,7 @@ public class MixtureTDA {
 			}
 		}
 		if(decoy.size() == 0){
-			i=target.size()-1;
+			i=1;
 		}
 		System.out.println("threshold is: " + target.get(i-1) + " Accepted targets: " + (totalTarget - i));
 		return target.get(i);

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="PeakComparatorSet.java|org/systemsbiology/jrap/stax/" kind="src" path="src"/>
+	<classpathentry excluding="PeakComparatorSet.java|org/systemsbiology/jrap/stax/|IO/MZMLReader.java" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="library/jrap/jrap/stax/software/jrap_StAX_v5.2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Jian/workspace/external_lib/collections-generic-4.01.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Jian/workspace/external_lib/commons-collections-3.2.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jian/workspace/MS_Java/msgfdb/extlib/jrap_StAX_v5.2.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/JmzReader"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

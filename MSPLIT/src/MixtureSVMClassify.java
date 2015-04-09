@@ -72,6 +72,8 @@ public class MixtureSVMClassify {
 	public MixtureSVMClassify(String resultFile, String classtempDir, String svmPath){
 		this.resultFile = resultFile;
 		this.SVM_LIGHT_PATH = svmPath;
+		this.svmPath1 = SVM_LIGHT_PATH + "msplit_stage1.model";
+		this.svmPath2 = SVM_LIGHT_PATH + "msplit_stage2.model";
 		this.svmResultFile = this.getSVMResultFile(this.resultFile);
 		//System.out.println("out file: "  + this.svmResultFile);
 		this.currentPath = classtempDir;
