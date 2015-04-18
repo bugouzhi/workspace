@@ -98,7 +98,7 @@ public class MXDBSearch {
     		s.windowFilterPeaks(this.topPeaksKept, this.windowWidth);
     		s.removePrecursors(0.5);
     		s.computePeakRank();
-    		System.out.println("Searching " + s.spectrumName + "\t" + s.parentMass + "\t" + s.charge);
+    		//System.out.println("Searching " + s.spectrumName + "\t" + s.parentMass + "\t" + s.charge);
     		String[] targetPeptides = s.peptide.split("--");
 			//int passedFilter = lookup.checkPassFilter(targetPeptides[0], targetPeptides[1], candidates);
 			//System.out.println("Query: "  + s.spectrumName + " after filter one we have: " + candidates.size() + " candidates\tAfter filter correct peptide is retained?: " + passedFilter);
@@ -254,7 +254,7 @@ public class MXDBSearch {
 	}
 	
 	public static void main(String[] args){
-		args[0] = "..\\mixture_linked\\MXDB_inputs2.txt";
+		//args[0] = "..\\mixture_linked\\MXDB_inputs2.txt";
 		testMXDBSearch(args[0]);
 	}
 }

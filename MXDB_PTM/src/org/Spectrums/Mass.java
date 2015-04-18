@@ -111,12 +111,12 @@ public class Mass {
 			return 0;
 		}
 		if((int)aa-'A' < 0){
-			System.out.println("warning: " + aa + " might not be a valide aa");
+			//System.out.println("warning: " + aa + " might not be a valide aa");
 			return 0;
 			//throw new IllegalArgumentException();
 		}
 		if((int)aa-'A' >= aaMap.length){
-			System.out.println("warning: " + aa + " might not be a valide aa");
+			//System.out.println("warning: " + aa + " might not be a valide aa");
 			//throw new IllegalArgumentException();
 			return 1000000;
 		}
@@ -135,12 +135,12 @@ public class Mass {
 			return -1;
 		}
 		if((int)aa-'A' < 0){
-			System.out.println("warning: " + aa + " might not be a valide aa");
+			//System.out.println("warning: " + aa + " might not be a valide aa");
 			//throw new IllegalArgumentException();
 			return -1;
 		}
 		if((int)aa-'A' >= aaMap.length){
-			System.out.println("warning: " + aa + " might not be a valide aa");
+			//System.out.println("warning: " + aa + " might not be a valide aa");
 			//throw new IllegalArgumentException();
 			return -1;
 		}
