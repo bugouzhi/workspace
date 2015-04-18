@@ -555,7 +555,7 @@ public class SpectrumUtil {
 				s.peptide=peptide;
 				s.charge = charge;
 				log.print(line + "\t");
-				double[] stats = filter.computeAnnotatedSNR(s, SpectrumFilter.MODE_GLOBAL, tolerance);
+				double[] stats = filter.computeAnnotatedSNR(s, tolerance);
 				for(int i = 0; i < stats.length; i++){
 					log.print(stats[i] +"\t");
 				}

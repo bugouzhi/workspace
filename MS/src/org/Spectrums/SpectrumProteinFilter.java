@@ -1,6 +1,6 @@
 package org.Spectrums;
 
-public class SpectrumProteinFilter implements SpectrumFilter{
+public class SpectrumProteinFilter implements SpectrumQualityFilter{
 	String protPattern = "";
 	public SpectrumProteinFilter(String pattern){
 		this.protPattern = pattern;

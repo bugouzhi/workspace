@@ -42,6 +42,8 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 	public double upperBound = 0;// upper bound for searching
 	public double rt = Double.MIN_VALUE;
 	public int scanNumber = 0; //scan number of the spectrum
+	private double precursorInt;
+	
 	public Spectrum(){ //create dummy spectrum
 			this.peaks =new Vector();
 			this.spectrumName = "";
@@ -66,6 +68,8 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		this.score = s.score;
 		this.upperBound = s.upperBound;
 		this.protein = s.protein;
+		this.precursorInt = precursorInt;
+		
 		for(int i = 0; i < s.peaks.size(); i++){
 			Peak p = s.peaks.get(i);
 			//System.out.println("copying: " + p);
@@ -257,6 +261,32 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 		
 	}
 	
+	
+	
+	public double getParentMass() {
+		return parentMass;
+	}
+
+	public void setParentMass(double parentMass) {
+		this.parentMass = parentMass;
+	}
+
+	public double getRt() {
+		return rt;
+	}
+
+	public void setRt(double rt) {
+		this.rt = rt;
+	}
+
+	public double getPrecursorInt() {
+		return precursorInt;
+	}
+
+	public void setPrecursorInt(double precursorInt) {
+		this.precursorInt = precursorInt;
+	}
+
 	//iterativel merge peaks that are close enough in masses
 	public void mergePeaks(Spectrum mix, double tolerance){
 		//System.out.println("we start with  " + mix.peaks.size() + " peaks");

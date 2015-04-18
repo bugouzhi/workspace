@@ -54,6 +54,7 @@ public class TDAStat{
 	public boolean msplit= false;
 	public boolean hasHeader = true;
 	public String fastaSeq;
+	public static boolean PRINT_UNIQUE_PEP = true;
 	
 	
 	public TDAStat(String resultFile){
@@ -332,7 +333,7 @@ public class TDAStat{
 								peps.add(pepKey);
 							}
 						}else{
-							bo.write(result + "\t" + s.getAnnotation().get("fdr") +"fdr\t"
+							bo.write(result + "\t" + s.getAnnotation().get("fdr") +"\t"
 									+ s.getAnnotation().get("pepfdr") + "\n");
 							
 						}
@@ -348,6 +349,7 @@ public class TDAStat{
 			ioe.printStackTrace();
 		}
 	}
+	
 	
 	public void getSummary(){
 		System.out.println("TDA-Result-Summary:");

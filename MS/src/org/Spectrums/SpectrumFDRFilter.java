@@ -1,6 +1,6 @@
 package org.Spectrums;
 
-public class SpectrumFDRFilter implements SpectrumFilter{
+public class SpectrumFDRFilter implements SpectrumQualityFilter{
 	public static int PSM = 0;
 	public static int PEP = 1;
 	double minFDR = 0.0;

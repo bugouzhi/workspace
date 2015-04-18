@@ -85,7 +85,7 @@ public class SearchResultReporter {
 		tdaStat.getSummary();
 	}
 	
-	public Collection<Spectrum> getSubResults(SpectrumFilter[] filters){
+	public Collection<Spectrum> getSubResults(SpectrumQualityFilter[] filters){
 		Collection<AnnotatedSpectrum> results = tdaStat.getPeptideResults();
 		//Collection<AnnotatedSpectrum> results = tdaStat.getResults();
 		Collection<Spectrum> filtered = new ArrayList<Spectrum>();
@@ -94,7 +94,7 @@ public class SearchResultReporter {
 				Spectrum s = it.next();
 				boolean pass = true;
 				for(int i = 0; i < filters.length; i++){
-					SpectrumFilter filter = filters[i];
+					SpectrumQualityFilter filter = filters[i];
 					if(!filter.accept(s)){
 						pass = false;
 						continue;
@@ -156,36 +156,36 @@ public class SearchResultReporter {
 
 	
 	public Object[] getCustomReport1(){
-		SpectrumFilter unModFilter = new SpectrumPepFilter("[^0-9]+");
-		SpectrumFilter upsProtFilter = new SpectrumProteinFilter(".*HUMAN.*");
+		SpectrumQualityFilter unModFilter = new SpectrumPepFilter("[^0-9]+");
+		SpectrumQualityFilter upsProtFilter = new SpectrumProteinFilter(".*HUMAN.*");
 		//SpectrumFilter upsProtFilter = new SpectrumProteinFilter(".*SV=[0-8]_[0\\.]*5[0]*$");
-		SpectrumFilter upsAbundFilter1 = new SpectrumProteinFilter(".*HUMAN.*_50000$");
-		SpectrumFilter upsAbundFilter2 = new SpectrumProteinFilter(".*HUMAN.*_5000$");
-		SpectrumFilter upsAbundFilter3 = new SpectrumProteinFilter(".*HUMAN.*_500$");
-		SpectrumFilter upsAbundFilter4 = new SpectrumProteinFilter(".*HUMAN.*_50$");
-		SpectrumFilter upsAbundFilter5 = new SpectrumProteinFilter(".*HUMAN.*_5$");
-		SpectrumFilter upsAbundFilter6 = new SpectrumProteinFilter(".*HUMAN.*_0.5$");
+		SpectrumQualityFilter upsAbundFilter1 = new SpectrumProteinFilter(".*HUMAN.*_50000$");
+		SpectrumQualityFilter upsAbundFilter2 = new SpectrumProteinFilter(".*HUMAN.*_5000$");
+		SpectrumQualityFilter upsAbundFilter3 = new SpectrumProteinFilter(".*HUMAN.*_500$");
+		SpectrumQualityFilter upsAbundFilter4 = new SpectrumProteinFilter(".*HUMAN.*_50$");
+		SpectrumQualityFilter upsAbundFilter5 = new SpectrumProteinFilter(".*HUMAN.*_5$");
+		SpectrumQualityFilter upsAbundFilter6 = new SpectrumProteinFilter(".*HUMAN.*_0.5$");
 		//this.tdaStat.getSpecCount(0.01, 0.012);
 		this.tdaStat.mapProtein("../mixture_linked/database/UPS_plusHuman_plusDecoy.fasta");
-		SpectrumFilter fdrFilter = new SpectrumFDRFilter(0.010002, SpectrumFDRFilter.PEP);
-		SpectrumFilter[] filters = new SpectrumFilter[]{fdrFilter, unModFilter};
-		SpectrumFilter[] filters2 = new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter};
+		SpectrumQualityFilter fdrFilter = new SpectrumFDRFilter(0.010002, SpectrumFDRFilter.PEP);
+		SpectrumQualityFilter[] filters = new SpectrumQualityFilter[]{fdrFilter, unModFilter};
+		SpectrumQualityFilter[] filters2 = new SpectrumQualityFilter[]{fdrFilter, unModFilter, upsProtFilter};
 		// int[] scanCounts = reader.getSpectrumStat();
 		int[] scanCounts = new int[]{69825, 67829, 66000};
 		
 		Collection<Collection> subResults = new ArrayList<Collection>();
-		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter}));
+		subResults.add(this.getSubResults(new SpectrumQualityFilter[]{fdrFilter, unModFilter}));
 		subResults.add(this.getSubResults(filters));
 		subResults.add(this.getSubResults(filters2));
 		
 		
 		//Peptide IDs stat
-		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter1}));
-		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter2}));
-		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter3}));
-		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter4}));
-		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter5}));
-		subResults.add(this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter6}));
+		subResults.add(this.getSubResults(new SpectrumQualityFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter1}));
+		subResults.add(this.getSubResults(new SpectrumQualityFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter2}));
+		subResults.add(this.getSubResults(new SpectrumQualityFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter3}));
+		subResults.add(this.getSubResults(new SpectrumQualityFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter4}));
+		subResults.add(this.getSubResults(new SpectrumQualityFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter5}));
+		subResults.add(this.getSubResults(new SpectrumQualityFilter[]{fdrFilter, unModFilter, upsProtFilter, upsAbundFilter6}));
 		List<Spectrum> filtered = new ArrayList();
 		filtered.addAll(subResults.iterator().next());
 		
@@ -317,9 +317,9 @@ public class SearchResultReporter {
 	}
 	
 	public void getPeptideReport(){
-		SpectrumFilter fdrFilter = new SpectrumFDRFilter(0.012, SpectrumFDRFilter.PEP);
-		SpectrumFilter unModFilter = new SpectrumPepFilter("[^0-9]+");
-		Collection<Spectrum> subResult = this.getSubResults(new SpectrumFilter[]{fdrFilter, unModFilter});
+		SpectrumQualityFilter fdrFilter = new SpectrumFDRFilter(0.012, SpectrumFDRFilter.PEP);
+		SpectrumQualityFilter unModFilter = new SpectrumPepFilter("[^0-9]+");
+		Collection<Spectrum> subResult = this.getSubResults(new SpectrumQualityFilter[]{fdrFilter, unModFilter});
 		System.out.println("total result: " + subResult.size());
 		//for(Iterator<Spectrum> it = subResult.iterator(); it.hasNext();){
 		//	System.out.println(it.next());
