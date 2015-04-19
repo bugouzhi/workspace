@@ -536,6 +536,10 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 					temp = temp.split(" ")[0];
 					//System.out.println("mod string " + temp);
 			    	tokens = temp.split("/") ;
+			    	temp = line.substring(line.indexOf(" Protein")) ;
+			    	String prot = temp.split("[=\\s+]")[2];
+			    	prot=prot.replaceAll("\"", "");
+			    	this.protein = prot;
 			    	StringBuffer modPep = new StringBuffer(this.peptide);
 			    	int modOffset=0;
 			    	for(int i = 1; i < tokens.length; i++){
@@ -619,23 +623,26 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 					
 					
 					//parse rt
-					temp = line.substring(line.indexOf(" RetentionTime")) ;
-					String RT = temp.split("[=\\s+]")[2];
-					//System.out.println(this.peptide + "\t" + this.charge + "\tRT is\t" + RT);
-					this.rt = Double.parseDouble(RT.split(",")[0]);
-					
+					if(line.contains("RetentionTime")){
+						temp = line.substring(line.indexOf(" RetentionTime")) ;
+						String RT = temp.split("[=\\s+]")[2];
+						//System.out.println(this.peptide + "\t" + this.charge + "\tRT is\t" + RT);
+						this.rt = Double.parseDouble(RT.split(",")[0]);
+					}
 					
 					//parse irt
 					//when we have irt in lib always use it instead, since they are more well-aligned between one another
-					temp = line.substring(line.indexOf(" iRT")) ;
-					String iRT = temp.split("[=\\s+]")[2];
-					//System.out.println("iRT string: " + iRT);
-					String[] iRTs = iRT.split(",");
-					this.rt = 0;
-					for(int i = 0; i < iRTs.length; i++){
-						this.rt += Double.parseDouble(iRTs[i]);
+					if(line.contains("iRT")){
+						temp = line.substring(line.indexOf(" iRT")) ;
+						String iRT = temp.split("[=\\s+]")[2];
+						//System.out.println("iRT string: " + iRT);
+						String[] iRTs = iRT.split(",");
+						this.rt = 0;
+						for(int i = 0; i < iRTs.length; i++){
+							this.rt += Double.parseDouble(iRTs[i]);
+						}
+						this.rt = this.rt / iRTs.length;
 					}
-					this.rt = this.rt / iRTs.length;
 					//System.out.println(this.peptide + "\t" + this.charge + "\tiRT is\t" + this.rt);
 					
 					

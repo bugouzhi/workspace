@@ -312,8 +312,8 @@ public class DecoySpectrumGenerator {
 	}
 	
 	public static void testShuffleSpectra(String spectrumFile, String decoyFileName, double tolerance){
-		//spectrumFile = "..\\mixture_linked\\MSPLIT_v1.0\\test_Blibospec_libs/Acidiphilium_cryptum_JF-5.ms2";
-		//tolerance = 0.33;
+		spectrumFile = "..\\mixture_linked\\NIST_mouse_consensus_final_true_lib_2014.mgf";
+		tolerance = 0.33;
 		Iterator<Spectrum> iter = new GenericSpectrumReader(spectrumFile);
 		int index = spectrumFile.lastIndexOf('.');
 		if(decoyFileName == null || decoyFileName.length() < 1){
