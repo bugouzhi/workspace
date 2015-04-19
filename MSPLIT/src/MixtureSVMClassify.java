@@ -36,12 +36,20 @@ public class MixtureSVMClassify {
 	private double minScore = 0.4;//32;
 	private int totalColumns = 29;//28;
 	
+	/**
+	 * Get the default svm path, which assume to be in the same folder as the jar under "svm_light_" folder
+	 * @return
+	 */
 	public static String getDefaultSVMPath(){
 		String bin = new File(MixtureSVMClassify.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent()
 				+File.separator;
 		return bin + "svm_light_linux" + "" + File.separator;
 	}
 	
+	/**
+	 * 
+	 * @param resultFile
+	 */
 	public MixtureSVMClassify(String resultFile){
 		this.resultFile = resultFile;
 		this.svmResultFile = this.getSVMResultFile(this.resultFile);
@@ -55,6 +63,11 @@ public class MixtureSVMClassify {
 		//this.svmResultFile = currentPath + "/temp_svmresult.txt";
 	}
 	
+	/**
+	 * 
+	 * @param resultFile
+	 * @param classtempDir
+	 */
 	public MixtureSVMClassify(String resultFile, String classtempDir){
 		this.resultFile = resultFile;
 		this.svmResultFile = this.getSVMResultFile(this.resultFile);
@@ -68,7 +81,12 @@ public class MixtureSVMClassify {
 		this.svmResultFile = currentPath + "/temp_svmresult.txt";
 	}
 
-	
+	/**
+	 * 
+	 * @param resultFile
+	 * @param classtempDir
+	 * @param svmPath
+	 */
 	public MixtureSVMClassify(String resultFile, String classtempDir, String svmPath){
 		this.resultFile = resultFile;
 		this.SVM_LIGHT_PATH = svmPath;
@@ -85,6 +103,10 @@ public class MixtureSVMClassify {
 		this.svmResultFile = currentPath + "/temp_svmresult.txt";
 	}
 	
+	/**
+	 * 
+	 * @return
+	 */
 	public String spectrumMatchClassify(){
 		this.generateSVMInput();
 		this.runSVMClassify();  

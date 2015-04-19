@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Perform SVM classification of
+ * Perform target/decoy calculation for mixture spectra
  * @author Jian Wang
  *
  */

@@ -1,10 +1,15 @@
 
-
 import java.util.ArrayList;
 import java.util.List;
-
 import Spectrum.Peak;
 import Spectrum.SpectrumLib;
+
+/**
+ * This class is use to profile the memory performance of some
+ * data object in the M-SPLIT package
+ * @author Jian
+ *
+ */
 
 public class MemoryUsageTester {
 	public static void testLoadSpectrum(){
