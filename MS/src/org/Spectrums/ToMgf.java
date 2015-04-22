@@ -29,8 +29,8 @@ public class ToMgf {
 	public static void main(String[] args){
 		String inFile = args[0];
 		String outFile = args[1];
-		inFile = "..\\mixture_linked\\spectral_library\\NIST_mouse_consensus_final_true_lib_2014.sptxts";
-		outFile = "..\\mixture_linked\\NIST_mouse_consensus_final_true_lib_2014.mgf";
+		inFile = "..\\mixture_linked\\spectral_library\\NIST_human_consensus_final_true_lib_2014.sptxt";
+		outFile = "..\\mixture_linked\\NIST_human_consensus_final_true_lib_2014.mgf";
 		if(args.length < 2){
 			System.out.println("usage: java -Xmx1000M  -jar ToMgf.jar <input file> <Mgf-out file>");	
 		}else{

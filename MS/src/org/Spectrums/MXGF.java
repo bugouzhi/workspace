@@ -1257,11 +1257,11 @@ public class MXGF {
 	public static void main(String[] args){
 		//testComputeSingleMXGF();
 		//testComputeMSGF();
-//		args[0] = "../mixture_linked/MixDBv1.0/Testing/test_run_Mixdb/test.txt";
-//		args[1] = "../mixture_linked/yeast_data/klc_010908p_yeast-digest.mzXML";
+//		args[0] = "../mixture_linked/MixDBv1.0/Testing/test_Kfattila_diamzxml/test.out";
+//		args[1] = "../mixture_linked/MixDBv1.0/Testing/test_Kfattila_diamzxml/cyt1_400to525_b.mzXML";
 //		args[2] = "../mixture_linked/yeast_simmix_alpha_generic_12_25.o";
-//		//args[2] = "../mixture_linked/mixtures_TOF_alpha01-10_models.o";
-//		args[3] = "5158";
+		//args[2] = "../mixture_linked/mixtures_TOF_alpha01-10_models.o";
+//		args[3] = "1";
 //		args[4] = "200000";	
 //		args[5] = "0.5";
 		String resultFile = args[0];

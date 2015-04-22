@@ -34,6 +34,10 @@ public class MixtureTDA {
 		this.results = Utils.FileIOUtils.createListFromFile(this.resultFile);
 	}
 	
+	/**
+	 * 
+	 * @param FDR
+	 */
 	public void filterByTDA(double FDR){
 		List<Double> target1 = new ArrayList<Double>();
 		List<Double> decoy1 = new ArrayList<Double>();
@@ -68,6 +72,10 @@ public class MixtureTDA {
 		this.threshold2 = getThreshold(target2, decoy2, FDR);
 	}
 	
+	/**
+	 * 
+	 * @param outfile
+	 */
 	public void printOutFile(String outfile){
 		try{
 			BufferedWriter out = new BufferedWriter(new FileWriter(outfile));
@@ -159,6 +167,15 @@ public class MixtureTDA {
 		MixtureTDA mix = new MixtureTDA("../mixture_linked/MixDBv1.0/Human_heck_trypsin_mixdb_1_topHit_svmresult.txt");
 		mix.filterByTDA(0.01);
 	}
+	
+	/**
+	 * Static method for classifying matches and filtering results using TDA
+	 * @param resultFile
+	 * @param outFile
+	 * @param FDR
+	 * @param tempDir
+	 * @param SVMPath
+	 */
 	public static void MixtureFilter(String resultFile, String outFile, double FDR, String tempDir, String SVMPath){
 		MixtureSVMClassify classify = new MixtureSVMClassify(resultFile, tempDir, SVMPath);
 		classify.spectrumMatchClassify();

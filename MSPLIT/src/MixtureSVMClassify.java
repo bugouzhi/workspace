@@ -104,7 +104,7 @@ public class MixtureSVMClassify {
 	}
 	
 	/**
-	 * 
+	 * Run svm and classify the library search results
 	 * @return
 	 */
 	public String spectrumMatchClassify(){
