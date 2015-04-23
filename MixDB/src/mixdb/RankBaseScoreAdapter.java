@@ -9,7 +9,9 @@ import org.Spectrums.Peptide;
 import org.Spectrums.RankBaseScoreLearner;
 
 /**
- * Convert old scoring function to new one
+ * Convert old scoring function to new one (see TheoreticalSpectrumFactrory)
+ * This adaptor provide methods that covert scoring models in the old framework
+ * to the new one.
  * @author Jian Wang
  *
  */

@@ -10,6 +10,14 @@ import org.Spectrums.Spectrum;
  *
  */
 import org.Spectrums.ArrayUtils;
+/**
+ * An implementation of the spectrum back by an array.  The spectrum
+ * is basically a arrays of mass and intensity information
+ * This allow for much faster processing and analyzing the spectrum compared to
+ * the Peak-objected based spectrum
+ * @author Jian
+ *
+ */
 public class ArraySpectrum extends Spectrum{
 	public static int MASS = 0;
 	public static int INTENSITY = 1;

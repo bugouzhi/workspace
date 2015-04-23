@@ -24,7 +24,8 @@ import sequences.FastaSequence;
 
 /**
  * An implementation of the DBSearcher interface
- * that aim at searching single-peptide
+ * that aim at searching single-peptide per query spectrum
+ * (as oppotion to MixDBSearcher which search multi-peptide matches to a query spectrum).
  * @author Jian Wang
  *
  */

@@ -13,7 +13,8 @@ import org.Spectrums.Spectrum;
 import org.Spectrums.TheoreticalSpectrum;
 
 /**
- * Theoretical spectrum factory for mixture spectrum
+ * Theoretical spectrum factory for creating mixture spectrum under the framework
+ * of TheoreticalSpectrumFactory (see that class for detail)
  * @author Jian Wang
  *
  */
@@ -25,6 +26,10 @@ public class MixTheoSpectrumFactory{
 	public static IonTypeMapper mixIonMap;
 	public static Map<String, Collection<IonType>> mixPeptideMap;
 	
+	/**
+	 * This create the iontype map for mixture spectrum ions
+	 * @return
+	 */
 	public static Map<String, MixIonType> createStandardMixMap(){
 		Map<String, IonType> standardMap = TheoreticalSpectrumFactory.standardTypeMap;
 		System.out.println("standard ions counts:  " + standardMap.values().size());
@@ -57,7 +62,7 @@ public class MixTheoSpectrumFactory{
 	}
 	
 	/**
-	 * transform a set of simple ion type to mix ion types
+	 * Transform a set of simple ion type to mix ion types
 	 * @param type
 	 * @return
 	 */
@@ -77,6 +82,7 @@ public class MixTheoSpectrumFactory{
 		mix.addAll(mixLow);
 		return mix;
 	}
+	
 	
 	public static Map<String, Collection<IonType>> createMixPeptideMap(List<IonType> ionTypeList){
 		Map<String, Collection<IonType>> peptideMap = new HashMap<String, Collection<IonType>>();
@@ -120,6 +126,12 @@ public class MixTheoSpectrumFactory{
 		return 0;
 	}
 	
+	/**
+	 * Create a mixture theoretical spectrum from two theoretical spectrum
+	 * @param th1
+	 * @param th2
+	 * @return
+	 */
 	public static Spectrum getMixTheoSpectrum(ArrayTheoreticalSpectrum th1, ArrayTheoreticalSpectrum th2){
 		ArrayTheoreticalSpectrum arry = new ArrayTheoreticalSpectrum();
 		double[][] massIntList1 = transformIonType(th1.getMassIntensityList(), th2.getCharge(), 0);//MixturePeptideType.HIGH_ABUNDANCE);
@@ -133,7 +145,14 @@ public class MixTheoSpectrumFactory{
 		return arry;
 	}
 	
-	//now we add an nonmix to mix
+	/**
+	 * Create a mixture theoretical spectrum by adding one more component/peptide to another mixture theoretical spectrum
+	 * This iteratively allows one to create multi-peptide mixture spectra
+	 * @param mix
+	 * @param th2
+	 * @param mixNum
+	 * @return
+	 */
 	public static Spectrum getMixTheoSpectrum(ArrayTheoreticalSpectrum mix, ArrayTheoreticalSpectrum th2, int mixNum){
 		if(mixNum == 2){
 			return getMixTheoSpectrum(mix, th2);
@@ -150,7 +169,13 @@ public class MixTheoSpectrumFactory{
 		return arry;
 	}
 	
-	
+	/**
+	 * Tranform a simple iontype to a mixture iontype
+	 * @param massIntList
+	 * @param partnerCharge
+	 * @param abundance
+	 * @return
+	 */
 	public static double[][] transformIonType(double[][] massIntList, int partnerCharge, int abundance){
 		double[][] transformed = new double[2][massIntList[0].length];
 		for(int i = 0; i < massIntList[0].length; i++){
@@ -169,6 +194,16 @@ public class MixTheoSpectrumFactory{
 		return mixtype;
 	}
 	
+	/**
+	 * Create mixture theoretical spectrum from peptides and given ion types
+	 * @param peptide1
+	 * @param peptide2
+	 * @param charge1
+	 * @param charge2
+	 * @param typeMap
+	 * @param ionMap
+	 * @return
+	 */
 	public static Spectrum getMixTheoSpectrum(String peptide1, String peptide2, int charge1, int charge2, Map<String, MixIonType> typeMap, IonTypeMapper ionMap){
 		ArrayTheoreticalSpectrum arry = new ArrayTheoreticalSpectrum();
 		double[][] massIntList1 = getMixMassIntList(peptide1, charge1, charge1+charge2, "high", typeMap, ionMap);
@@ -184,7 +219,7 @@ public class MixTheoSpectrumFactory{
 		return arry;
 	}
 	
-	public static double[][] merge(double[][] massIntList1, double[][] massIntList2){
+	protected static double[][] merge(double[][] massIntList1, double[][] massIntList2){
 		double[][] massIntList = new double[2][massIntList1[0].length+massIntList2[0].length];
 		int i = 0, j = 0;
 		int curr = 0;
@@ -216,7 +251,7 @@ public class MixTheoSpectrumFactory{
 		return massIntList;
 	}
 	
-	public static double[][] getMixMassIntList(String peptide, int charge, int mixtureCharge, String abundance, Map<String, MixIonType> typeMap, IonTypeMapper ionMap){
+	protected static double[][] getMixMassIntList(String peptide, int charge, int mixtureCharge, String abundance, Map<String, MixIonType> typeMap, IonTypeMapper ionMap){
 		ArrayTheoreticalSpectrum arry = new ArrayTheoreticalSpectrum();
 		double[][] baseMasses = TheoreticalSpectrumFactory.computeBaseMass(peptide, new int[]{}, new double[]{}); 
 		String[] leng = new String[]{"short", "long"};

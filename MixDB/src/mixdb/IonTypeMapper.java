@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 /**
  * Generate a mapping between ion type and an index
- * this index is used to represent ion type in a theoretical spectrum
+ * this index is used to represent ion type in array theoretical spectrum
  * @author Jian Wang
  *
  */

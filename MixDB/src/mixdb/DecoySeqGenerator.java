@@ -5,7 +5,11 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-
+/**
+ * Generate decoy sequences from fasta database by reversing the sequence
+ * @author Jian
+ *
+ */
 public class DecoySeqGenerator {
 	private String fastaFile;
 	private String outFile;

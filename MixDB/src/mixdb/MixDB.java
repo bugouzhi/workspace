@@ -21,7 +21,11 @@ import org.Spectrums.SpectrumLibSearcher;
 import org.Spectrums.TheoreticalSpectrum;
 
 import sequences.FastaSequence;
-
+/**
+ * Deprecated class for entry into mixdb search. See MixDBSearcher instead.
+ * @author Jian
+ *
+ */
 public class MixDB {
 	private String spectrumFile;
 	private String dbPath;

@@ -26,6 +26,16 @@ import sequences.FastaSequence;
 
 /**
  * Factory to create theoretcial spectrum from single peptide
+ * In order to allow fast analyzing and processing spectrum, we redesign the framework used to deal with theoretical spectrum.
+ * Under this framework, a spectrum is simply a 2D array of mass and intensity information.  For theoretical spectrum, since
+ * intensity information is not available, the intensity is instead transformed into a unique index that represents ion type of the fragment ions.
+ * The specific information about the ion type (e.g label, mass-offset, charge, position etc...) is stored in a iontype map that 
+ * map ion-type object to a unique index.  This way we avoid dealing with a list of Peak object and each peak object cotnain the ion that generates that
+ * peak as in the old framework. For different type of theoretical spectrum a different IonTypes map will be used to map the index to ion type. 
+ * Note that this new framework interface to the old ones through this IonType map. It get all the information (e.g label, charge, massoffset) and the scoring 
+ * model through from the old framework through this iontype map.  There are two important map a ionTypeMap which basically list all possible ion type.  There
+ * is a peptide map which list the valid type of ions for a specific peptide type (i.e since our model model peptide with different charge state or length
+ * differently, thus the peptides are divide into different types also).  
  * @author Jian Wang
  *
  */
@@ -72,6 +82,10 @@ public class TheoreticalSpectrumFactory {
 		return 0;
 	}
 	
+	/**
+	 * Create the standard ion type
+	 * @return
+	 */
 	public static Map<String, IonType> createStandardIonTypeMap(){
 		int[] peptideLength = {SimplePeptideType.SHORT,SimplePeptideType.LONG};
 		int[] peptideCharge = {2,3,4};
@@ -97,6 +111,7 @@ public class TheoreticalSpectrumFactory {
 		return typeMap;
 	}
 	
+	
 	public static Map<String, Collection<IonType>> createPeptideMap(Map<String, IonType> typeMap){
 		Map<String, Collection<IonType>> peptideMap = new HashMap<String, Collection<IonType>>();
 		for(Iterator<IonType> it = typeMap.values().iterator(); it.hasNext();){
@@ -118,6 +133,13 @@ public class TheoreticalSpectrumFactory {
 		return peptideMap;
 	}
 	
+	/**
+	 * Generate theoretical spectrum for a peptide
+	 * @param pep
+	 * @param typeMap
+	 * @param ionMap
+	 * @return
+	 */
 	public static ArrayTheoreticalSpectrum getArrayTheoSpectrum(Peptide pep, Map<String, IonType> typeMap, IonTypeMapper ionMap){
 		TheoreticalSpectrum th = new TheoreticalSpectrum(pep);
 		ArrayTheoreticalSpectrum arry = new ArrayTheoreticalSpectrum();
@@ -143,19 +165,20 @@ public class TheoreticalSpectrumFactory {
 		return arry;
 	}
 	
+	
 	public static ArrayTheoreticalSpectrum getArrayTheoSpectrum(PeptideLite pep, FastaSequence protein, Map<String, IonType> typeMap, IonTypeMapper ionMap){
 		ArrayTheoreticalSpectrum arry = new ArrayTheoreticalSpectrum();
 		
 		return arry;
 	}
 	
-
-	public static Spectrum getTheoSpectrum(PeptideLite pep, FastaSequence protein, int charge, Map<String, IonType> typeMap, IonTypeMapper ionMap){
+	
+	protected static Spectrum getTheoSpectrum(PeptideLite pep, FastaSequence protein, int charge, Map<String, IonType> typeMap, IonTypeMapper ionMap){
 		String peptide = protein.getSubsequence(pep.getBeginInd(), pep.getEndInd()+1);
 		return getTheoSpectrum(peptide, charge, typeMap, ionMap);
 	}
 	
-	public static Spectrum getTheoSpectrum(String peptide, int charge, Map<String, IonType> typeMap, IonTypeMapper ionMap){
+	protected static Spectrum getTheoSpectrum(String peptide, int charge, Map<String, IonType> typeMap, IonTypeMapper ionMap){
 		ArrayTheoreticalSpectrum arry = new ArrayTheoreticalSpectrum();
 		double[][] baseMasses = computeBaseMass(peptide, new int[]{}, new double[]{});
 		String[] leng = new String[]{"short", "long"};
@@ -212,7 +235,15 @@ public class TheoreticalSpectrumFactory {
 		}
 		return candidates;
 	}
-	
+	/**
+	 * Generate theoretical spectrum for petpide
+	 * @param peplite
+	 * @param seq
+	 * @param charge
+	 * @param typeMap
+	 * @param ionMap
+	 * @return
+	 */
 	public static Spectrum getTheoSpectrumX(PeptideLite peplite, FastaSequence seq, int charge, Map<String, IonType> typeMap, IonTypeMapper ionMap){
 		String pep=seq.getSubsequence(peplite.getBeginInd(), peplite.getEndInd()+1);
 		ArrayTheoreticalSpectrum theo = null;
@@ -236,7 +267,16 @@ public class TheoreticalSpectrumFactory {
 		return getTheoSpectrumX(peptide, charge, typeMap, ionMap, new int[]{}, new double[]{});
 	}
 	
-	//a fast array-base implementation
+	/**
+	 * Generate theortical spectrum for peptide with PTMs
+	 * @param peptide
+	 * @param charge
+	 * @param typeMap
+	 * @param ionMap
+	 * @param ptmPos
+	 * @param ptmMass
+	 * @return
+	 */
 	public static Spectrum getTheoSpectrumX(String peptide, int charge, 
 			Map<String, IonType> typeMap, IonTypeMapper ionMap, int[] ptmPos, double[] ptmMass){
 		ArrayTheoreticalSpectrum arry = new ArrayTheoreticalSpectrum();
@@ -290,12 +330,12 @@ public class TheoreticalSpectrumFactory {
 		return arry;
 	}
 	
-	public static void quicksort(double[] main, double[] index) {
+	protected static void quicksort(double[] main, double[] index) {
 	    quicksort(main, index, 0, index.length - 1);
 	}
 
 	// quicksort a[left] to a[right]
-	public static void quicksort(double[] a, double[] index, int left, int right) {
+	protected static void quicksort(double[] a, double[] index, int left, int right) {
 	    if (right <= left) return;
 	    int i = partition(a, index, left, right);
 	    quicksort(a, index, left, i-1);
@@ -334,6 +374,13 @@ public class TheoreticalSpectrumFactory {
 	    index[j] = b;
 	}
 	
+	/**
+	 * Compute the masses of all possible fragment ions for a peptide
+	 * @param peptide
+	 * @param pos
+	 * @param ptmmass
+	 * @return
+	 */
 	public static double[][] computeBaseMass(String peptide, int[] pos, double[] ptmmass){
 		double[] prefixMasses = new double[peptide.length()];
 		double[] suffixMasses = new double [peptide.length()];

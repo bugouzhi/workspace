@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.HashMap;
 import sequences.*;
 /**
- * A simple database indexer for protein sequences, index all peptides
+ * A simple database indexer for protein sequences. It perform digestion of proteins in
+ * fasta file in-silico into peptides then index the peptides by mass
  * @author Jian Wang
  *
  */
@@ -33,12 +34,25 @@ public class DatabaseIndexer {
 		indexDatabase();
 	}
 	
+	/**
+	 * Create a indexer with enzyme specificity.  Note I later come to realize ntermcut and ctermcut is slightly misleading in this case.
+	 * The nterm and cterm cut is not the usual enzyme rules.  But take on a more string pattern matching meaning.
+	 * It is meant to specifiy the following cutting rule: [N]PEPTID[E]  where [N] is any of the ntermcut residues and [E] is any of
+	 * the ctermcut  residue.  So any substring match the pattern will produce peptide PEPTIDE.  
+	 * @TODO to modify this to fully support the "actual definition" of enzymatic cutting rules
+	 * @param dbPath
+	 * @param ntermcut
+	 * @param ctermcut
+	 */
 	public DatabaseIndexer(String dbPath, char[] ntermcut, char[] ctermcut){
 		this.dbPath = dbPath;
 		this.ntermcut = ntermcut;
 		this.ctermcut = ctermcut;
 	}
 	
+	/**
+	 * Index sequence database
+	 */
 	public void indexDatabase(){
 		this.seq = new FastaSequence(this.dbPath);
 		Map<Integer, List<PeptideLite>> table = new HashMap();
@@ -107,6 +121,13 @@ public class DatabaseIndexer {
 		return this.peptidesIndex.getKeys();
 	}
 	
+	/**
+	 * Retrieve candidate peptides by mass
+	 * @param fromMass
+	 * @param toMass
+	 * @param tolerance
+	 * @return
+	 */
 	public List<PeptideLite> getPeptides(double fromMass, double toMass, double tolerance){
 		int leftKey = getKey(fromMass);
 		int rightKey = getKey(toMass);

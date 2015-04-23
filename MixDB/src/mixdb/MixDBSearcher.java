@@ -37,7 +37,15 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 
 import Utils.FileIOUtils;
-
+/**
+ * This class is the main entry point into mixdb tool, it setup input parameters from command line
+ * perform different type of searches depending on input and generates outputs.  Note MixDBSearch can
+ * perform several different kind of searches.  However except for the standard searchDB() methods, the
+ * others are consider experimental methods in this stage.  As they have not be tested on many datasets,
+ * and thus may need further test/validations for them in future development
+ * @author Jian
+ *
+ */
 public class MixDBSearcher extends SimpleDBSearcher{
 	public int minRank; //how deep we go down the initial list to get the first spectrum
 	public int maxRank; //how deep we go down the initial list to get the second spectrum
@@ -71,6 +79,9 @@ public class MixDBSearcher extends SimpleDBSearcher{
 	}
 	
 	
+	/**
+	 * Search query spectra against database, look for the best pair of peptie matches to each spectrum
+	 */
 	public void searchDB(){
 		initialize();
 		//MZXMLReader reader = new MZXMLReader(this.spectrumFile);
@@ -127,6 +138,10 @@ public class MixDBSearcher extends SimpleDBSearcher{
 		System.out.println("matching " + counter + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
 	}
 	
+	/**
+	 * Same as searchDB(), but extends it to look for Mix number of peptides per spectrum
+	 * @param Mix
+	 */
 	public void searchDB(int Mix){
 		initialize();
 		//MZXMLReader reader = new MZXMLReader(this.spectrumFile);
@@ -188,6 +203,9 @@ public class MixDBSearcher extends SimpleDBSearcher{
 		System.out.println("matching " + counter + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
 	}
 	
+	/**
+	 * This search allow one to specify a list of precursors to search for each query spectrum
+	 */
 	public void searchWithMultiPrecursors(){
 		initialize();
 		Iterator reader = null;
@@ -263,6 +281,9 @@ public class MixDBSearcher extends SimpleDBSearcher{
 		System.out.println("matching " + counter + " spectra in time: " + (new GregorianCalendar().getTimeInMillis()- start)/1000 + "secs");
 	}
 	
+	/**
+	 * This search add PTM support for search.  PTMs are input as a parameter files
+	 */
 	public void searchDBWithPTM(){
 		initialize();
 		Iterator reader = null;

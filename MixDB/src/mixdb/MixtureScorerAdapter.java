@@ -10,7 +10,16 @@ import org.Spectrums.Peak;
 import org.Spectrums.Peptide;
 import org.Spectrums.RankBaseScoreLearner;
 import org.Spectrums.Spectrum;
-
+/**
+ * Please see TheoreticalSpectrumFactory for the basic framework of theoretical spectrum.
+ * This adaptor class provide methods to transform the scoring model under the old framework to our new framework so 
+ * scoring can be done under our new framework using learned scoring models.
+ * @TODO
+ * Since the new framework for theoretical spectrum is much cleaner.  It wil be greate if we
+ * add in functionality that can learn the scoring mode only base on this new framework  
+ * @author Jian
+ *
+ */
 public class MixtureScorerAdapter{
 	private Map<String, MixIonType> typeMap;
 	private IonTypeMapper ionTypeMap;
