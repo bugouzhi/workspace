@@ -21,7 +21,7 @@
 		<!-- Search file parameters -->
 		<parameter name="spec_on_server" label="Spectrum Files">
 			<validator type="required"/>
-			<fileGenerator type="upload" purpose="spectrum" target="spec"/>
+			<fileGenerator type="upload" purpose="input data" target="spec"/>
 		</parameter>
 		<parameter name="lib_on_server" label="Spectral Library">
 			<fileGenerator type="upload" purpose="spectral library" target="fasta"/>
@@ -91,7 +91,7 @@
 			<processor type="filter"/>
 		</parameter>
 
-		<parameter name="FDR.FDR" label="Peptide-level FDR">
+		<parameter name="FDR.FDR" label="Spectrum-level FDR">
 			<default value="0.01"/>
 			<validator type="float" minimum="0" maximum="1"/>
 		</parameter>

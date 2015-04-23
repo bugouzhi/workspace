@@ -36,16 +36,16 @@
 			<column type="text"    field="Annotation"     label="Peptide"       width="18"/>
 			<column type="text"    field="Protein"        label="Protein"       width="18"/>
 			<column type="integer" field="Charge"         label="Charge"        width="1"/>
-			<column type="float"   field="cosine(M, A+B)" label="Cosine(M,A+B)" precision="3"/>
-			<column type="float"   field="cosine(M,A)"    label="Cosine(M,A)"   precision="3"/>
-			<column type="float"   field="cosine(A,B)"    label="Cosine(A,B)"   precision="3"/>
-			<column type="float"   field="alpha"          label="Alpha"         precision="3"/>
-			<column type="float"   field="res-alpha"      label="Res-Alpha"     precision="3"/>
-			<column type="float"   field="svm1-score"     label="SVM1-Score"    precision="3"/>
-			<column type="float"   field="svm2-score"     label="SVM2-Score"    precision="3"/>
+			<column type="float"   field="cosine(M, A+B)" label="Cosine(M,A+B)"  precision="3"/>
+			<column type="float"   field="cosine(M,A)"    label="Cosine(M,A)"    precision="3"/>
+			<column type="float"   field="cosine(A,B)"    label="Cosine(A,B)"    precision="3"/>
+			<column type="float"   field="projCos(M,A+B)"    label="ProjCosine" precision="3"/>
+			<column type="float"   field="alpha"          label="alpha"          precision="3"/>
+			<column type="float"   field="svm1-score"     label="SVM1-Score"     precision="3"/>
+			<column type="float"   field="svm2-score"     label="SVM2-Score"     precision="3"/>
 		</row>
 		<row expander="image">
-			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+		<!--	<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
 				<parameter name="file"    file="spec/[internalFilename]"/>
 				<parameter name="scan"    value="[Scan#]"/>
 				<parameter name="index"   value="[spectrumIndex]"/>
@@ -56,7 +56,29 @@
 				<parameter name="scan"    value="[Scan#]"/>
 				<parameter name="index"   value="[spectrumIndex]"/>
 				<parameter name="peptide" value="[Annotation]"/>
+			</column>  -->
+			<column type="jscolumnspectrumviewer" colspan="5" label="Query" width="550" height="350">
+                               <parameter name="file"    file="spec/[internalFilename]"/>
+                               <parameter name="scan"    value="[Scan#]"/>
+                               <parameter name="compoundname" value="*..*"/>
+			       <parameter name="peptide" value="[Annotation]"/>
+			 </column>
+			
+			<column type="jscolumnspectrumviewer" colspan="5" label="Library" width="550" height="350">
+                               <parameter name="file"    file="specLib/mergedLib.mgf"/>
+                               <parameter name="index"    value="[libIndex1]"/>
+                               <parameter name="compoundname" value="*..*"/>
+			       <parameter name="peptide" value="[Annotation]"/>
 			</column>
+			<column type="jscolumnspectrumviewer_spectrum_comparison" colspan="5">
+                                <parameter name="spectrum1_type"    value="flatfile"/>
+                                <parameter name="spectrum1_file"    file="spec/[internalFilename]"/>>
+                                <parameter name="spectrum1_scan"    value="[Scan#]"/>
+                                <parameter name="spectrum2_type"    value="flatfile"/>
+                                <parameter name="spectrum2_file"    file="specLib/mergedLib.mgf"/>>
+                                <parameter name="spectrum2_index"    value="[libIndex1]"/>
+                                <parameter name="display_peptide"    value="[Annotation]"/>
+                        </column>
 		</row>
 	</block>
 	

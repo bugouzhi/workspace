@@ -40,7 +40,7 @@
 	</action>
 	
 	<action name="msplit" multiplicity="multiple" type="parallel">
-		<input port="spec" collection="spectra" transformation="unfolding"/>
+		<input port="spectra" collection="spectra" transformation="unfolding"/>
 		<input port="params" object="params"/>
 		<input port="indexedLib" object="indexedLib"	/>
 		<output port="MsplitOut" collection="MsplitOut"/>		
@@ -59,6 +59,7 @@
 	
 	<action name="end">
 		<input port="mergedResult" object="mergedResult"/>
+		<input port="mergedLib" object="mergedLib"/>
 	</action>
 
 </flow>

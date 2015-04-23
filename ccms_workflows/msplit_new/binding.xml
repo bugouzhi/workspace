@@ -41,12 +41,12 @@
 	
 	<bind action="msplit" tool="msplit_new">
 	<!--	<inputAsRequirement port="params" requirement="flowParams"/> -->
-		<inputAsRequirement port="spec" requirement="spectrum"/>
+		<inputAsRequirement port="spectra" requirement="spectrum"/>
 		<inputAsRequirement port="indexedLib" requirement="library"/>
 		<productionToOutput port="MsplitOut" production="result"/>
 	</bind> 
 	
-	<bind action="MSPLITFilter" tool="spectrumMatchClassify">
+	<bind action="MSPLITFilter" tool="spectrumMatchClassify_new">
 		<inputAsRequirement port="MsplitOut" requirement="input"/>
 		<productionToOutput port="filteredResult" production="output"/>
 	</bind> 
@@ -64,6 +64,10 @@
 		<upload port="mergedResult" type="file">
 			<query name="resource" value="result"/>
 		</upload>
+		 <upload port="mergedLib" type="file">
+                        <query name="resource" value="specLib"/>
+                </upload>
+
 	</bind>
 
 </binding>
