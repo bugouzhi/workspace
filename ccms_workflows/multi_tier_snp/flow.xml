@@ -1,0 +1,567 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<flow name="msplitnew_msgfdb_moda">
+
+        <collection name="input_file_validation_flag"/>
+	<collection name="inputspectra"/>
+	<collection name="spectrapklbin"/>
+	<collection name="spectra"/>
+	<collection name="aligns"/>
+	<collection name="paramsgen"/>
+	<collection name="toolParameters"/>
+	<collection name="intermediateresults"/>
+	<object     name="workflowParameters"/>
+	<collection     name="library"/>
+	<object     name="result"/>
+	<object     name="log"/>
+	<object     name="specnetsparam"/>
+	<object     name="clusterinfo"/>
+	<object     name="clusterinfosummary"/>	
+	<collection name="paramsgen_specnets"/>
+	<collection name="intermediateresults_specnets"/>
+        <object     name="workflowParameters_specnets"/>
+        <object     name="result_specnets"/>
+        <object     name="result_specnets_DB"/>
+	<object     name="clusterinfogroup"/>
+	<object     name="clusterinfosummarygroup"/>
+	<object     name="clusterinfosummarygroup_attributes"/>
+        <object     name="clusterinfosummarygroup_attributes_withIDs"/>
+        <object     name="clusterinfosummarygroup_attributes_withIDs_arbitraryattribute"/>
+	<object     name="groupmapping"/>
+	<object     name="groupmapping_converted"/>
+        <object     name="attributemapping"/>
+        <object     name="allclustered_spectra_info"/>
+        <object     name="allclustered_spectra_info_withpath"/>
+	<object name="networkedges"/>
+        <object name="networkedges_display"/>
+        <object name="networkedges_display_pairs"/>
+        <object name="networkedges_selfloop"/>
+        <object name="clusterinfosummarygroup_attributes_withIDs_withcomponentID"/>
+        <object name="networkcomponents"/>
+        <object name="network_statistics"/>
+
+    <collection name="sequence"/>
+    <collection name="speclibs"/>
+    <object     name="parameters"/>
+    <collection name="concatlibs"/>
+    <object     name="mergedLib"/>
+    <object     name="indexedLib"/>
+    <object     name="appendedSeq"/>
+    <collection name="msplitResult"/>
+    <object     name="mergedResultMSPLIT"/>
+    <object     name="finalResultMSPLIT"/>
+    <object     name="finalLogMSPLIT"/>
+    
+    <object     name="mergedSequence"/>
+    <object     name="snpSequence"/>
+    <object     name="normalSequence"/>
+    <object     name="subset_snpSequence"/>
+    <object     name="preparedSequenceMSGFDB"/>
+    <object     name="snp_preparedSequenceMSGFDB"/>
+    <collection name="msgfDBResult"/>
+    <collection name="snp_msgfDBResult"/>
+    <object     name="mergedResultMSGFDB"/>
+    <object     name="snp_mergedResultMSGFDB"/>
+    <object     name="finalResultMSGFDB"/>
+    <object     name="snp_finalResultMSGFDB"/>
+    
+    <object     name="shuffledSequenceMODA"/>
+    <collection name="configMODA"/>
+    <collection name="modaResult"/>
+    <object     name="mergedResultMODA"/>
+    <object     name="mergedConfigMODA"/>
+    <object     name="finalResultMODA"/>
+    <object     name="ptmResultMODA"/>
+
+    <collection name="mgfOutSpec"/>
+    <collection name="msplitUnident"/>
+    <collection name="msplitMsgfdbUnident"/>
+    <collection name="msplitMsgfdbModaUnident"/>
+    <collection name="snp_msplitMsgfdbUnident"/>
+    <object     name="modaInputDB"/>
+    <object     name="categorization"/>
+    <object         name="spectrumCounts"/>
+        <object         name="peptideExplorer"/>
+	<object         name="summaryReport"/>
+        <object         name="finalResultMSPLITMods"/>
+        <object         name="finalResultMSGFDBMods"/>
+        <object         name="finalResultMODAMods"/>
+        <object         name="finalResultMSPLITProt"/>
+        <object         name="finalResultMSGFDBProt"/>
+        <object         name="mergedResultMSGFDBProt"/>
+        <object         name="finalResultMODAProt"/>
+        <object         name="snp_finalResultMSGFDBMods"/>
+        <object         name="snp_finalResultMSGFDBProt"/>
+        <object         name="combined_finalResultMSGFDBProt"/>
+
+        <object         name="networkqc_curve"/>
+        <object         name="networkqc_falsepositive"/>
+        <object         name="networkqc_otheroutput"/>
+        <collection     name="networkqc_workingdir"/>
+	
+	
+	<action name="begin">
+		<output port="spec"       collection="inputspectra"/>
+		<output port="lib" 		collection="library"/>
+		<output port="fasta"  collection="sequence"/>
+		<output port="spectrallibrary"  collection="speclibs"/>
+		<output port="params" object="parameters"/>
+		<output port="groupmapping" 	object="groupmapping"/>
+                <output port="attributemapping"     object="attributemapping"/>
+		<output port="toolParams" collection="toolParameters"/>
+		<output port="flowParams" object="workflowParameters"/>
+               <output port="spectwo" collection="inputspectra"/>
+               <output port="specthree" collection="inputspectra"/>
+               <output port="specfour" collection="inputspectra"/>
+               <output port="specfive" collection="inputspectra"/>
+               <output port="specsix" collection="inputspectra"/>
+	</action>
+
+	<!--*******Metabolomics-snets**********-->
+        <action name="searchlibraryparamgeneration_specnets">
+                <input  port="spectra"       collection="spectra"/>
+                <input  port="flowParams" object="workflowParameters"/>
+                <input  port="lib"            collection="library"/>
+                <output port="paramsgen_specnets"     collection="paramsgen_specnets"/>
+        </action>
+        
+        <action name="searchlibrarysearch_specnets" multiplicity="multiple" type="parallel">
+                <input port="paramsgen_specnets"     collection="paramsgen_specnets" transformation="unfolding"/>
+                <input  port="spectra"       collection="spectra"/>
+                <input  port="lib"            collection="library"/>
+                <output port="intermediateresults_specnets"     collection="intermediateresults_specnets"/>
+        </action>
+        
+        <action name="searchlibrarymerge_specnets">
+                <input port="intermediateresults_specnets"     collection="intermediateresults_specnets"/>
+                <input  port="flowParams" object="workflowParameters"/>
+                <output port="result_specnets"     object="result_specnets"/>
+        </action>        
+        
+        <action name="get_dbannotations_specnets">
+                <input  port="result_specnets"             object="result_specnets"/>
+                <output port="result_specnets_DB"           object="result_specnets_DB"/>
+        </action>
+        
+        <action name="input_file_validation_specnets">
+                <input  port="inputspectra"             collection="inputspectra"/>
+                <input  port="flowParams" object="workflowParameters"/>
+                <output port="input_file_validation_flag"           object="input_file_validation_flag"/>
+        </action>
+        
+        <action name="specnetsparamsgen">
+                <input  port="spec"       collection="inputspectra"/>
+                <input  port="input_file_validation_flag"       collection="input_file_validation_flag"/>
+                <input  port="flowParams" object="workflowParameters"/>
+                <output port="specnetsparam"     object="specnetsparam"/>
+        </action>
+        
+        <action name="metabolomicspecnets">
+                <input  port="spec"       collection="inputspectra"/>
+                <input  port="specnetsparam" object="specnetsparam"/>
+                <output port="spectra"     collection="spectra"/>
+		<output port="aligns"     collection="aligns"/>
+                <output port="log"     object="log"/>
+        </action>
+        
+        <action name="metabolomicclusterinfo">
+                <input  port="spec"       collection="inputspectra"/>
+                <input  port="spectra" collection="spectra"/>
+                <output port="clusterinfo"     object="clusterinfo"/>
+                <output port="clusterinfosummary"     object="clusterinfosummary"/>
+        </action>
+	
+	<action name="metabolomicgroupmappingconvert">
+                <input  port="flowParams" object="workflowParameters"/>
+                <input  port="groupmapping" object="groupmapping"/>
+                <output port="groupmapping_converted"     object="groupmapping_converted"/>
+        </action>
+	
+	<action name="metabolomicclusterinfogroup">
+                <input  port="spec"       collection="inputspectra"/>
+		<input  port="groupmapping"       object="groupmapping_converted"/>
+                <input  port="spectra" collection="spectra"/>
+                <output port="clusterinfogroup"     object="clusterinfogroup"/>
+                <output port="clusterinfosummarygroup"     object="clusterinfosummarygroup"/>
+        </action>
+	
+	<action name="metabolomicclusterinfogroupaddattribute">
+                <input  port="flowParams" object="workflowParameters"/>
+                <input port="clusterinfosummarygroup"     object="clusterinfosummarygroup"/>
+                <input port="clusterinfogroup"     object="clusterinfogroup"/>
+                <output port="clusterinfosummarygroup_attributes"     object="clusterinfosummarygroup_attributes"/>
+        </action>
+        
+        <action name="metabolomic_add_ID_to_summary">
+                <input  port="flowParams" object="workflowParameters"/>
+                <input port="clusterinfosummarygroup_attributes"     object="clusterinfosummarygroup_attributes"/>
+                <input port="result_specnets"     object="result_specnets"/>
+                <output port="clusterinfosummarygroup_attributes_withIDs"     object="clusterinfosummarygroup_attributes_withIDs"/>
+        </action>
+      
+        <action name="metabolomic_create_all_cluster_info">
+                <input  port="flowParams" object="workflowParameters"/>
+                <input port="clusterinfosummarygroup_attributes"     object="clusterinfosummarygroup_attributes"/>
+                <input port="clusterinfogroup"     object="clusterinfogroup"/>
+                <output port="allclustered_spectra_info"     object="allclustered_spectra_info"/>
+        </action>
+	
+	<action name="metabolomicpairsinfo">
+                <input  port="aligns"       collection="aligns"/>
+		<input  port="flowParams" object="workflowParameters"/>
+                <output port="networkedges"     object="networkedges"/>
+        </action>
+        
+        <action name="metabolomic_create_network_view">
+                <input  port="networkedges"       collection="networkedges"/>
+                <output  port="networkedges_display" object="networkedges_display"/>
+                <output  port="networkedges_display_pairs" object="networkedges_display_pairs"/>
+        </action>
+        
+        <action name="metabolomicsmakeselfloop">
+                <input  port="flowParams" object="workflowParameters"/>
+                <input  port="networkedges"       collection="networkedges"/>
+                <input  port="clusterinfosummarygroup" object="clusterinfosummarygroup"/>
+                <output port="networkedges_selfloop"     object="networkedges_selfloop"/>
+        </action>
+        
+        <action name="metabolomic_add_original_filepath_clusterinfo">
+                <input  port="flowParams" object="workflowParameters"/>
+                <input  port="allclustered_spectra_info"       object="allclustered_spectra_info"/>
+                <output  port="allclustered_spectra_info_withpath" object="allclustered_spectra_info_withpath"/>
+        </action>
+        
+        <action name="metabolomic_add_arbitrary_attribute">
+                <input  port="attributemapping" object="attributemapping"/>
+                <input  port="clusterinfosummarygroup_attributes_withIDs"       object="clusterinfosummarygroup_attributes_withIDs"/>
+                <output  port="clusterinfosummarygroup_attributes_withIDs_arbitraryattribute" object="clusterinfosummarygroup_attributes_withIDs_arbitraryattribute"/>
+        </action>
+
+        <action name="metabolomic_add_component_index">
+                <input  port="clusterinfosummarygroup_attributes_withIDs" object="clusterinfosummarygroup_attributes_withIDs"/>
+                <input  port="networkedges"       object="networkedges"/>
+                <output  port="clusterinfosummarygroup_attributes_withIDs_withcomponentID" object="clusterinfosummarygroup_attributes_withIDs_withcomponentID"/>
+                <output  port="networkcomponents" object="networkcomponents"/>
+        </action>
+
+        <action name="metabolomic_network_stats">
+                <input  port="flowParams"       object="workflowParameters"/>
+                <input  port="networkedges"       object="networkedges"/>
+                <input  port="clusterinfosummarygroup_attributes_withIDs" object="clusterinfosummarygroup_attributes_withIDs"/>
+                <output  port="network_statistics" object="network_statistics"/>
+        </action>
+
+	<action name="extract_mgf">
+		<input port="spec" collection="spectra"/>
+		<output port="spec" collection="mgfOutSpec"/>
+	</action>
+
+       <action name="mergeSequences">
+               <input port="fasta" collection="sequence"/>
+               <output port="out"  collection="mergedSequence"/>
+       </action>
+
+    <!-- First separate database into SNP and nonSNP sequence-->
+       <action name="splitSequences">
+               <input port="mergedSequence" object="mergedSequence"/>
+               <output port="out1"  object="normalSequence"/>
+               <output port="out2"   object="snpSequence"/>
+       </action>
+
+
+    <!--*************MSPLIT**********-->
+    	<action name="createDecoyLib" multiplicity="multiple" type="parallel">
+                <input port="spectrallibrary" collection="speclibs" transformation="unfolding"/>
+                <output port="concatlibs" collection="concatlibs"/>
+        </action>
+
+    	<action name="mergeLib">
+                <input port="concatlibs" collection="concatlibs"/>
+                <output port="mergedLib"  object="mergedLib"/>
+        </action>
+
+        <action name="indexLib">
+                <input port="mergedLib" collection="mergedLib"/>
+                <output port="indexedLib"  object="indexedLib"/>
+        </action>
+
+        <action name="msplit" multiplicity="multiple" type="parallel">
+                <input port="spec" collection="mgfOutSpec" transformation="unfolding"/>
+                <!--<input port="params" object="parameters"/>-->
+                <input port="indexedLib" object="indexedLib"/>
+                <output port="msplitOut" collection="msplitResult"/>
+        </action>
+
+        <action name="merge_msplit">
+                <input port="msplitOut" collection="msplitResult"/>
+                <output port="mergedResult" object="mergedResultMSPLIT"/>
+        </action>
+        
+	<action name="filter_msplit">
+                <input port="mergedResult" collection="mergedResultMSPLIT"/>
+                <!--<input port="params" object="parameters"/>-->
+                <output port="filteredResult" collection="finalResultMSPLIT"/>
+        </action>
+
+
+        <action name="get_unidentified_msplit">
+                <input port="spec" collection="mgfOutSpec"/>
+                <input port="searchResult" object="finalResultMSPLIT"/>
+                <output port="spec" collection="msplitUnident"/>
+        </action>
+
+	<!--***********MSGFDB***************-->
+
+      <action name="buildSA_msgfdb">
+                <input port="fasta" object="normalSequence"/>
+                <output port="out"  object="preparedSequenceMSGFDB"/>
+        </action>
+        
+        <action name="msgfDB" multiplicity="multiple" type="parallel">
+                <input port="spec"   collection="msplitUnident" transformation="unfolding"/>
+                <input port="fasta"  object="normalSequence"/>
+                <input port="seq"    object="preparedSequenceMSGFDB"/>
+                <input port="params" object="parameters"/>
+                <output port="out"   collection="msgfDBResult"/>
+        </action>
+        
+
+        <action name="merge_msgfdb">
+                <input port="result"        collection="msgfDBResult"/>
+                <output port="mergedResult" object="mergedResultMSGFDB"/>
+        </action>
+        
+        <action name="reassign_proteins_msgfdb_merged">
+                <input port="mergedResultMSGFDB" object="mergedResultMSGFDB"/>
+                <input port="protDB" object="normalSequence"/>
+                <output port="msgfdbProtOut"  object="mergedResultMSGFDBProt"/>
+        </action>
+                
+        <action name="fdr_msgfdb">
+                <input port="in"   object="mergedResultMSGFDB"/>
+                <output port="out" object="finalResultMSGFDB"/>
+        </action>
+
+
+        <action name="get_unidentified_msgfdb">
+                <input port="spec" collection="msplitUnident"/>
+                <input port="searchResult" object="finalResultMSGFDBProt"/>
+                <output port="spec" collection="msplitMsgfdbUnident"/>
+        </action>
+        
+        <!--we extracted identified proteins, use in 2nd pass of SNP ids and also moda blind search-->
+        <action name="make_moda_input_db">
+                <input port="params" object="parameters"/>
+                <input port="msplitFinalResult" object="finalResultMSPLITProt"/>
+                <input port="msgfdbMergedResult" object="mergedResultMSGFDBProt"/>
+                <input port="revConcatDB" collection="preparedSequenceMSGFDB"/>
+                <output port="output" object="modaInputDB"/>
+        </action>
+
+    <!--***********2nd-pass MSGFDB   searching  for SNP peptides ***************-->
+
+    <action name="get_snp_sequence">
+        <input port="IDsequence" object="modaInputDB"/>
+        <input port="snpSequence" object="snpSequence"/>
+        <output port="out"  object="subset_snpSequence"/>
+    </action>
+
+    <action name="buildSA_msgfdb_snp">
+        <input port="fasta" object="subset_snpSequence"/>
+        <output port="out"  object="snp_preparedSequenceMSGFDB"/>
+    </action>
+    
+    <action name="msgfDB_snp" multiplicity="multiple" type="parallel">
+        <input port="spec"   collection="msplitMsgfdbUnident" transformation="unfolding"/>
+        <input port="fasta"  object="subset_snpSequence"/>
+        <input port="seq"    object="snp_preparedSequenceMSGFDB"/>
+        <input port="params" object="parameters"/>
+        <output port="out"   collection="snp_msgfDBResult"/>
+    </action>
+    
+    <action name="merge_msgfdb_snp">
+        <input port="result"        collection="snp_msgfDBResult"/>
+        <output port="mergedResult" object="snp_mergedResultMSGFDB"/>
+    </action>
+    
+    <action name="fdr_msgfdb_snp">
+        <input port="in"   object="snp_mergedResultMSGFDB"/>
+        <output port="out" object="snp_finalResultMSGFDB"/>
+    </action>
+    
+    <action name="get_unidentified_msgfdb_snp">
+        <input port="spec" collection="msplitMsgfdbUnident"/>
+        <input port="searchResult" object="snp_finalResultMSGFDB"/>
+        <output port="spec" collection="snp_msplitMsgfdbUnident"/>
+    </action>
+
+
+    <action name="reassign_proteins_msgfdb_snp">
+                <input port="snp_finalResultMSGFDB" object="snp_finalResultMSGFDB"/>
+                <input port="protDB" object="subset_snpSequence"/>
+                <output port="msgfdbProtOut"  object="snp_finalResultMSGFDBProt"/>
+    </action>
+
+	
+	<!--***************MODA**************-->
+	<action name="shuffleSequences_moda">
+		<input  port="in"  object="modaInputDB"/>
+		<output port="out" object="shuffledSequenceMODA"/>
+	</action>
+	
+	<action name="createConfig_moda" multiplicity="multiple" type="parallel">
+		<input  port="spec"   collection="snp_msplitMsgfdbUnident" transformation="unfolding"/>
+		<input  port="seq"    object="shuffledSequenceMODA"/>
+		<input  port="params" object="parameters"/>
+		<output port="cfg"    collection="configMODA"/>
+	</action>
+	
+	<action name="moda" multiplicity="multiple" type="parallel">
+		<input  port="config"  collection="configMODA" transformation="unfolding"/>
+		<input  port="spec"    collection="snp_msplitMsgfdbUnident"/>
+		<input  port="seq"     object="shuffledSequenceMODA"/>
+		<output port="result"  collection="modaResult"/>
+	</action>
+	
+	<action name="merge_moda">
+		<input  port="in"  collection="modaResult"/>
+		<output port="out" object="mergedResultMODA"/>
+	</action>
+	
+	<action name="mergeConfig_moda">
+		<input  port="in"  collection="configMODA"/>
+		<output port="out" object="mergedConfigMODA"/>
+	</action>
+	
+	<action name="fdr_moda">
+		<input  port="in"  object="mergedResultMODA"/>
+		<input  port="cfg" object="mergedConfigMODA"/>
+		<output port="out" object="finalResultMODA"/>
+		<output port="ptm" object="ptmResultMODA"/>
+	</action>
+
+	<action name="get_unidentified_moda">
+		<input port="spec" 	   collection="msplitMsgfdbUnident"/>
+		<input port="searchResult" object="finalResultMODA"/>
+		<output port="numIdent"    collection="msplitMsgfdbModaUnident"/>
+	</action>
+
+        <action name="reassign_proteins_msplit">
+                <input port="msplitResult" object="finalResultMSPLIT"/>
+                <input port="protDB" object="normalSequence"/>
+                <output port="msplitProtOut"  object="finalResultMSPLITProt"/>
+        </action>
+       
+        <action name="reassign_proteins_msgfdb">
+                <input port="msgfdbResult" object="finalResultMSGFDB"/>
+                <input port="protDB" object="normalSequence"/>
+                <output port="msgfdbProtOut"  object="finalResultMSGFDBProt"/>
+        </action>
+        
+        <action name="reassign_proteins_moda">
+                <input port="modaResult" object="finalResultMODA"/>
+                <input port="protDB" object="normalSequence"/>
+                <output port="modaProtOut"  object="finalResultMODAProt"/>
+        </action>
+	   
+        <action name="merge_msgfdb_with_snp">
+                <input port="result"        object="finalResultMSGFDBProt"/>
+                <input port="snp_result"        object="snp_finalResultMSGFDBProt"/> 
+                <output port="combinedResult" object="combined_finalResultMSGFDBProt"/>
+        </action>
+
+
+        <action name="convert_mods">
+                <input port="params" object="parameters"/>
+                <input port="msplitSearchResult" object="finalResultMSPLITProt"/>
+                <input port="msgfdbSearchResult" object="combined_finalResultMSGFDBProt"/>
+                <input port="modaSearchResult" object="finalResultMODAProt"/>
+                <output port="msplitOut"  object="finalResultMSPLITMods"/>
+                <output port="msgfdbOut"  object="finalResultMSGFDBMods"/>
+                <output port="modaOut"  object="finalResultMODAMods"/>
+        </action>
+        	
+	<action name="spectrum_counts">
+                <input port="params" object="parameters"/>
+                <input port="msplitSearchResult" object="finalResultMSPLITMods"/>
+                <input port="msgfdbSearchResult" object="finalResultMSGFDBMods"/>
+                <input port="modaSearchResult" object="finalResultMODAMods"/>
+                <input port="clusterinfosummarygroup_attributes" object="clusterinfosummarygroup_attributes"/>
+                <input port="networkEdgesDisp" object="networkedges_display"/>
+                <input port="groupMapping" object="groupmapping_converted"/>
+                <output port="spectrum_counts"  object="spectrumCounts"/>
+        </action>
+
+        <action name="peptide_explorer">
+                 <input port="spectrumCounts" object="spectrumCounts"/>
+                <input port="networkEdgesDispPairs" object="networkedges_display_pairs"/>
+                <input port="clusterInfo" object="clusterinfosummarygroup_attributes_withIDs_withcomponentID"/>
+                <output port="peptide_explorer"  object="peptideExplorer"/>
+        </action>
+
+        <action name="categorize_spectra">
+                <input port="msplitSearchResult" object="finalResultMSPLITMods"/>
+                <input port="msgfdbSearchResult" object="finalResultMSGFDBMods"/>
+                <input port="modaSearchResult" object="finalResultMODAMods"/>
+                <output port="categories"  object="categorization"/>
+        </action>
+	
+	<!-- Precision Recall for Network -->
+        <action name="networkqc_generate_qc">
+                <input port="spectra" collection="spectra"/>
+                <input port="aligns" collection="aligns"/>
+                <input port="spectrum_counts" object="spectrumCounts"/>
+                <output port="networkqc_falsepositive"  object="networkqc_falsepositive"/>
+                <output port="networkqc_curve"  object="networkqc_curve"/>
+                <output port="networkqc_otheroutput"  object="networkqc_otheroutput"/>
+                <output port="networkqc_workingdir"  collection="networkqc_workingdir"/>
+        </action>
+
+        	
+	<action name="summary_report">
+                <input port="params" object="parameters"/>
+                <input port="clusterInfoSummaryGroupAttr" object="clusterinfosummarygroup_attributes"/>
+                <input port="spectrumCounts" object="spectrumCounts"/>
+                <input port="networkEdgesDisp" object="networkedges_display_pairs"/>
+                <input port="networkQcCurve" object="networkqc_curve"/>
+                <input port="networkQcFalse" object="networkqc_falsepositive"/>
+                <input port="groupMapping" object="groupmapping_converted"/>
+                <output port="summary_report"  object="summaryReport"/>
+        </action>
+	
+	<action name="end">
+                <input port="result_specnets_DB" object="result_specnets_DB"/> 
+                <input port="clusterinfo" object="clusterinfo"/> 
+                <input port="clusterinfosummary" object="clusterinfosummary"/> 
+		<input port="clusterinfogroup" object="clusterinfogroup"/> 
+		<input port="clusterinfosummarygroup_attributes" object="clusterinfosummarygroup_attributes"/> 
+                <input port="clusterinfosummarygroup_attributes_withIDs" object="clusterinfosummarygroup_attributes_withIDs"/> 
+                <input port="clusterinfosummarygroup_attributes_withIDs_arbitraryattribute" object="clusterinfosummarygroup_attributes_withIDs_arbitraryattribute"/> 
+                <input port="networkedges_selfloop" object="networkedges_selfloop"/> 
+                <input port="clusterinfosummarygroup" object="clusterinfosummarygroup"/> 
+		<input port="networkedges" object="networkedges"/> 
+		<input port="result_specnets" object="result_specnets"/> 
+		<input port="spectra" collection="spectra"/>
+                <input port="allclustered_spectra_info" collection="allclustered_spectra_info"/>
+                <input port="networkedges_display" object="networkedges_display"/>
+                <input port="networkedges_display_pairs" object="networkedges_display_pairs"/>
+                <input port="allclustered_spectra_info_withpath" object="allclustered_spectra_info_withpath"/>
+                <input port="network_statistics" object="network_statistics"/>
+                <input port="networkcomponents" object="networkcomponents"/>
+
+                <input port="msplitResult" object="finalResultMSPLITMods"/>
+                <input port="msgfdbResult" object="finalResultMSGFDBMods"/>
+                <input port="modaResult"   object="finalResultMODAMods"/>
+		<input port="ptm"          object="ptmResultMODA"/>
+		<input port="numIdent"     collection="msplitMsgfdbModaUnident"/>
+		<input port="categories"   object="categorization"/>
+		<input port="spectrum_counts"   object="spectrumCounts"/>
+		<input port="summary_report"   object="summaryReport"/>
+                <input port="peptide_explorer"   object="peptideExplorer"/> 
+                
+		<input port="networkqc_curve"   object="networkqc_curve"/>
+                <input port="networkqc_falsepositive"   object="networkqc_falsepositive"/>
+	</action> 	
+
+</flow>
+
+

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<flow name="msplit_new">
+	<collection name="spectra"/>
+	<collection name="speclibs"/>
+    <collection name="concatlibs"/>
+	<collection name="seqdb"/>
+	<collection name="config"/>	
+	<collection name="MsplitOut"/>
+	<collection name="filteredResult"/>		
+	<collection name="peakviewIn"/>
+	<object     name="params"/>
+	<object     name="Seq"/>
+    <object	    name="mergedLib"/>
+    <object	    name="concatLib"/>
+    <object	    name="indexedLib"/>
+   	<object	    name="appendedSeq"/>
+	<object	    name="mergedResult"/>
+	
+	
+	<action name="begin">
+	    <output port="spec"       collection="spectra"/>
+		<output port="fasta"  collection="speclibs"/>
+		<output port="seqdb"  collection="seqdb"/>
+		<output port="params" object="params"/>
+	</action>
+	
+    <action name="createDecoyLib" multiplicity="multiple" type="parallel">
+		<input port="speclibs" collection="speclibs" transformation="unfolding"/>
+		<output port="concatlibs" collection="concatlibs"/>
+	</action>
+
+    <action name = "mergeLib">
+		<input port="concatlibs" collection="concatlibs"/>
+		<output port="mergedLib"  object="mergedLib"/>
+	</action>
+		
+	<action name = "indexLib">
+		<input port="mergedLib" collection="mergedLib"/>
+		<output port="indexedLib"  object="indexedLib"/>
+	</action>
+	
+	<action name="msplit" multiplicity="multiple" type="parallel">
+		<input port="spec" collection="spectra" transformation="unfolding"/>
+		<input port="params" object="params"/>
+		<input port="indexedLib" object="indexedLib"	/>
+		<output port="MsplitOut" collection="MsplitOut"/>		
+	</action>	    
+	
+	<action name="MSPLITFilter" multiplicity="multiple" type="parallel">
+		<input port="MsplitOut" collection="MsplitOut" transformation="unfolding"/>
+		<input port="params" object="params"/>
+		<output port="filteredResult" collection="filteredResult"/>		
+	</action>
+
+	<action name="merge">
+		<input port="filteredResult"        collection="filteredResult"/>
+		<output port="mergedResult" object="mergedResult"/>
+	</action>
+	
+	<action name="end">
+		<input port="mergedResult" object="mergedResult"/>
+	</action>
+
+</flow>

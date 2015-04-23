@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<binding>
+	<bind action="begin" type="download">
+	 	<url value="{livesearch.download}"/>
+	 	<query name="task" valueRef="@task" />
+	 	<query name="user" valueRef="@user"/>
+	 	<compression type="zip" />
+		<download port="spec" type="folder">
+			<query name="resource" value="spec"/>
+		</download>
+		<download port="fasta" type="folder">
+			<query name="resource" value="fasta"/>
+		</download>
+		<download port="seqdb" type="folder">
+			<query name="resource" value="seqdb"/>
+		</download>
+		<download port="params" type="file">
+			<query name="resource" value="params"/>
+		</download>		
+		<downloadParams>
+			<query name="resource" value="params"/>
+		</downloadParams>
+	</bind>
+	
+	<bind action="mergeLib" tool="mergeFasta">
+		<inputAsRequirement port="speclibs" requirement="input"/>
+		<productionToOutput port="mergedLib"   production="output"/>
+	</bind>
+
+	<bind action="mergeSequences" tool="mergeFasta">
+		<inputAsRequirement port="seqdb" requirement="input"/>
+		<productionToOutput port="mergedSequence"   production="output"/>
+	</bind>
+	
+	<bind action="SWATHMSPLIT" tool="SWATHMSPLITSearch">
+		<inputAsRequirement port="params" requirement="flowParams"/>
+		<inputAsRequirement port="spec" requirement="spectrum"/>
+		<inputAsRequirement port="mergedLib" requirement="mergedLib"/>
+		<productionToOutput port="MsplitOut" production="MsplitOut"/>
+	</bind> 
+	
+	<bind action="SWATHMSPLITFilter" tool="SWATHMSPLITFilter">
+		<inputAsRequirement port="params" requirement="flowParams"/>
+		<inputAsRequirement port="MsplitOut" requirement="MsplitOut"/>
+		<productionToOutput port="filteredResult" production="filteredResult"/>
+	</bind> 
+
+	<bind action="SWATHQuant" tool="SWATHQuant">
+		<inputAsRequirement port="params" requirement="flowParams"/>
+		<inputAsRequirement port="filteredResult" requirement="filteredResult"/>
+		<inputAsRequirement port="mergedLib" requirement="mergedLib"/>
+		<inputAsRequirement port="mergedSequence" requirement="mergedSequence"/>
+		<productionToOutput port="quantExport" production="quantExport"/>
+	</bind> 
+	
+	<bind action="merge" tool="mergeWithHeader">
+		<inputAsRequirement port="filteredResult"       requirement="input"/>
+		<productionToOutput port="mergedResult" production="output"/>
+	</bind>
+	
+	<bind action="end" type="upload">
+	 	<url value="{livesearch.upload}"/>
+	 	<query name="task" valueRef="@task"/>
+	 	<contentQuery name="content"/>
+	 	<compression type="zip"/>
+		<upload port="mergedResult" type="file">
+			<query name="resource" value="result"/>
+		</upload>
+		<upload port="quantExport" type="folder">
+			<query name="resource" value="SWATHQuant"/>
+		</upload>
+	</bind>
+
+</binding>

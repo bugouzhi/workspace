@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<interface id="MixGF" version="1.2.5">
+	<!-- View definitions -->
+	<view id="group_by_peptide" label="Group by Peptide">
+		<blockRef id="main" type="list"/>
+	</view>
+
+	<!-- Block definitions -->
+	<block id="list" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="Scan#" operator="ascending"/>
+			</parsers>
+		</data>
+		<row>
+			<column type="text"        field="#SpectrumFile"  label="Filename"    width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="Scan#"          label="Scan"        width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="Annotation"     label="Annotation"  width="12"    tooltip="Annotation"/>
+			<column type="text"        field="Protein"        label="Protein"     width="18"    tooltip="Protein"/>
+
+			<column type="float"        field="score"           label="score"       precision="5"    tooltip="score"/>
+			<column type="float"        field="score-1pep"      label="score-1pep"  precision="5"    tooltip="score-1pep"/>
+			<column type="float"        field="expl-Int"        label="expl-Int"       precision="5"    tooltip="expl-Int"/>
+			<column type="float"        field="b-fract"           label="b-fract"       precision="5"    tooltip="b-fract"/>
+			<column type="float"        field="y-fract"           label="y-fract"       precision="5"    tooltip="y-fract"/>
+			<column type="float"        field="b-series"           label="b-series"       precision="5"    tooltip="b-series"/>
+			<column type="float"        field="y-series"           label="y-series"       precision="5"    tooltip="y-series"/>
+
+			<column type="float"       field="svm1-score"          label="svm1-score"      precision="5"    tooltip="svm1-score"/>
+			<column type="float"       field="svm2-score"          label="svm2-score"       precision="5"    tooltip="svm2-score"/>
+
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+
+</interface>

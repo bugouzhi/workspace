@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<binding>
+	<bind action="begin" type="download">
+	 	<url value="{livesearch.download}"/>
+	 	<query name="task" valueRef="@task" />
+	 	<query name="user" valueRef="@user"/>
+	 	<compression type="zip" />
+		<download port="spec" type="folder">
+			<query name="resource" value="spec"/>
+		</download>
+		<download port="fasta" type="folder">
+			<query name="resource" value="fasta"/>
+		</download>
+		<download port="seqdb" type="folder">
+			<query name="resource" value="seqdb"/>
+		</download>
+		<download port="params" type="file">
+			<query name="resource" value="params"/>
+		</download>		
+		<downloadParams>
+			<query name="resource" value="params"/>
+		</downloadParams>
+	</bind>
+
+	<bind action="createDecoyLib" tool="createDecoyLibMsplit">
+		<inputAsRequirement port="speclibs"  requirement="speclib"/>
+		<productionToOutput port="concatlibs" production="concatlib"/>
+	</bind>
+	
+
+	<bind action="mergeLib" tool="mergeMGF">
+		<inputAsRequirement port="concatlibs" requirement="input"/>
+		<productionToOutput port="mergedLib"   production="output"/>
+	</bind>
+	
+	
+	<bind action="indexLib" tool="indexLib">
+		<inputAsRequirement port="mergedLib" requirement="mergedLib"/>
+		<productionToOutput port="indexedLib"   production="indexedLib"/>
+	</bind>
+	
+	<bind action="msplit" tool="msplit_new">
+	<!--	<inputAsRequirement port="params" requirement="flowParams"/> -->
+		<inputAsRequirement port="spec" requirement="spectrum"/>
+		<inputAsRequirement port="indexedLib" requirement="library"/>
+		<productionToOutput port="MsplitOut" production="result"/>
+	</bind> 
+	
+	<bind action="MSPLITFilter" tool="spectrumMatchClassify">
+		<inputAsRequirement port="MsplitOut" requirement="input"/>
+		<productionToOutput port="filteredResult" production="output"/>
+	</bind> 
+	
+	<bind action="merge" tool="mergeWithHeader">
+		<inputAsRequirement port="filteredResult"       requirement="input"/>
+		<productionToOutput port="mergedResult" production="output"/>
+	</bind>
+	
+	<bind action="end" type="upload">
+	 	<url value="{livesearch.upload}"/>
+	 	<query name="task" valueRef="@task"/>
+	 	<contentQuery name="content"/>
+	 	<compression type="zip"/>
+		<upload port="mergedResult" type="file">
+			<query name="resource" value="result"/>
+		</upload>
+	</bind>
+
+</binding>

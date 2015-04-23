@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<flow name="specialize">
+	<collection name="spectra"/>
+	<collection name="sequence"/>
+	<collection name="config"/>	
+	<collection name="specializeOut"/>		
+	<object     name="params"/>
+	<object     name="Seq"/>
+    <object	    name="mergedSequence"/>
+   	<object	    name="appendedSeq"/>
+	<object	    name="mergedResult"/>
+	<object	    name="filteredResult"/>
+	
+	<action name="begin">
+	    <output port="spec"       collection="spectra"/>
+		<output port="fasta"  collection="sequence"/>
+		<output port="params" object="params"/>
+	</action>
+        <action name = "mergeSequences">
+		<input port="fasta" collection="sequence"/>
+		<output port="merged"  object="mergedSequence"/>
+	</action>		
+
+	<action name="DecoySeqGenerate">
+		<input port="merged" object="mergedSequence"/>
+		<output port="appendedSeq" object="appendedSeq"/>	
+	</action>
+	
+	<action name="createParam">
+		<input port="spec" collection="spectra" transformation="unfolding"/>
+		<input port="appendedSeq" object="appendedSeq"	/>
+		<input port="params" object="params"/>
+		<output port="cfg" collection="config"/>
+	</action>
+
+	<action name="Specialize" multiplicity="multiple" type="parallel">
+		<input port="cfg" collection="config" transformation="unfolding"/>
+		<input port="spec" collection="spectra"/>		
+		<input port="appendedSeq" object="appendedSeq"	/>
+		<output port="specializeOut" collection="specializeOut"/>		
+	</action>
+	
+	<action name="merge">
+		<input port="specializeOut"        collection="specializeOut"/>
+		<output port="mergedResult" object="mergedResult"/>
+	</action>
+	
+	<action name="SpecializeFilter">
+		<input port="params" object="params"/>
+		<input port="mergedResult"        collection="mergedResult"/>
+		<output port="filteredResult" object="filteredResult"/>
+	</action>
+		
+	<action name="end">
+		<input port="filteredResult"   object="filteredResult"/>
+	</action>
+</flow>

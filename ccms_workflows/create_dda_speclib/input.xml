@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<interface id="create_dda_speclib" version="1.2.5">
+	<workflow-id>CREATE_DDA_SPECLIB</workflow-id>
+	<workflow-label>Create_DDA_SpecLib</workflow-label>
+	
+	<!-- Parameter declarations -->
+	<parameters>
+		<!--
+		<parameter name="workflow"/>
+		<parameter name="protocol"/>
+		<parameter name="uuid"/>
+		<parameter name="ptm.custom_PTM"/>
+		-->
+		<!-- Universal parameters -->
+		<parameter name="desc" label="Description">
+			<validator type="length" maximum="100"/>
+		</parameter>
+		<parameter name="email" label="Email">
+			<validator type="email"/>
+		</parameter>
+		
+		<!-- new parameter for creating lib -->
+		<parameter name="speclibname" label="Spectral library name">
+			<validator type="length" minimum="1"/>
+		</parameter>
+		
+		<!-- Search file parameters -->
+		<parameter name="spec_on_server" label="Spectrum Files">
+			<validator type="required"/>
+			<fileGenerator type="upload" purpose="spectrum" target="spec"/>
+		</parameter>
+		<parameter name="seq_on_server" label="Additional Sequences">
+			<fileGenerator type="upload" purpose="sequence" target="fasta"/>
+		</parameter>
+		<parameter name="db.DB" label="Sequence Database">
+			<options resource="sequence"/>
+			<fileGenerator type="resource" resource="sequence" target="fasta"/>
+		</parameter>
+		<parameter name="db.contaminants" label="Include Common Contaminants"/>
+		<!-- Basic MS parameters -->
+		<parameter name="instrument.instrument" label="Instrument">
+			<options>
+				<option value="ESI-ION-TRAP"/>
+				<option value="QTOF"/>
+				<option value="FT-HYBRID" label="High accuracy LTQ"/>
+			</options>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="fragmentation.fragmentation" label="Fragmentation Method">
+			<options>
+				<option value="None" label="Specified in spectrum file"/>
+				<option value="CID"/>
+				<option value="ETD"/>
+				<option value="HCD"/>
+				<option value="Merge" label="Merge spectra from the same precursor"/>
+			</options>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="cysteine_protease.cysteine" label="Cysteine Protecting Group">
+			<options>
+				<option value="c57" label="Carbamidomethylation (+57)"/>
+				<option value="c58" label="Carboxymethylation (+58)"/>
+				<option value="c99" label="NIPIA/NIPCAM (+99)"/>
+				<option value="None"/>
+			</options>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="cysteine_protease.protease" label="Protease">
+			<options>
+				<option value="Trypsin"/>
+				<option value="Chymotrypsin"/>
+				<option value="Lys-C"/>
+				<option value="Lys-N"/>
+				<option value="Arg-C"/>
+				<option value="Glu-C"/>
+				<option value="Asp-N"/>
+				<option value="None"/>
+			</options>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="c13_nnet.c13" label="Number of Allowed 13C">
+			<options>
+				<option value="0"/>
+				<option value="1"/>
+				<option value="2"/>
+			</options>
+			<default value="1"/>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="c13_nnet.nnet" label="Number of Allowed Non-Enzymatic Termini">
+			<options>
+				<option value="0"/>
+				<option value="1"/>
+				<option value="2"/>
+			</options>
+			<default value="1"/>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="tolerance.PM_tolerance" label="Parent Mass Tolerance">
+			<default value="30"/>
+			<!--
+			<validator type="float" minimum="0" maximum="2.5"/>
+			-->
+			<processor type="concatenate" suffix="tolerance_unit.PM_unit"/>
+		</parameter>
+		<parameter name="tolerance_unit.PM_unit" label="Parent Mass Tolerance Units">
+			<options>
+				<option value="Da"/>
+				<option value="ppm"/>
+			</options>
+			<default value="ppm"/>
+			<validator type="set"/>
+		</parameter>
+		
+		<parameter name="tolerance_unit.FM_unit" label="Fragment Mass Tolerance Units">
+			<options>
+				<option value="Da"/>
+			<!--	<option value="ppm"/> -->
+			</options>
+			<default value="ppm"/>
+			<validator type="set"/>
+		</parameter>
+		
+		<parameter name="tolerance.FM_tolerance" label="Fragment Mass Tolerance">
+			<default value="0.5"/>
+			<!--
+			<validator type="float" minimum="0" maximum="2.5"/>-->
+			<processor type="concatenate" suffix="tolerance_unit.PM_unit"/>			
+		</parameter>
+		
+		<!-- PTM parameters -->
+		<parameter name="ptm.mods" label="Maximum Number of PTMs Permitted in a Single Peptide">
+			<default value="1"/>
+			<validator type="integer" minimum="0"/>
+		</parameter>
+		<!-- Quality control parameters -->
+		<parameter name="filter.filter" label="Filter">
+			<options>
+				<option value="FDR"/>
+				<!-- Temporarily removed, as per email discussion 2/23/12
+				<option value="PepFDR"/>
+				-->
+				<option value="FPR"/>
+			</options>
+			<default value="FDR"/>
+			<validator type="set"/>
+			<processor type="filter"/>
+		</parameter>
+		<parameter name="FDR.FDR" label="Spectrum-Level FDR">
+			<default value="0.01"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+		<!-- Temporarily removed, as per email discussion 2/23/12
+		<parameter name="PepFDR.PepFDR" label="Peptide-Level FDR">
+			<default value="0.01"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+		-->
+		<parameter name="FPR.FPR" label="FPR">
+			<default value="10e-9"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+	</parameters>
+	
+	<!-- Parameter processors not associated with any single parameter -->
+	<processors>
+		<processor type="sequence"/>
+		<processor type="ptm"/>
+	</processors>
+	
+	<!-- Input form layout -->
+	<block label="Basic Options">
+		<row>
+			<cell>
+				<label>
+					<content parameter="spec_on_server"/>
+					<tooltip id="hSpectrumFile"/>
+				</label>
+			</cell>
+			<cell colspan="3">
+				<module id="spec_on_server" type="fileSelector">
+					<property name="label">Spectrum Files</property>
+				</module>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter = "speclibname"/>
+				</label>
+			</cell>
+			<cell colspan="5">
+				<input  type="text"  parameter="speclibname">
+					<attribute name="size" value="30"/>
+				</input>
+			</cell>	
+					
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="instrument.instrument"/>
+					<tooltip id="hInstrument"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="instrument.instrument"/>
+			</cell>
+			<cell>
+				<label>
+					<content parameter="fragmentation.fragmentation"/>
+					<tooltip id="hFragmentation"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="fragmentation.fragmentation"/>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="cysteine_protease.cysteine"/>
+					<tooltip id="hCysteine"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="cysteine_protease.cysteine"/>
+			</cell>
+			<cell>
+				<label>
+					<content parameter="cysteine_protease.protease"/>
+					<tooltip id="hProtease"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="cysteine_protease.protease"/>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content>
+						<![CDATA[Number of Allowed <sup>13</sup>C]]>
+					</content>
+					<tooltip id="hC13"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="c13_nnet.c13"/>
+			</cell>
+			<cell>
+				<label>
+					<content parameter="c13_nnet.nnet"/>
+					<tooltip id="hNnet"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="c13_nnet.nnet"/>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="tolerance.PM_tolerance"/>
+					<tooltip id="hParentMass"/>
+				</label>
+			</cell>
+			<cell colspan="1">
+				<input type="text" parameter="tolerance.PM_tolerance">
+					<attribute name="size" value="3"/>
+				</input>
+				<input type="select" parameter="tolerance_unit.PM_unit"/>
+			</cell>
+			
+			<cell>
+				<label>
+					<content parameter="tolerance.FM_tolerance"/>
+					<tooltip id="hParentMass"/>
+				</label>
+			</cell>
+			<cell colspan="1">
+				<input type="text" parameter="tolerance.FM_tolerance">
+					<attribute name="size" value="3"/>
+				</input>
+				<input type="select" parameter="tolerance_unit.FM_unit"/>
+			</cell>
+			
+		</row>
+	</block>
+	<block label="Allowed Post-Translational Modifications">
+		<row>
+			<cell align="center">
+				<label>
+					<content parameter="ptm.mods"/>
+					<tooltip id="hMods"/>
+				</label>
+				<input type="text" parameter="ptm.mods">
+					<attribute name="size" value="3"/>
+				</input>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<module id="ptm" type="ptmTable">
+					<property name="types">fix,opt,fix_nterm,opt_nterm</property>
+					<property name="defaultType">opt</property>
+				</module>
+			</cell>
+		</row>
+	</block>
+	<block label="More Options">
+		<row>
+			<cell>
+				<label>
+					<content parameter="db.DB"/>
+					<tooltip id="hDatabase"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="db.DB"/>
+			</cell>
+			<cell>
+				<input type="checkbox" parameter="db.contaminants"/>
+				<label>
+					<content parameter="db.contaminants"/>
+					<tooltip id="hContaminant"/>
+				</label>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="seq_on_server"/>
+					<tooltip id="hAdditionalSeq"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<module id="seq_on_server" type="fileSelector">
+					<property name="label">Sequence Files</property>
+				</module>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<input type="radio" parameter="filter.filter" value="FDR"/>
+				<label>
+					<content parameter="FDR.FDR"/>
+					<tooltip id="hFDR"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="FDR.FDR"/>
+			</cell>
+		</row>
+		<!-- Temporarily removed, as per email discussion 2/23/12
+		<row>
+			<cell>
+				<input type="radio" parameter="filter.filter" value="PepFDR"/>
+				<label>
+					<content parameter="PepFDR.PepFDR"/>
+					<tooltip id="hPepFDR"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="PepFDR.PepFDR"/>
+			</cell>
+		</row>
+		-->
+		<row>
+			<cell>
+				<input type="radio" parameter="filter.filter" value="FPR"/>
+				<label>
+					<content parameter="FPR.FPR"/>
+					<tooltip id="hFPR"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="FPR.FPR"/>
+			</cell>
+		</row>
+	</block>
+</interface>

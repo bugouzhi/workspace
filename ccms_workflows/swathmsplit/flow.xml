@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<flow name="swathmsplit">
+	<collection name="spectra"/>
+	<collection name="speclibs"/>
+	<collection name="seqdb"/>
+	<collection name="config"/>	
+	<collection name="MsplitOut"/>
+	<collection name="filteredResult"/>		
+	<collection name="quantExport"/>
+	<object     name="params"/>
+	<object     name="Seq"/>
+    <object	    name="mergedLib"/>
+   	<object	    name="appendedSeq"/>
+	<object	    name="mergedResult"/>
+	<object     name="mergedSequence"/>
+	
+	<action name="begin">
+	    <output port="spec"       collection="spectra"/>
+		<output port="fasta"  collection="speclibs"/>
+		<output port="seqdb"  collection="seqdb"/>
+		<output port="params" object="params"/>
+	</action>
+	
+    <action name = "mergeLib">
+		<input port="speclibs" collection="speclibs"/>
+		<output port="mergedLib"  object="mergedLib"/>
+	</action>
+	
+	<action name="mergeSequences">
+		<input port="seqdb"  collection="seqdb"/>
+		<output port="mergedSequence"  object="mergedSequence"/>
+	</action>
+	
+	<action name="SWATHMSPLIT" multiplicity="multiple" type="parallel">
+		<input port="spec" collection="spectra" transformation="unfolding"/>
+		<input port="params" object="params"/>
+		<input port="mergedLib" object="mergedLib"	/>
+		<output port="MsplitOut" collection="MsplitOut"/>		
+	</action>	    
+	
+	<action name="SWATHMSPLITFilter" multiplicity="multiple" type="parallel">
+		<input port="MsplitOut" collection="MsplitOut" transformation="unfolding"/>
+		<input port="params" object="params"/>
+		<output port="filteredResult" collection="filteredResult"/>		
+	</action>
+
+<!--	
+	<action name="genPeakViewIn" multiplicity="multiple" type="parallel">
+		<input port="filteredOut" collection="MsplitOut" transformation="unfolding"/>
+		<input port="seqdb" collection="seqdb"/>		
+		<input port="params" object="params"/>
+		<output port="filteredResult" collection="filteredResult"/>		
+	</action>
+	-->
+	<action name="SWATHQuant">
+		<input port="params" object="params"/>
+		<input port="filteredResult"        collection="filteredResult"/>
+		<input port="mergedLib"  object="mergedLib"/>
+		<input port="mergedSequence"  collection="mergedSequence"/>
+		<output port="quantExport" collection="quantExport"/>
+	</action>
+
+	<action name="merge">
+		<input port="filteredResult"        collection="filteredResult"/>
+		<output port="mergedResult" object="mergedResult"/>
+	</action>
+
+	<action name="end">
+		<input port="mergedResult" object="mergedResult"/>
+		<input port="quantExport"  collection="quantExport"/>
+	</action>
+
+</flow>

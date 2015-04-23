@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<interface id="msplit_new" version="1.2.5">
+	<workflow-id>MSPLIT_New</workflow-id>
+	<workflow-label>MSPLIT_New</workflow-label>
+	
+	<!-- Parameter declarations -->
+	<parameters>
+		<!--
+		<parameter name="workflow"/>
+		<parameter name="protocol"/>
+		<parameter name="uuid"/>
+		<parameter name="ptm.custom_PTM"/>
+		-->
+		<!-- Universal parameters -->
+		<parameter name="desc" label="Description">
+			<validator type="length" maximum="100"/>
+		</parameter>
+		<parameter name="email" label="Email">
+			<validator type="email"/>
+		</parameter>
+		<!-- Search file parameters -->
+		<parameter name="spec_on_server" label="Spectrum Files">
+			<validator type="required"/>
+			<fileGenerator type="upload" purpose="spectrum" target="spec"/>
+		</parameter>
+		<parameter name="lib_on_server" label="Spectral Library">
+			<fileGenerator type="upload" purpose="spectral library" target="fasta"/>
+		</parameter>
+	    <parameter name="db_on_server" label="Sequence Database">
+			<fileGenerator type="upload" purpose="sequence" target="seqdb"/>
+		</parameter>
+		
+	<!--	<parameter name="db.DB" label="Sequence Database">
+			<options resource="sequence"/>
+			<fileGenerator type="resource" resource="sequence" target="fasta"/>
+		</parameter>
+		<parameter name="db.contaminants" label="Include Common Contaminants"/>-->
+		<!-- Basic MS parameters -->
+	
+		<parameter name="tolerance.PM_tolerance" label="Parent Mass Tolerance">
+			<default value="2.0"/>
+			<!--
+			<validator type="float" minimum="0" maximum="2.5"/>
+			-->
+			<processor type="concatenate" suffix="tolerance_unit.PM_unit"/>
+		</parameter>
+
+		<parameter name="tolerance_unit.PM_unit" label="Parent Mass Tolerance Units">
+			<options>
+				<option value="Da"/>
+				<!--<option value="ppm"/>-->
+			</options>
+			<default value="Da"/>
+			<validator type="set"/>
+		</parameter>
+
+<!--		<parameter name="tolerance.FM_tolerance" label="Fragment Mass Tolerance">
+			<default value="45"/>
+			<validator type="float" minimum="0" maximum="2.5"/>
+				<processor type="concatenate" suffix="tolerance_unit.FM_unit"/>
+		</parameter> 
+		
+		<parameter name="tolerance_unit.FM_unit" label="Fragment Mass Tolerance Units">
+			<options>
+				 <option value="Da"/> 
+				<option value="ppm"/>
+			</options>
+			<default value="ppm"/>
+			<validator type="set"/>
+		</parameter>
+
+		<parameter name="swath_cycle" label="Number of scans per Swath cycle">
+			<default value="35"/>
+		        <validator type="float" minimum="0" maximum="2.5"/>
+			<processor type="concatenate" suffix="tolerance_unit.PM_unit"/> 
+		
+		</parameter>
+-->			
+
+		<!-- Quality control parameters -->
+		<parameter name="filter.filter" label="Filter">
+			<options>
+				<option value="FDR"/>
+				<!-- Temporarily removed, as per email discussion 2/23/12
+				<option value="PepFDR"/>
+				<option value="FPR"/>
+				-->
+			</options>
+			<default value="FDR"/>
+			<validator type="set"/>
+			<processor type="filter"/>
+		</parameter>
+
+		<parameter name="FDR.FDR" label="Peptide-level FDR">
+			<default value="0.01"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+		<!-- Temporarily removed, as per email discussion 2/23/12
+		<parameter name="PepFDR.PepFDR" label="Peptide-Level FDR">
+			<default value="0.01"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+		<parameter name="FPR.FPR" label="FPR">
+			<default value="10e-9"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+		-->
+	</parameters>
+	
+	<!-- Input form layout -->
+	<block label="Basic Options">
+		<row>
+			<cell>
+				<label>
+					<content parameter="spec_on_server"/>
+					<tool id="hSpectrumFile"/>
+				</label>
+			</cell>
+			<cell colspan="3">
+				<module id="spec_on_server" type="fileSelector">
+					<property name="label">Spectrum Files</property>
+				</module>
+			</cell>
+		</row>
+		
+		<row>
+			<cell>
+				<label>
+					<content parameter="tolerance.PM_tolerance"/>
+					<tooltip id="hParentMass"/>
+				</label>
+			</cell>
+			<cell colspan="3">
+				<input type="text" parameter="tolerance.PM_tolerance">
+					<attribute name="size" value="3"/>
+				</input>
+				<input type="select" parameter="tolerance_unit.PM_unit"/>
+			</cell>
+ 		</row>	
+	</block>
+
+	<!--
+	<block label="Allowed Post-Translational Modifications">
+		<row>
+			<cell align="center">
+				<label>
+					<content parameter="ptm.mods"/>
+					<tooltip id="hMods"/>
+				</label>
+				<input type="text" parameter="ptm.mods">
+					<attribute name="size" value="3"/>
+				</input>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<module id="ptm" type="ptmTable">
+					<property name="types">fix,opt,fix_nterm,opt_nterm</property>
+					<property name="defaultType">opt</property>
+				</module>
+			</cell>
+		</row>
+	</block>
+         -->
+	<block label="More Options">
+	<!--	<row>
+			<cell>
+				<label>
+					<content parameter="db.DB"/>
+					<tooltip id="hDatabase"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="db.DB"/>
+			</cell>
+		</row> -->
+		<row>
+			<cell>
+				<label>
+					<content parameter="lib_on_server"/>
+					<tooltip id="hAdditionalSeq"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<module id="lib_on_server" type="fileSelector">
+					<property name="label">Spectral library</property>
+				</module>
+			</cell>
+		</row>
+		
+	<!--	<row>
+			<cell>
+				<label>
+					<content parameter="db_on_server"/>
+					<tooltip id="hAdditionalSeq"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<module id="db_on_server" type="fileSelector">
+					<property name="label">Sequence Files</property>
+				</module>
+			</cell>
+		</row>  -->
+		<row>
+			<cell>
+				<input type="radio" parameter="filter.filter" value="FDR"/>
+				<label>
+					<content parameter="FDR.FDR"/>
+					<tooltip id="hFDR"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="FDR.FDR"/>
+			</cell>
+		</row>
+		<!-- Temporarily removed, as per email discussion 2/23/12
+		<row>
+			<cell>
+				<input type="radio" parameter="filter.filter" value="PepFDR"/>
+				<label>
+					<content parameter="PepFDR.PepFDR"/>
+					<tooltip id="hPepFDR"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="PepFDR.PepFDR"/>
+			</cell>
+		</row>
+		-->
+		</block>
+</interface>

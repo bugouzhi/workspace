@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<flow name="create_dda_speclib">
+	<collection	name="spectrum"/>
+	<collection	name="sequence"/>
+	<object		name="parameters"/>
+	<object		name="mergedSequence"/>
+	<object	    name="preparedSequence"/>
+	<collection	name="msgfDBResult"/>
+	<object		name="mergedResult"/>
+	<object		name="finalResult"/>
+	<object 	name="pepResult"/>
+	<object     name="speclib"/>
+	<object     name="log"/>
+	<object     name="stats"/>
+	<object     name="concatlib"/>
+	<collection name="userlib" />
+	
+	<action name="begin">
+		<output port="spec"   collection="spectrum"/>
+		<output port="fasta"  collection="sequence"/>
+		<output port="params" object="parameters"/>
+	</action>
+	
+	<action name="mergeSequences">
+		<input port="fasta" collection="sequence"/>
+		<output port="out"  collection="mergedSequence"/>
+	</action>
+	
+	<action name="buildSA">
+		<input port="fasta" object="mergedSequence"/>
+		<output port="out"  object="preparedSequence"/>
+	</action>
+	
+	<action name="msgfDB" multiplicity="multiple" type="parallel">
+		<input port="spec"   collection="spectrum" transformation="unfolding"/>
+		<input port="fasta"  object="mergedSequence"/>
+		<input port="seq"    object="preparedSequence"/>
+		<input port="params" object="parameters"/>
+		<output port="out"   collection="msgfDBResult"/>
+	</action>
+	
+	<action name="merge">
+		<input port="result"        collection="msgfDBResult"/>
+		<output port="mergedResult" object="mergedResult"/>
+	</action>
+	
+	<action name="fdr">
+		<input port="in"   object="mergedResult"/>
+		<output port="out" object="finalResult"/>
+	</action>
+
+	<action name="getPepResult">
+		<input port="out"   object="finalResult"/>
+		<output port="pepResult" object="pepResult"/>
+	</action>
+	
+	<action name="createLib">
+		<input port="spec" collection="spectrum"/>
+		<input port="pepResult" object="pepResult"/>
+		<output port="speclib" object="speclib"/>
+		<output port="log" object="log"/>
+	</action>
+	
+	<action name="getLibStats">
+		<input port="log" object="log"/>
+		<output port="stats" object="stats"/>
+	</action>
+	
+	<action name="createDecoyLib">
+		<input port="speclib" object="speclib"/>
+		<output port="concatlib" object="concatlib"/>
+	</action>
+     
+     <action name="renameLib">
+		<input port="concatlib" object="concatlib"/>
+		<output port="userlib" collection="userlib"/>
+	</action>
+     		
+	<action name="end">
+		<input port="out" object="finalResult"/>
+		<input port="log" object="log"/>
+		<input port="stats" object="stats"/>
+		<input port="userlib" object="userlib"/>
+	</action>
+</flow>

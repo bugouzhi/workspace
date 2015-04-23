@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<flow name="mxdb_twopass">
+	<collection	name="spectrum"/>
+	<collection	name="sequence"/>
+	<object		name="parameters"/>
+	<object		name="mergedSequence"/>
+	<object	    name="appendedSeq"/>
+	<object	    name="preparedSequence"/>
+	<collection	name="msgfDBResult"/>
+	<object		name="mergedResult"/>
+	<object		name="mergedLinkedResult"/>
+	<object		name="finalResult"/>
+	<collection name="config"/>	
+	<collection name="MxdbOut"/>
+	<object     name="IDedSeq"/>
+	<object     name="filteredResult"/>
+	<collection     name="groupedResult"/>	
+	
+	<action name="begin">
+		<output port="spec"   collection="spectrum"/>
+		<output port="fasta"  collection="sequence"/>
+		<output port="params" object="parameters"/>
+	</action>
+	
+	<action name="mergeSequences">
+		<input port="fasta" collection="sequence"/>
+		<output port="mergedSequence"  object="mergedSequence"/>
+	</action>
+	
+	<!-- Stage one flow -->
+	<action name="buildSA">
+		<input port="mergedSequence" object="mergedSequence"/>
+		<output port="preparedSequence"  object="preparedSequence"/>
+	</action>
+	
+	<action name="msgfDB" multiplicity="multiple" type="parallel">
+		<input port="spec"   collection="spectrum" transformation="unfolding"/>
+		<input port="mergedSequence" object="mergedSequence"/>
+		<input port="preparedSequence"    object="preparedSequence"/>
+		<input port="params" object="parameters"/>
+		<output port="out"   collection="msgfDBResult"/>
+	</action>
+	
+	<action name="merge">
+		<input port="result"        collection="msgfDBResult"/>
+		<output port="mergedResult" object="mergedResult"/>
+	</action>
+	
+	<action name="fdr">
+		<input port="in"   object="mergedResult"/>
+		<output port="out" object="finalResult"/>
+	</action>
+	
+	<!--Stage two flows -->
+	<action name="getIDedProteins">
+		<input port="out" object="finalResult"/>
+		<input port="fasta" object="mergedSequence"/>
+		<output port="IDedSeq" object="IDedSeq"/>
+	</action>
+	
+	<action name="DecoySeqGenerate">
+		<input port="IDedSeq" object="IDedSeq"/>
+		<output port="appendedSeq" object="appendedSeq"/>	
+	</action>
+	
+	
+	<action name="createMXDBParam">
+		<input port="spec" collection="spectrum" transformation="unfolding"/>
+		<input port="appendedSeq" object="appendedSeq"/>
+		<input port="params" object="parameters"/>
+		<output port="cfg" collection="config"/>
+	</action>
+
+	<action name="MXDB" multiplicity="multiple" type="parallel">
+		<input port="cfg" collection="config" transformation="unfolding"/>
+		<input port="spec" collection="spectrum"/>		
+		<input port="appendedSeq" object="appendedSeq"/>
+		<output port="MXDBOut" collection="MxdbOut"/>		
+	</action>
+	
+	<action name="mergeLinked">
+		<input  port="MXDBOut" collection="MxdbOut"/>
+		<output port="mergedLinkedResult" object="mergedLinkedResult"/>
+	</action>
+	
+	<action name="MXDBFilter">
+		<input port="params" object="params"/>
+		<input port="mergedLinkedResult"    collection="mergedLinkedResult"/>
+		<output port="filteredResult" object="filteredResult"/>
+	</action>
+	
+	<action name="groupIDs">
+		<input port="params" object="params"/>
+		<input port="filteredResult" object="filteredResult"/>
+		<input port="out" object="finalResult"/>
+		<output port="groupedResult" collection="groupedResult"/>
+	</action>
+	
+
+	<action name="end">
+		<input port="out" object="finalResult"/>
+		<input port="filteredResult" object="filteredResult"/>
+		<input port="groupedResult"  object="groupedResult"/>
+	</action>
+</flow>

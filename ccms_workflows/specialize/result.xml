@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<interface id="specialize" version="1.2.5">
+	<!-- View definitions -->
+	<view id="group_by_spectrum" label="Group by Spectrum">
+		<blockRef id="main" type="spectrum_list"/>
+	</view>
+	<!--
+	<view id="group_by_peptide" label="Group by Peptide">
+		<blockRef id="main" type="peptide_list"/>
+	</view>
+	<view id="group_by_protein" label="Group by Protein">
+		<blockRef id="main" type="protein_list"/>
+	</view>
+	<view id="protein_details" display="hidden">
+		<blockRef id="main" type="spectra_per_protein"/>
+	</view>
+	-->
+
+	<!-- Block definitions -->
+	<block id="spectrum_list" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="Scan#" operator="ascending"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+
+		</data>
+		<row>
+			<column type="text"        field="#SpectrumFile"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="Scan#"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="Annotation"    label="Peptide"    width="18"    tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="text"        field="Protein"  label="Protein"    width="18"    tooltip="Protein name"/>
+			<column type="integer"     field="Charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="float"     field="Score"  label="Score"      precision="1"     tooltip="Specialize raw score of the peptide-spectrum match"/>
+			<column type="float"     field="SVM-Score"  label="SVM-Score"      precision="1"     tooltip="Specialize svm score of the peptide-spectrum match"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImage" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+				<parameter name="annotation-style-inspect"       value=" "/>
+			</column>
+		<!--	<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+		-->
+		</row>
+	</block>
+	
+	
+</interface>	

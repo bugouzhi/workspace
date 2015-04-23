@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<interface id="mxdb_twopass" version="1.2.5">
+	<!-- View definitions -->
+	<view id="group_by_spectrum" label="Unlinked IDs: Group by Spectrum">
+		<blockRef id="main" type="spectrum_list"/>
+	</view>
+	<view id="group_by_peptide" label="Unlinked IDs: Group by Peptide">
+		<blockRef id="main" type="peptide_list"/>
+	</view>
+	<view id="group_by_protein" label="Unlinked IDs: Group by Protein">
+		<blockRef id="main" type="protein_list"/>
+	</view>
+	<view id="protein_details" display="hidden">
+		<!--
+		<blockRef id="summary" type="protein_summary"/>
+		-->
+		<blockRef id="main" type="spectra_per_protein"/>
+	</view>
+	
+	<view id="group_by_spectrum_linked" label="Linked IDs: Group by Spectrum">
+		<blockRef id="main" type="linked_spectrum_list"/>
+	</view>
+
+
+	<view id="group_by_allpeptides" label="Linked IDs: Group by Peptide">
+		<blockRef id="main" type="linked_peptide_list"/>
+	</view>
+
+	<!-- Block definitions -->
+	<block id="spectrum_list" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="FDR" operator="ascending"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpecFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#SpecFile"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="SpecIndex"  label="Index"      width="3"     tooltip="Spectrum index (1-based) in the file. The first spectrum has index 1, the second has index 2, and so on. For mzXML files this value is same as the scan number."/>
+			<column type="integer"     field="Scan#"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="FragMethod" label="FragMethod" width="3"     tooltip="Fragmentation method"/>
+			<column type="text"        field="Peptide"    label="Peptide"    width="18"    tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="text"        field="ProteinID"  label="Protein"    width="18"    tooltip="Protein name"/>
+			<column type="integer"     field="Charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="integer"     field="MSGFScore"  label="Score"      width="3"     tooltip="MS-GF raw score of the peptide-spectrum match"/>
+			<column type="exponential" field="P-value"    label="DB P-Value" precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;database&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+			<column type="float"       field="FDR"        label="FDR"        precision="5" tooltip="False discovery rate"/>
+			<column type="float"       field="PepFDR"     label="PepFDR"     precision="5" tooltip="Peptide-level false discovery rate estimated using the target-decoy approach"/>
+			<column type="exponential" field="SpecProb"   label="SpecProb"   precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;peptide&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="index"         value="[SpecIndex]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+				<parameter name="fragmentation" value="[FragMethod]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="index"         value="[SpecIndex]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+				<parameter name="fragmentation" value="[FragMethod]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="peptide_list" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular"         sortBy="FDR"      operator="ascending"/>
+				<parser type="representativeTabular" groupBy="Peptide" selectBy="MSGFScore" operator="max"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpecFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#SpecFile"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="SpecIndex"  label="Index"      width="3"     tooltip="Spectrum index (1-based) in the file. The first spectrum has index 1, the second has index 2, and so on. For mzXML files this value is same as the scan number."/>
+			<column type="integer"     field="Scan#"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="FragMethod" label="FragMethod" width="3"     tooltip="Fragmentation method"/>
+			<column type="text"        field="Peptide"    label="Peptide"    width="18"    tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="text"        field="ProteinID"  label="Protein"    width="18"    tooltip="Protein name"/>
+			<column type="integer"     field="Charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="integer"     field="MSGFScore"  label="Score"      width="3"     tooltip="MS-GF raw score of the peptide-spectrum match"/>
+			<column type="exponential" field="P-value"    label="DB P-Value" precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;database&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+			<column type="float"       field="FDR"        label="FDR"        precision="5" tooltip="False discovery rate"/>
+			<column type="float"       field="PepFDR"     label="PepFDR"     precision="5" tooltip="Peptide-level false discovery rate estimated using the target-decoy approach"/>
+			<column type="exponential" field="SpecProb"   label="SpecProb"   precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;peptide&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="index"         value="[SpecIndex]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+				<parameter name="fragmentation" value="[FragMethod]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="index"         value="[SpecIndex]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+				<parameter name="fragmentation" value="[FragMethod]"/>
+			</column>
+		</row>
+		<row expander="down:up">
+			<column type="block" block="spectra_per_peptide" colspan="12">
+				<parameter name="peptide0" value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_peptide" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="FDR"      operator="ascending"/>
+				<parser type="slicedTabular" groupBy="Peptide" sliceBy="{peptide0}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpecFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#SpecFile"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="SpecIndex"  label="Index"      width="3"     tooltip="Spectrum index (1-based) in the file. The first spectrum has index 1, the second has index 2, and so on. For mzXML files this value is same as the scan number."/>
+			<column type="integer"     field="Scan#"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="FragMethod" label="FragMethod" width="3"     tooltip="Fragmentation method"/>
+			<column type="text"        field="ProteinID"  label="Protein"    width="18"    tooltip="Protein name"/>
+			<column type="integer"     field="Charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="integer"     field="MSGFScore"  label="Score"      width="3"     tooltip="MS-GF raw score of the peptide-spectrum match"/>
+			<column type="exponential" field="P-value"    label="DB P-Value" precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;database&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+			<column type="float"       field="FDR"        label="FDR"        precision="5" tooltip="False discovery rate"/>
+			<column type="float"       field="PepFDR"     label="PepFDR"     precision="5" tooltip="Peptide-level false discovery rate estimated using the target-decoy approach"/>
+			<column type="exponential" field="SpecProb"   label="SpecProb"   precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;peptide&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="index"         value="[SpecIndex]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+				<parameter name="fragmentation" value="[FragMethod]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="5">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="index"         value="[SpecIndex]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+				<parameter name="fragmentation" value="[FragMethod]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="protein_list" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular"  sortBy="FDR"      operator="ascending"/>
+				<parser type="groupedTabular" groupBy="Protein"/>
+			</parsers>
+			<processors>
+				<processor type="protein"      field="Protein"/>
+				<processor type="peptideCount" field="Peptide"/>
+			</processors>
+		</data>
+		<row>
+			<column type="view" view="protein_details" field="ProteinID" label="Protein" width="18">
+				<parameter name="protein"   value="[Protein]"/>
+				<parameter name="proteinID" value="[ProteinID]"/>
+			</column>
+			<column type="text"     field="Comment"   label="Description"                width="18"/>
+			<column type="integer"  field="Hits"      label="Hits"                       width="2"/>
+			<column type="integer"  field="Peptides"  label="Unique Unmodified Peptides" width="2"/>
+			<column type="integer"  field="Modified"  label="Unique Modified Peptides"   width="2"/>
+		</row>
+		<row expander="down:up">
+			<column type="block" block="spectra_per_protein" colspan="5">
+				<parameter name="protein" value="[Protein]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_protein" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="FDR"      operator="ascending"/>
+				<parser type="slicedTabular" groupBy="Protein" sliceBy="{protein}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpecFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#SpecFile"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="SpecIndex"  label="Index"      width="3"     tooltip="Spectrum index (1-based) in the file. The first spectrum has index 1, the second has index 2, and so on. For mzXML files this value is same as the scan number."/>
+			<column type="integer"     field="Scan#"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="FragMethod" label="FragMethod" width="3"     tooltip="Fragmentation method"/>
+			<column type="text"        field="Peptide"    label="Peptide"    width="18"    tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="integer"     field="Charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="integer"     field="MSGFScore"  label="Score"      width="3"     tooltip="MS-GF raw score of the peptide-spectrum match"/>
+			<column type="exponential" field="P-value"    label="DB P-Value" precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;database&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+			<column type="float"       field="FDR"        label="FDR"        precision="5" tooltip="False discovery rate"/>
+			<column type="float"       field="PepFDR"     label="PepFDR"     precision="5" tooltip="Peptide-level false discovery rate estimated using the target-decoy approach"/>
+			<column type="exponential" field="SpecProb"   label="SpecProb"   precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;peptide&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="index"         value="[SpecIndex]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+				<parameter name="fragmentation" value="[FragMethod]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="5">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="index"         value="[SpecIndex]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+				<parameter name="fragmentation" value="[FragMethod]"/>
+			</column>
+		</row>
+	</block>
+	
+	<!--
+	<block id="protein_summary" type="stream">
+		<data>
+			<source type="invoke" name="proteinSummaryExtractor">
+				<parameter name="input"     file="summary/"/>
+				<parameter name="protein"   value="{protein}"/>
+				<parameter name="proteinID" value="{proteinID}"/>
+				<parameter name="output"    file="temp/summary/{protein}.html"/>
+			</source>
+			<parsers>
+				<parser type="stream" contentType="text/html"/>
+			</parsers>
+		</data>
+	</block>
+	-->
+	
+	<!-- Linked results Block definitions -->
+	<block id="linked_spectrum_list" type="table">
+		<data>
+			<source type="file" name="linkedresult/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="Scan#" operator="ascending"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+
+		</data>
+		<row>
+			<column type="text"        field="#SpectrumFile"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="Scan#"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="Annotation"    label="Peptide"    width="18"    tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="text"        field="Protein"  label="Protein"    width="18"    tooltip="Protein name"/>
+			<column type="integer"     field="Charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="float"     field="Score"  label="Score"      precision="1"     tooltip="MXDB raw score of the peptide-spectrum match"/>
+			<column type="float"     field="SVM-Score"  label="SVM Score"      precision="1"     tooltip="MXDB svm score of the peptide-spectrum match"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="linked_peptide_list" type="table">
+		<data>
+			<source type="file" name="groupedResult/linked_result.txt"/>
+			<parsers>
+				<parser type="sortedTabular"         sortBy="Score"      operator="descending"/>
+				<parser type="representativeTabular" groupBy="GrpInd" selectBy="Score" operator="max"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#spectrum"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#spectrum"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="scan"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="Annotation"    label="Peptide"    width="18"    tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="text"        field="Protein"  label="Protein"    width="18"    tooltip="Protein name"/>
+			<column type="integer"     field="charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="float"     field="Score"  label="Score"      precision="3"     tooltip="MS-GF raw score of the peptide-spectrum match"/>
+			<column type="integer"     field="RelatedID"  label="#RelatedIDs"      precision="3"     tooltip="Unlinked IDs that has the same peptide sequence as this linkedID"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[scan]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[scan]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+		</row>
+		<row expander="down:up">
+			<column type="block" block="spectra_per_linkpeptide" colspan="12">
+				<parameter name="peptide" value="[GrpInd]"/>
+			</column>
+		</row>
+		<row expander="down:up">
+			<column type="block" block="spectra_per_unlinkpeptide" colspan="12">
+				<parameter name="peptide" value="[GrpInd]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_linkpeptide" type="table">
+		<data>
+			<source type="file" name="groupedResult/linked_result.txt"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="Score"      operator="descending"/>
+				<parser type="slicedTabular" groupBy="GrpInd" sliceBy="{peptide}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#spectrum"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#spectrum"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="scan"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="Annotation"    label="Peptide"    width="18"    tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="text"        field="Protein"  label="Protein"    width="18"    tooltip="Protein name"/>
+			<column type="integer"     field="charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="float"     field="Score"  label="Score"      precision="3"     tooltip="MXDB raw score of the peptide-spectrum match"/>
+			<column type="integer"     field="RelatedID"  label="#RelatedIDs"      precision="3"     tooltip="Unlinked IDs that has the same peptide sequence as this linkedID"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[scan]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[scan]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	<block id="spectra_per_unlinkpeptide" type="table">
+		<data>
+			<source type="file" name="groupedResult/unlinked_result.txt"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="Score"      operator="ascending"/>
+				<parser type="slicedTabular" groupBy="GrpInd" sliceBy="{peptide}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#spectrum"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#spectrum"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="scan"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="Annotation"    label="Peptide"    width="18"    tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="text"        field="Protein"  label="Protein"    width="18"    tooltip="Protein name"/>
+			<column type="integer"     field="charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="exponential"     field="Score"  label="Score"      precision="1"     tooltip="Probability that a spectrum matches a random &lt;b&gt;peptide&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[scan]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[scan]"/>
+				<parameter name="peptide"       value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+</interface>

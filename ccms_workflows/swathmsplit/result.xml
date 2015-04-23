@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<interface id="swathmsplit" version="1.2.5">
+	<!-- Dowload files -->
+     <download>
+            <source type="folder" name="SWATHQuant/"/>
+     </download>
+
+	<!-- View definitions -->
+	<view id="group_by_spectrum" label="Group by Spectrum">
+		<blockRef id="main" type="spectrum_list"/>
+	</view>
+	<view id="group_by_peptide" label="Group by Peptide">
+		<blockRef id="main" type="peptide_list"/>
+	</view>
+<!--	
+	<view id="group_by_protein" label="Group by Protein">
+		<blockRef id="main" type="protein_list"/>
+	</view>
+	<view id="protein_details" display="hidden">
+		<blockRef id="main" type="spectra_per_protein"/>
+	</view>
+	-->
+
+	<!-- Block definitions -->
+	<block id="spectrum_list" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="Scan#" operator="ascending"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#File"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+
+		</data>
+		<row>
+			<column type="text"        field="#File"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="Scan#"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="float"        field="Mz"    label="M/Z"    precision="2"    tooltip="Precursor M/Z"/>
+			<column type="integer"        field="z"  label="Charge"    width="3"    tooltip="Precursor charge"/>
+			<column type="text"     field="Peptide"     label="Peptide"     width="6"     tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="float"     field="cosine"  label="Cosine"      precision="3"     tooltip="Spectral similarity of spectrum-spectrum match"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="peptide_list" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular"         sortBy="cosine"      operator="descending"/>
+				<parser type="representativeTabular" groupBy="Peptide" selectBy="cosine" operator="max"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpecFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#File"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="Scan#"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="float"        field="Mz"    label="M/Z"    precision="2"    tooltip="Precursor M/Z"/>
+			<column type="integer"        field="z"  label="Charge"    width="3"    tooltip="Precursor charge"/>
+			<column type="text"     field="Peptide"     label="Peptide"     width="6"     tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="float"     field="cosine"  label="Cosine"      precision="3"     tooltip="Spectral similarity of spectrum-spectrum match"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+			</column>
+		</row>
+		<row expander="down:up">
+			<column type="block" block="spectra_per_peptide" colspan="12">
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_peptide" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="Cosine"      operator="descending"/>
+				<parser type="slicedTabular" groupBy="Peptide" sliceBy="{Peptide}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpecFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#File"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="integer"     field="Scan#"      label="Scan"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="float"        field="Mz"    label="M/Z"    precision="2"    tooltip="Precursor M/Z"/>
+			<column type="integer"        field="z"  label="Charge"    width="3"    tooltip="Precursor charge"/>
+			<column type="text"     field="Peptide"     label="Peptide"     width="6"     tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="float"     field="cosine"  label="Cosine"      precision="3"     tooltip="Spectral similarity of spectrum-spectrum match"/>
+
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="5">
+				<parameter name="file"          file="spec/[internalFilename]"/>
+				<parameter name="scan"          value="[Scan#]"/>
+				<parameter name="peptide"       value="[Peptide]"/>
+
+			</column>
+		</row>
+	</block>
+	
+</interface>	

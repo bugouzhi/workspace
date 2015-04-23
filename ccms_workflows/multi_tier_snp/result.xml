@@ -1,0 +1,1807 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<interface id="msplitnew_msgfdb_moda" version="1">
+
+<!--************************METABOLOMICS-SNETS*******************-->
+	<download>
+                <source type="folder" name="clusterinfo/"/>
+                <source type="folder" name="clusterinfosummary/"/>
+                <source type="folder" name="clusterinfogroup/"/>
+                <source type="folder" name="clusterinfosummarygroup/"/>
+                <source type="folder" name="clusterinfosummarygroup_attributes/"/>
+                <source type="folder" name="clusterinfosummarygroup_attributes_withIDs/"/>
+                <source type="folder" name="clusterinfosummarygroup_attributes_withIDs_arbitraryattribute/"/>
+                <source type="folder" name="networkedges/"/>
+                <source type="folder" name="networkedges_selfloop/"/>
+                <source type="file" name="spectra/specs_ms.mgf"/>
+        </download>
+	
+        <view id="view_all_annotations_DB" label="View All Spectra DB">
+                <blockRef id="main"   type="view_all_annotations_DB"/>
+        </view>
+        
+        <view id="group_by_organism_DB" label="Group by Organism DB">
+                <blockRef id="main" type="organism_list_DB"/>
+        </view>
+        
+        <view id="organism_details_DB" display="hidden">
+                <blockRef id="main" type="spectra_per_organism_DB"/>
+        </view>
+	
+	<view id="group_by_spectrum_specnets" label="Group by Spectrum Specnets">
+                <blockRef id="main" type="spectrum_list_specnets"/>
+        </view>
+        
+        <view id="view_all_clusters" label="View All Clusters">
+                <blockRef id="main" type="clusters_list_specnets"/>
+        </view>
+        
+        <view id="view_all_clusters_withID" label="View All Clusters With IDs">
+                <blockRef id="main" type="clusters_list_specnets_withID"/>
+        </view>
+        
+        <view id="view_network" label="View Network, Node Centric">
+                <blockRef id="main" type="network_list_specnets"/>
+        </view>
+
+        <view id="cluster_details" display="hidden">
+                <blockRef id="main" type="results_per_cluster"/>
+        </view>
+        
+        <view id="view_related_network" display="hidden">
+                <blockRef id="main" type="related_network_list_specnets"/>
+        </view>
+        
+        
+        <view id="view_network_pairs" label="View Network Pairs">
+                <blockRef id="main" type="network_pairs_specnets"/>
+        </view>
+        
+        <view id="view_qc_false_results" label="View QC False Results">
+                <blockRef id="main" type="view_qc_false_results"/>
+        </view>
+        
+        <view id="view_qc_curve_results" label="View QC Curve Results">
+                <blockRef id="main" type="view_qc_curve_results"/>
+        </view>
+        
+	<view id="peptide_explorer" label="Peptide Explorer">
+                <blockRef id="main" type="peptide_explorer"/>
+        </view>
+ 
+        <block id="peptide_explorer" type="table">
+                <data>
+                        <source type="file" name="peptideExplorer/"/>
+                        <parsers>
+                                <parser type="sortedTabular" sortBy="SEQ" operator="ascending"/>
+                        </parsers>
+
+                </data>
+                <row>
+                        <column type="text"     field="SEQ"   label="Sequence"                width="10"/>
+                        <column type="text"     field="variants"   label="Variants"                width="10"/>
+                        <column type="text"     field="neighbors"   label="Neighbor Cluster Indices"                width="5"/>
+                        <column type="text"     field="unidentifiedneighbors"   label="Unidentified Neighbor Cluster Indices"                width="5"/>
+                        <column type="integer"     field="unidentifiedneighborscount"   label="Unidentified Neighbor Count"                width="2"/>
+                        <column type="integer"     field="uniqueprecursors"   label="Unique Precursor Count"     width="2"/>
+                        <column type="integer"     field="uniqueunidentifiedprecursors"   label="Unique Unidentified Precursor Count"     width="2"/>
+                </row>
+
+        </block>
+        <view id="network_statistics" label="Network Statistics">
+                <blockRef id="main" type="network_stats_plaintext"/>
+        </view>
+
+        <block id="network_stats_plaintext" type="stream">
+                <data>
+                        <source type="file" name="network_statistics/"/>
+                        <parsers>
+                                <parser type="stream" contentType="text/plain"/>
+                        </parsers>
+                </data>
+        </block>
+
+        <view id="networkcomponents" label="Network Components">
+                <blockRef id="main" type="networkcomponents_table"/>
+        </view>
+        
+        <block id="networkcomponents_table" type="table">
+                <data>
+                        <source type="file" name="networkcomponents/"/>
+                        <parsers>
+                                <parser type="tabular"/>
+                        </parsers>
+
+                </data>
+                <row>
+                        <column type="integer"     field="ComponentIndex"   label="Component Index"     width="6"/>
+                        <column type="integer"     field="NodeCount"   label="Node Count"       width="6"/>
+                        <column type="text"     field="AllIDs"   label="All IDs"        width="13"/>
+                        <column type="integer"     field="%ID"   label="% ID"   width="3"/>
+                        <column type="integer"     field="#Spectra"   label="# Spectra" width="6"/>
+                </row>
+
+        </block>
+
+	<block id="view_all_annotations_DB" type="table">
+                <data>
+                        <source type="file" name="result_specnets_DB/"/>
+                        <parsers>
+                                <parser type="sortedTabular" sortBy="Compound_Name" operator="ascending"/>
+                        </parsers>
+                        <processors>
+                                <processor type="uploadFilename" field="SpectrumFile"/>
+                        </processors>
+                </data>
+                <row>
+                        <column type="text"        field="Compound_Name" label="Compound_Name"        width="12"/>
+                        <column type="integer"     field="#Scan#"         label="Scan"            width="3"/>
+                        <!--<column type="text"     field="SpectrumID"         label="SpectrumID"            width="15"/>-->
+                        <column type="text"     field="LibraryQualityString"         label="Library Class"            width="5"/>
+                        
+                        <column type="float"     field="MQScore"         label="Cosine"            precision="2"/>
+                        <column type="integer"     field="SharedPeaks"         label="SharedPeaks"            width="3"/>
+                        <column type="float"     field="TIC_Query"         label="TIC Query"            precision="2"/>
+                        <column type="float"     field="RT_Query"         label="RT Query"           precision="2" />
+                        <column type="integer"     field="MZErrorPPM"         label="MZErrorPPM"            />
+                        <column type="text"     field="Organism"         label="Organism"            width="3"/>
+                        
+                        <column type="integer"     field="MassDiff"         label="MassDiff"            width="3"/>
+                        <column type="float"     field="LibMZ"         label="LibMZ"            precision="2"/>
+                        
+                        <column type="text"     field="Instrument"         label="Instrument"            width="5"/>
+                        <column type="text"     field="IonMode"         label="IonMode"            width="5"/>
+                        <column type="text"     field="PI"         label="PI"            width="5"/>
+                        <column type="text"     field="Ion_Source"         label="Ion Source"            width="5"/>
+                        
+                        <column type="mingplugin" target="/" label="Update">
+                          <parameter name="workflow" value="[UpdateWorkflowName]"/>
+                          <parameter name="SPECTRUMID" value="[SpectrumID]"/>
+                          <parameter name="ADDSPECTRA_LIBQUALITY" value="[Library_Class]"/>
+                          <parameter name="ADDSPECTRA_IONSOURCE" value="[Ion_Source]"/>
+                          <parameter name="ADDSPECTRA_INSTRUMENT" value="[Instrument]"/>
+                          <parameter name="ADDSPECTRA_IONMODE" value="[IonMode]"/>
+                          <parameter name="ADDSPECTRA_ACQUISITION" value="[Compound_Source]"/>
+                          <parameter name="ADDSPECTRA_SMILES" value="[Smiles]"/>
+                          <parameter name="ADDSPECTRA_INCHI" value="[INCHI]"/>
+                          <parameter name="ADDSPECTRA_INCHIAUX" value="[INCHI_AUX]"/>
+                          <parameter name="ADDSPECTRA_CASNUMBER" value="[CAS_Number]"/>
+                          <parameter name="ADDSPECTRA_PUB" value="[Pubmed_ID]"/>
+                          <parameter name="ADDSPECTRA_PI" value="[PI]"/>
+                          <parameter name="ADDSPECTRA_DATACOLLECTOR" value="[Data_Collector]"/>
+                          <parameter name="ADDSPECTRA_EXACTMASS" value="[ExactMass]"/>
+                          <parameter name="ADDSPECTRA_ADDUCT" value="[Adduct]"/>
+                          <parameter name="ADDSPECTRA_CHARGE" value="[Charge]"/>
+                          <parameter name="ADDSPECTRA_MOLECULEMASS" value="[Precursor_MZ]"/>
+                          <parameter name="ADDSPECTRA_COMPOUND_NAME" value="[Compound_Name]"/>
+                        </column>
+                </row>
+                <row expander="image">
+                        <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                                <parameter name="file"    file="spectra/[internalFilename]"/>
+                                <parameter name="scan"    value="[#Scan#]"/>
+                                <parameter name="peptide" value="*..*"/>
+                        </column>
+                        <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                            <parameter name="file"    file="lib/[LibraryName]"/>
+                            <parameter name="spectrumid"    value="[SpectrumID]"/>
+                            <parameter name="peptide" value="*..*"/>
+                        </column>
+                </row>
+        </block>
+	
+        <block id="organism_list_DB" type="table">
+                <data>
+                        <source type="file" name="result_specnets_DB/"/>
+                        <parsers>
+                                <parser type="groupedTabular" groupBy="Organism"/>
+                        </parsers>
+                        
+                </data>
+                <row>
+                        <column type="view" view="organism_details_DB" field="Organism" label="Organism" width="18">
+                                <parameter name="protein"   value="[Organism]"/>
+                                <parameter name="proteinID" value="[Organism]"/>
+                        </column>
+                        
+                        <column type="text"     field="Organism"   label="Organism"                width="18"/>
+                        <column type="integer"  field="Hits"      label="Hits"                       width="2"/>
+                </row>
+                
+        </block>
+        
+        <block id="spectra_per_organism_DB" type="table">
+                <data>
+                        <source type="file" name="result_specnets_DB/"/>
+                        <parsers>
+                                <parser type="slicedTabular" groupBy="Organism" sliceBy="{protein}"/>
+                        </parsers>
+                        <processors>
+                                <processor type="uploadFilename" field="SpectrumFile"/>
+                        </processors>
+                        
+                </data>
+                <row>
+                        <column type="text"        field="Compound_Name" label="Compound_Name"        width="12"/>
+                        <column type="integer"     field="#Scan#"         label="Scan"            width="3"/>
+                        <!--<column type="text"     field="SpectrumID"         label="SpectrumID"            width="15"/>-->
+                        <column type="text"     field="LibraryQualityString"         label="Library Class"            width="5"/>
+                        
+                        <column type="float"     field="MQScore"         label="Cosine"            precision="2"/>
+                        <column type="integer"     field="SharedPeaks"         label="SharedPeaks"            width="3"/>
+                        <column type="float"     field="TIC_Query"         label="TIC Query"            precision="2"/>
+                        <column type="float"     field="RT_Query"         label="RT Query"           precision="2" />
+                        <column type="integer"     field="MZErrorPPM"         label="MZErrorPPM"            />
+                        <column type="text"     field="Organism"         label="Organism"            width="3"/>
+                        
+                        <column type="integer"     field="MassDiff"         label="MassDiff"            width="3"/>
+                        <column type="float"     field="LibMZ"         label="LibMZ"            precision="2"/>
+                        
+                        <column type="text"     field="Instrument"         label="Instrument"            width="5"/>
+                        <column type="text"     field="IonMode"         label="IonMode"            width="5"/>
+                        <column type="text"     field="PI"         label="PI"            width="5"/>
+                        <column type="text"     field="Ion_Source"         label="Ion Source"            width="5"/>
+                        
+                        <column type="mingplugin" target="/" label="Update">
+                          <parameter name="workflow" value="[UpdateWorkflowName]"/>
+                          <parameter name="SPECTRUMID" value="[SpectrumID]"/>
+                          <parameter name="ADDSPECTRA_LIBQUALITY" value="[Library_Class]"/>
+                          <parameter name="ADDSPECTRA_IONSOURCE" value="[Ion_Source]"/>
+                          <parameter name="ADDSPECTRA_INSTRUMENT" value="[Instrument]"/>
+                          <parameter name="ADDSPECTRA_IONMODE" value="[IonMode]"/>
+                          <parameter name="ADDSPECTRA_ACQUISITION" value="[Compound_Source]"/>
+                          <parameter name="ADDSPECTRA_SMILES" value="[Smiles]"/>
+                          <parameter name="ADDSPECTRA_INCHI" value="[INCHI]"/>
+                          <parameter name="ADDSPECTRA_INCHIAUX" value="[INCHI_AUX]"/>
+                          <parameter name="ADDSPECTRA_CASNUMBER" value="[CAS_Number]"/>
+                          <parameter name="ADDSPECTRA_PUB" value="[Pubmed_ID]"/>
+                          <parameter name="ADDSPECTRA_PI" value="[PI]"/>
+                          <parameter name="ADDSPECTRA_DATACOLLECTOR" value="[Data_Collector]"/>
+                          <parameter name="ADDSPECTRA_EXACTMASS" value="[ExactMass]"/>
+                          <parameter name="ADDSPECTRA_ADDUCT" value="[Adduct]"/>
+                          <parameter name="ADDSPECTRA_CHARGE" value="[Charge]"/>
+                          <parameter name="ADDSPECTRA_MOLECULEMASS" value="[Precursor_MZ]"/>
+                          <parameter name="ADDSPECTRA_COMPOUND_NAME" value="[Compound_Name]"/>
+                        </column>
+                </row>
+                <row expander="image">
+                        <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                                <parameter name="file"    file="spectra/[internalFilename]"/>
+                                <parameter name="scan"    value="[#Scan#]"/>
+                                <parameter name="peptide" value="*..*"/>
+                        </column>
+                        <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                            <parameter name="file"    file="lib/[LibraryName]"/>
+                            <parameter name="spectrumid"    value="[SpectrumID]"/>
+                            <parameter name="peptide" value="*..*"/>
+                        </column>
+                </row>
+                
+        </block>
+        
+	<block id="spectrum_list_specnets" type="table">
+                <data>
+                        <source type="file" name="result_specnets/"/>
+                        <parsers>
+                                <parser type="sortedTabular" sortBy="SpectrumFile" operator="ascending"/>
+                                <parser type="representativeTabular" groupBy="FileScanUniqueID" selectBy="MQScore" operator="max"/>
+                        </parsers>
+                        <processors>
+                                <processor type="uploadFilename" field="SpectrumFile"/>
+                        </processors>
+                </data>
+                <row>
+                        <column type="text"        field="SpectrumFile" label="Filename"        width="12"/>
+                        <column type="integer"     field="#Scan#"         label="Scan"            width="3"/>
+                        <column type="integer"     field="Charge"        label="Charge"          width="1"/>
+                        <column type="float"       field="MQScore"       label="Score"           precision="5"/>
+                        <column type="text"        field="CompoundName"    label="CompoundName"         width="18"/>
+                        <column type="text"        field="Organism"    label="Organism"         width="30"/>
+			<column type="integer"        field="LibSearchSharedPeaks"    label="SharedPeaks"         width="2"/>
+			<column type="float"        field="mzErrorPPM"    label="mzErrorPPM"         width="5"/>
+                </row>
+                <row expander="image">
+                        <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                                <parameter name="file"    file="spectra/[internalFilename]"/>
+                                <parameter name="scan"    value="[#Scan#]"/>
+                                <parameter name="peptide" value="[Annotation]"/>
+                        </column>
+                        <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                                <parameter name="file"    file="lib/[LibraryName]"/>
+                                <parameter name="scan"    value="[dbIndex]"/>
+                                <parameter name="peptide" value="[Annotation]"/>
+                        </column>
+                </row>
+                <row expander="down:up">
+            <column type="block" block="results_per_spectrum_specnets" colspan="7">
+                <parameter name="spectraid" value="[FileScanUniqueID]"/>
+            </column>
+        </row>
+        </block>
+        
+        <block id="results_per_spectrum_specnets" type="table">
+        <data>
+            <source type="file" name="result_specnets/"/>
+            <parsers>
+                <parser type="sortedTabular" sortBy="MQScore" operator="ascending"/>
+                <parser type="slicedTabular" groupBy="FileScanUniqueID" sliceBy="{spectraid}"/>
+            </parsers>
+            <processors>
+                <processor type="uploadFilename" field="SpectrumFile"/>
+            </processors>
+        </data>
+        <row>
+            <column type="text"        field="SpectrumFile" label="Filename"        width="12"/>
+            <column type="integer"     field="#Scan#"         label="Scan"            width="3"/>
+            <column type="integer"     field="Charge"        label="Charge"          width="1"/>
+            <column type="float"       field="MQScore"       label="Score"           precision="5"/>
+            <column type="float"       field="FDR"           label="FDR"             precision="5"/>
+            <column type="text"        field="CompoundName"    label="CompoundName"         width="18"/>
+                        <column type="text"        field="Organism"    label="Organism"         width="30"/>
+        </row>
+        <row expander="image">
+            <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                <parameter name="file"    file="spectra/[internalFilename]"/>
+                <parameter name="scan"    value="[#Scan#]"/>
+                <parameter name="peptide" value="[Annotation]"/>
+            </column>
+            <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                <parameter name="file"    file="lib/[LibraryName]"/>
+                <parameter name="scan"    value="[dbIndex]"/>
+                <parameter name="peptide" value="[Annotation]"/>
+            </column>
+        </row>
+        </block>
+        
+        <block id="clusters_list_specnets" type="table">
+                <data>
+                        <source type="file" name="clusterinfosummarygroup_attributes/"/>
+                        <parsers>
+                                <parser type="sortedTabular" sortBy="cluster index" operator="ascending"/>
+                        </parsers>
+<!--                        <processors>
+                                <processor type="uploadFilename" field="SpectrumFile"/>
+                        </processors>-->
+                </data>
+                <row>
+                        <column type="view" view="cluster_details" field="cluster index" label="ClusterIndex" width="18">
+                                <parameter name="protein"   value="[cluster index]"/>
+                                <parameter name="proteinID" value="[cluster index]"/>
+                        </column>
+                        
+                        <column type="integer"     field="cluster index"         label="ClusterIndex"            width="3"/>
+                        <column type="integer"     field="number of spectra"        label="NumSpectra"          width="3"/>
+                        <column type="float"       field="precursor mass"       label="PrecursorMZ"           precision="5"/>
+                        <column type="float"        field="sum(precursor intensity)"    label="PrecursorInt"         precision="5"/>
+                        <column type="float"        field="RTMean"    label="RTMean"         width="5"/>
+                        <column type="text"        field="AllGroups"    label="AllGroups"         width="5"/>
+                        <column type="text"        field="DefaultGroups"    label="DefaultGroups"         width="5"/>
+                </row>
+                <row expander="image">
+                  <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                      <parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      <parameter name="scan"    value="[cluster index]"/>
+                      <parameter name="peptide" value="*..*"/>
+                  </column>
+                </row>
+        </block>
+        
+        
+        <block id="clusters_list_specnets_withID" type="table">
+                <data>
+                        <source type="file" name="clusterinfosummarygroup_attributes_withIDs/"/>
+                        <parsers>
+                                <parser type="sortedTabular" sortBy="cluster index" operator="ascending"/>
+                        </parsers>
+<!--                        <processors>
+                                <processor type="uploadFilename" field="SpectrumFile"/>
+                        </processors>-->
+                </data>
+                <row>
+                        <column type="view" view="cluster_details" field="cluster index" label="ClusterIndex" width="18">
+                                <parameter name="protein"   value="[cluster index]"/>
+                                <parameter name="proteinID" value="[cluster index]"/>
+                        </column>
+                        
+                        <column type="integer"     field="cluster index"         label="ClusterIndex"            width="3"/>
+                        <column type="integer"     field="number of spectra"        label="NumSpectra"          width="3"/>
+                        <column type="float"       field="precursor mass"       label="PrecursorMZ"           precision="5"/>
+                        <column type="float"        field="sum(precursor intensity)"    label="PrecursorInt"         precision="5"/>
+                        <column type="float"        field="RTMean"    label="RTMean"         width="5"/>
+                        <column type="text"        field="AllGroups"    label="AllGroups"         width="5"/>
+                        <column type="text"        field="DefaultGroups"    label="DefaultGroups"         width="5"/>
+                        <column type="text"        field="LibraryID"    label="LibraryID"         width="20"/>
+                        <column type="integer"        field="NumberOrganismIDs"    label="NumberOrganismIDs"         width="1"/>
+                        <column type="text"        field="AllOrganisms"    label="AllOrganisms"         width="10"/>
+                </row>
+                <row expander="image">
+                  <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                      <parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      <parameter name="scan"    value="[cluster index]"/>
+                      <parameter name="peptide" value="*..*"/>
+                  </column>
+                </row>
+        </block>
+        
+        
+        <block id="results_per_cluster" type="table">
+        <data>
+            <source type="file" name="allclustered_spectra_info_withpath/"/>
+            <parsers>
+                <parser type="slicedTabular" groupBy="cluster index" sliceBy="{protein}"/>
+            </parsers>
+            <processors>
+                <processor type="uploadFilename" field="AllFiles"/>
+            </processors>
+        </data>
+        <row>
+                        <column type="integer"     field="cluster index"         label="ClusterIndex"            width="3"/>
+                        <column type="text"     field="AllFiles"        label="Filename"          width="10"/>
+                        <column type="integer"     field="ScanNumber"        label="Scan"          width="3"/>
+                        <column type="float"     field="sum(precursor intensity)"        label="Precursor Int"          precision="3"/>
+                        <column type="float"     field="RTMean"        label="RT"          precision="3"/>
+                        <column type="float"     field="parent mass"        label="Parent Mass"          precision="3"/>
+                        <column type="mingplugin" target="/" label="Gold">
+                          <parameter name="workflow" value="ADD-SINGLE-ANNOTATED-GOLD"/>
+                          <parameter name="ADDSPECTRA_EXTRACTSCAN" value="[ScanNumber]"/>
+                          <parameter name="spec_on_server" value="[Original_Path]"/>
+                        </column>
+                        <column type="mingplugin" target="/" label="Silver">
+                          <parameter name="workflow" value="ADD-SINGLE-ANNOTATED-SILVER"/>
+                          <parameter name="ADDSPECTRA_EXTRACTSCAN" value="[ScanNumber]"/>
+                          <parameter name="spec_on_server" value="[Original_Path]"/>
+                        </column>
+                        <column type="mingplugin" target="/" label="Bronze">
+                          <parameter name="workflow" value="ADD-SINGLE-ANNOTATED-BRONZE"/>
+                          <parameter name="ADDSPECTRA_EXTRACTSCAN" value="[ScanNumber]"/>
+                          <parameter name="spec_on_server" value="[Original_Path]"/>
+                        </column>
+                        
+        </row>
+	<row expander="image">
+	  <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+	      <parameter name="file"    file="spectra/specs_ms.mgf"/>
+	      <parameter name="scan"    value="[cluster index]"/>
+	      <parameter name="peptide" value="*..*"/>
+	  </column>
+	</row>
+        </block>
+	
+        <!--VIEW NETWORK-->
+        
+        <block id="network_list_specnets" type="table">
+                <data>
+                        <source type="file" name="networkedges_display/"/>
+                        <parsers>
+                                <parser type="sortedTabular" sortBy="Node1" operator="ascending"/>
+                                <parser type="representativeTabular" groupBy="Node1" selectBy="Cos_Score" operator="max"/>
+                        </parsers>
+                </data>
+                <row>
+                        <column type="integer"        field="Node1" label="Node Index"        width="10"/>
+                </row>
+                
+                <row expander="down:up">
+                  <column type="block" block="related_network_list_specnets" colspan="7">
+                    <parameter name="spectraid" value="[Node1]"/>
+                  </column>
+                </row>
+        </block>
+        
+        
+        <block id="related_network_list_specnets" type="table">
+        <data>
+            <source type="file" name="networkedges_display/"/>
+            <parsers>
+                <parser type="sortedTabular" sortBy="Node2" operator="ascending"/>
+                <parser type="slicedTabular" groupBy="Node1" sliceBy="{spectraid}"/>
+            </parsers>
+            <processors>
+                <processor type="uploadFilename" field="SpectrumFile"/>
+            </processors>
+        </data>
+        <row>
+            <column type="integer"        field="Node1" label="Node Index"        width="10"/>
+            <column type="integer"     field="Node2"         label="Neighbor Index"            width="10"/>
+            <column type="float"       field="Cos_Score"       label="Cosine Score"           precision="5" />
+            <column type="float"       field="MzDiff"           label="MzDiff"             precision="5"/>
+        </row>
+        <row expander="image">
+            <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                <parameter name="file"    file="spectra/specs_ms.mgf"/>
+                <parameter name="scan"    value="[Node1]"/>
+                <parameter name="index"    value="[Node1]"/>
+                <parameter name="peptide"    value="*..*"/>
+            </column>
+            <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                <parameter name="file"    file="spectra/specs_ms.mgf"/>
+                <parameter name="scan"    value="[Node2]"/>
+                <parameter name="index"    value="[Node2]"/>
+                <parameter name="peptide"    value="*..*"/>
+            </column>
+        </row>
+        </block>
+        
+        <block id="network_pairs_specnets" type="table">
+                <data>
+                        <source type="file" name="networkedges_display_pairs/"/>
+                        <parsers>
+                                <parser type="sortedTabular" sortBy="Node1" operator="ascending"/>
+                        </parsers>
+                </data>
+                <row>
+                        <column type="integer"        field="Node1" label="Node1"        width="10"/>
+                        <column type="integer"        field="Node2" label="Node2"        width="10"/>
+                        <column type="float"       field="Cos_Score"       label="Cosine Score"           precision="5" />
+                        <column type="float"       field="MzDiff"           label="MzDiff"             precision="5"/>
+                </row>
+                
+                <row expander="image">
+                    <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                        <parameter name="file"    file="spectra/specs_ms.mgf"/>
+                        <parameter name="scan"    value="[Node1]"/>
+                        <parameter name="index"    value="[Node1]"/>
+                        <parameter name="peptide" value="*..*"/>
+                    </column>
+                    <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                        <parameter name="file"    file="spectra/specs_ms.mgf"/>
+                        <parameter name="scan"    value="[Node2]"/>
+                        <parameter name="index"    value="[Node2]"/>
+                        <parameter name="peptide" value="*..*"/>
+                    </column>
+                </row>
+        </block>
+
+
+<!--****************************MSPLIT****************************-->
+	<!-- View definitions -->
+	<view id="group_by_spectrum_msplit" label="MSPLIT Group by Cluster">
+		<blockRef id="main" type="spectrum_list_msplit"/>
+	</view>
+	<view id="group_by_peptide_msplit" label="MSPLIT Group by Peptide">
+		<blockRef id="main" type="peptide_list_msplit"/>
+	</view>
+	<view id="group_by_protein_msplit" label="MSPLIT Group by Protein">
+		<blockRef id="main" type="protein_list_msplit"/>
+	</view>
+	<view id="protein_details_msplit" display="hidden">
+		<!--
+		<blockRef id="summary" type="protein_summary"/>
+		-->
+		<blockRef id="main" type="spectra_per_protein_msplit"/>
+	</view>
+	
+	<!-- Block definitions -->
+	<block id="spectrum_list_msplit" type="table">
+		<data>
+			<source type="file" name="msplitResult/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="svm1-score" operator="descending"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="#SpectrumFile"  label="Filename"      width="12"/>
+			<column type="view" view="scan_details_overall" field="Scan#" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[Scan#]"/>
+			</column>
+			<column type="integer" field="Scan#"          label="Cluster Index"          width="3"/>
+			<column type="text"    field="Annotation"     label="Peptide"       width="18"/>
+			<column type="text"    field="Protein"        label="Protein"       width="18"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+			<column type="integer" field="Charge"         label="Charge"        width="1"/>
+			<column type="float"   field="cosine(M, A+B)" label="Cosine(M,A+B)" precision="3"/>
+			<column type="float"   field="cosine(M,A)"    label="Cosine(M,A)"   precision="3"/>
+			<column type="float"   field="cosine(A,B)"    label="Cosine(A,B)"   precision="3"/>
+			<column type="float"   field="alpha"          label="Alpha"         precision="3"/>
+			<column type="float"   field="res-alpha"      label="Res-Alpha"     precision="3"/>
+			<column type="float"   field="svm1-score"     label="SVM1-Score"    precision="3"/>
+			<column type="float"   field="svm2-score"     label="SVM2-Score"    precision="3"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="peptide_list_msplit" type="table">
+		<data>
+			<source type="file" name="msplitResult/"/>
+			<parsers>
+				<parser type="groupedTabular" groupBy="Annotation"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+				<processor type="peptideCount" field="Annotation"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="Annotation"     label="Peptide"       width="18"/>
+			<column type="integer" field="Hits"     label="Hits"   width="2"/>
+			<column type="integer" field="Peptides" label="Unique Unmodified Peptides" width="2"/>
+			<column type="integer" field="Modified" label="Unique Modified Peptides"   width="2"/>
+
+		</row>
+		
+		<row expander="down:up">
+			<column type="block" block="spectra_per_peptide" colspan="13">
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_peptide" type="table">
+		<data>
+			<source type="file" name="msplitResult/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="svm1-score"  operator="descending"/>
+				<parser type="slicedTabular" groupBy="Annotation" sliceBy="{peptide}"/>
+			</parsers>
+			<processors>
+				<processor type="protein"        field="Protein"/>
+				<processor type="uploadFilename" field="#SpectrumFile"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="#SpectrumFile"  label="Filename"      width="12"/>
+			<column type="view" view="scan_details_overall" field="Scan#" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[Scan#]"/>
+			</column>
+			<column type="integer" field="Scan#"          label="Cluster Index"          width="1"/>
+			<column type="text"    field="Annotation"     label="Peptide"       width="18"/>
+			<column type="text"    field="Protein"        label="Protein"       width="18"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+			<column type="integer" field="Charge"         label="Charge"        width="1"/>
+			<column type="float"   field="cosine(M, A+B)" label="Cosine(M,A+B)" precision="3"/>
+			<column type="float"   field="cosine(M,A)"    label="Cosine(M,A)"   precision="3"/>
+			<column type="float"   field="cosine(A,B)"    label="Cosine(A,B)"   precision="3"/>
+			<column type="float"   field="alpha"          label="Alpha"         precision="3"/>
+			<column type="float"   field="res-alpha"      label="Res-Alpha"     precision="3"/>
+			<column type="float"   field="svm1-score"     label="SVM1-Score"    precision="3"/>
+			<column type="float"   field="svm2-score"     label="SVM2-Score"    precision="3"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="protein_list_msplit" type="table">
+		<data>
+			<source type="file" name="msplitResult/"/>
+			<parsers>
+				<parser type="sortedTabular"  sortBy="svm1-score" operator="descending"/>
+				<parser type="groupedTabular" groupBy="Protein"/>
+			</parsers>
+			<processors>
+				<processor type="protein"      field="Protein"/>
+				<processor type="peptideCount" field="Annotation"/>
+			</processors>
+		</data>
+		<row>
+			<column type="view" view="protein_details_msplit" field="ProteinID" label="Protein" width="18">
+				<parameter name="protein"   value="[Protein]"/>
+				<parameter name="proteinID" value="[ProteinID]"/>
+			</column>
+			<column type="text"    field="Comment"  label="Description"                width="18"/>
+			<column type="integer" field="Hits"     label="Hits"                       width="2"/>
+			<column type="integer" field="Peptides" label="Unique Unmodified Peptides" width="2"/>
+			<column type="integer" field="Modified" label="Unique Modified Peptides"   width="2"/>
+		</row>
+		<row expander="down:up">
+			<column type="block" block="spectra_per_protein_msplit" colspan="5">
+				<parameter name="protein" value="[Protein]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_protein_msplit" type="table">
+		<data>
+			<source type="file" name="msplitResult/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="svm1-score" operator="descending"/>
+				<parser type="slicedTabular" groupBy="Protein"   sliceBy="{protein}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="#SpectrumFile"  label="Filename"      width="12"/>
+			<column type="view" view="scan_details_overall" field="Scan#" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[Scan#]"/>
+			</column>
+			<column type="integer" field="Scan#"          label="Cluster Index"          width="1"/>
+			<column type="text"    field="Annotation"     label="Peptide"       width="18"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+			<column type="integer" field="Charge"         label="Charge"        width="1"/>
+			<column type="float"   field="cosine(M, A+B)" label="Cosine(M,A+B)" precision="3"/>
+			<column type="float"   field="cosine(M,A)"    label="Cosine(M,A)"   precision="3"/>
+			<column type="float"   field="cosine(A,B)"    label="Cosine(A,B)"   precision="3"/>
+			<column type="float"   field="alpha"          label="Alpha"         precision="3"/>
+			<column type="float"   field="res-alpha"      label="Res-Alpha"     precision="3"/>
+			<column type="float"   field="svm1-score"     label="SVM1-Score"    precision="3"/>
+			<column type="float"   field="svm2-score"     label="SVM2-Score"    precision="3"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+	<!--
+	<block id="protein_summary" type="stream">
+		<data>
+			<source type="invoke" name="proteinSummaryExtractor">
+				<parameter name="input"     file="summary/"/>
+				<parameter name="protein"   value="{protein}"/>
+				<parameter name="proteinID" value="{proteinID}"/>
+				<parameter name="output"    file="temp/summary/{protein}.html"/>
+			</source>
+			<parsers>
+				<parser type="stream" contentType="text/html"/>
+			</parsers>
+		</data>
+	</block>
+	-->
+
+
+
+
+<!--*************************MSGFDB*********************************-->
+
+	<!-- View definitions -->
+	<view id="group_by_spectrum_msgfdb" label="MSGFDB Group by Cluster">
+		<blockRef id="main" type="spectrum_list_msgfdb"/>
+	</view>
+	<view id="group_by_peptide_msgfdb" label="MSGFDB Group by Peptide">
+		<blockRef id="main" type="peptide_list_msgfdb"/>
+	</view>
+	<view id="group_by_protein_msgfdb" label="MSGFDB Group by Protein">
+		<blockRef id="main" type="protein_list_msgfdb"/>
+	</view>
+	<view id="protein_details_msgfdb" display="hidden">
+		<!--
+		<blockRef id="summary" type="protein_summary"/>
+		-->
+		<blockRef id="main" type="spectra_per_protein_msgfdb"/>
+	</view>
+
+	<!-- Block definitions -->
+	<block id="spectrum_list_msgfdb" type="table">
+		<data>
+			<source type="file" name="msgfdbResult/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="FDR" operator="ascending"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpecFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#SpecFile"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="view" view="scan_details_overall" field="Scan#" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[Scan#]"/>
+			</column>
+			<column type="integer"     field="Scan#"      label="Cluster Index"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="FragMethod" label="FragMethod" width="3"     tooltip="Fragmentation method"/>
+			<column type="text"        field="Peptide"    label="Peptide"    width="18"    tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="text"        field="ProteinID"  label="Protein"    width="18"    tooltip="Protein name"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+			<column type="integer"     field="Charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="integer"     field="MSGFScore"  label="Score"      width="3"     tooltip="MS-GF raw score of the peptide-spectrum match"/>
+			<column type="exponential" field="P-value"    label="DB P-Value" precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;database&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+			<column type="float"       field="FDR"        label="FDR"        precision="5" tooltip="False discovery rate"/>
+			<column type="float"       field="PepFDR"     label="PepFDR"     precision="5" tooltip="Peptide-level false discovery rate estimated using the target-decoy approach"/>
+			<column type="exponential" field="SpecProb"   label="SpecProb"   precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;peptide&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="peptide_list_msgfdb" type="table">
+		<data>
+			<source type="file" name="msgfdbResult/"/>
+			<parsers>
+				<parser type="groupedTabular" groupBy="Peptide"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpecFile"/>
+				<processor type="protein"        field="ProteinID"/>
+				<processor type="peptideCount" field="Peptide"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="Peptide"     label="Peptide"       width="18"/>
+			<column type="integer" field="Hits"     label="Hits"   width="2"/>
+			<column type="integer" field="Peptides" label="Unique Unmodified Peptides" width="2"/>
+			<column type="integer" field="Modified" label="Unique Modified Peptides"   width="2"/>
+		</row>
+
+		<row expander="down:up">
+			<column type="block" block="spectra_per_peptide_msgfdb" colspan="12">
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_peptide_msgfdb" type="table">
+		<data>
+			<source type="file" name="msgfdbResult/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="FDR"      operator="ascending"/>
+				<parser type="slicedTabular" groupBy="Peptide" sliceBy="{peptide}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpecFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#SpecFile"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="view" view="scan_details_overall" field="Scan#" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[Scan#]"/>
+			</column>
+			<column type="integer"     field="Scan#"      label="Cluster Index"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"    field="Peptide"     label="Peptide"       width="18"/>
+			<column type="text"        field="FragMethod" label="FragMethod" width="3"     tooltip="Fragmentation method"/>
+			<column type="text"        field="ProteinID"  label="Protein"    width="18"    tooltip="Protein name"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+			<column type="integer"     field="Charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="integer"     field="MSGFScore"  label="Score"      width="3"     tooltip="MS-GF raw score of the peptide-spectrum match"/>
+			<column type="exponential" field="P-value"    label="DB P-Value" precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;database&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+			<column type="float"       field="FDR"        label="FDR"        precision="5" tooltip="False discovery rate"/>
+			<column type="float"       field="PepFDR"     label="PepFDR"     precision="5" tooltip="Peptide-level false discovery rate estimated using the target-decoy approach"/>
+			<column type="exponential" field="SpecProb"   label="SpecProb"   precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;peptide&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="protein_list_msgfdb" type="table">
+		<data>
+			<source type="file" name="msgfdbResult/"/>
+			<parsers>
+				<parser type="sortedTabular"  sortBy="FDR"      operator="ascending"/>
+				<parser type="groupedTabular" groupBy="Protein"/>
+			</parsers>
+			<processors>
+				<processor type="protein"      field="Protein"/>
+				<processor type="peptideCount" field="Peptide"/>
+			</processors>
+		</data>
+		<row>
+			<column type="view" view="protein_details_msgfdb" field="ProteinID" label="Protein" width="18">
+				<parameter name="protein"   value="[Protein]"/>
+				<parameter name="proteinID" value="[ProteinID]"/>
+			</column>
+			<column type="text"     field="Comment"   label="Description"                width="18"/>
+			<column type="integer"  field="Hits"      label="Hits"                       width="2"/>
+			<column type="integer"  field="Peptides"  label="Unique Unmodified Peptides" width="2"/>
+			<column type="integer"  field="Modified"  label="Unique Modified Peptides"   width="2"/>
+		</row>
+		<row expander="down:up">
+			<column type="block" block="spectra_per_protein_msgfdb" colspan="5">
+				<parameter name="protein" value="[Protein]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_protein_msgfdb" type="table">
+		<data>
+			<source type="file" name="msgfdbResult/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="FDR"      operator="ascending"/>
+				<parser type="slicedTabular" groupBy="Protein" sliceBy="{protein}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpecFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"        field="#SpecFile"  label="Filename"   width="12"    tooltip="Spectrum file name"/>
+			<column type="view" view="scan_details_overall" field="Scan#" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[Scan#]"/>
+			</column>
+			<column type="integer"     field="Scan#"      label="Cluster Index"       width="3"     tooltip="Spectrum scan number"/>
+			<column type="text"        field="FragMethod" label="FragMethod" width="3"     tooltip="Fragmentation method"/>
+			<column type="text"        field="Peptide"    label="Peptide"    width="18"    tooltip="Peptide sequence with neighboring amino acids"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+			<column type="integer"     field="Charge"     label="Charge"     width="1"     tooltip="Precursor ion charge"/>
+			<column type="integer"     field="MSGFScore"  label="Score"      width="3"     tooltip="MS-GF raw score of the peptide-spectrum match"/>
+			<column type="exponential" field="P-value"    label="DB P-Value" precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;database&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+			<column type="float"       field="FDR"        label="FDR"        precision="5" tooltip="False discovery rate"/>
+			<column type="float"       field="PepFDR"     label="PepFDR"     precision="5" tooltip="Peptide-level false discovery rate estimated using the target-decoy approach"/>
+			<column type="exponential" field="SpecProb"   label="SpecProb"   precision="1" tooltip="Probability that a spectrum matches a random &lt;b&gt;peptide&lt;/b&gt; with a score equal to or exceeding the observed score"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan#]"/>
+                      		<parameter name="index"    value="[Scan#]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<!--
+	<block id="protein_summary" type="stream">
+		<data>
+			<source type="invoke" name="proteinSummaryExtractor">
+				<parameter name="input"     file="summary/"/>
+				<parameter name="protein"   value="{protein}"/>
+				<parameter name="proteinID" value="{proteinID}"/>
+				<parameter name="output"    file="temp/summary/{protein}.html"/>
+			</source>
+			<parsers>
+				<parser type="stream" contentType="text/html"/>
+			</parsers>
+		</data>
+	</block>
+	-->
+
+
+
+
+
+
+
+<!-- ***********************************MODA***********************-->
+	<!-- Result files that should always be downloaded -->
+	<download>
+		<source type="folder" name="ptmResult/"/>
+	</download>
+
+	<!-- View definitions -->
+	<view id="group_by_spectrum_moda" label="MODA Group by Cluster">
+		<blockRef id="main" type="spectrum_list_moda"/>
+	</view>
+	<view id="group_by_peptide_moda" label="MODA Group by Peptide">
+		<blockRef id="main" type="peptide_list_moda"/>
+	</view>
+	<view id="group_by_protein_moda" label="MODA Group by Protein">
+		<blockRef id="main" type="protein_list_moda"/>
+	</view>
+	<view id="protein_details_moda" display="hidden">
+		<!--
+		<blockRef id="summary" type="protein_summary"/>
+		-->
+		<blockRef id="main" type="spectra_per_protein_moda"/>
+	</view>
+	<view id="ptm_details" label="Modification Counts">
+		<blockRef id="main" type="ptm_counts"/>
+	</view>
+
+	<!-- Block definitions -->
+	<block id="spectrum_list_moda" type="table">
+		<data>
+			<source type="file" name="modaResult/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="Score" operator="descending"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="SpectrumFile"    label="Filename"         width="12"/>
+			<column type="view" view="scan_details_overall" field="ScanNo" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[ScanNo]"/>
+			</column>
+			<column type="integer" field="ScanNo"          label="Cluster Index"             width="3"/>
+			<column type="integer" field="Charge"          label="Charge"           width="1"/>
+			<column type="float"   field="ObservedMW"      label="Observed MW"      precision="4"/>
+			<column type="float"   field="CalculatedMW"    label="Calculated MW"    precision="4"/>
+			<column type="float"   field="DeltaMass"       label="Delta Mass"       precision="4"/>
+			<column type="integer" field="Score"           label="Score"            width="3"/>
+			<column type="float"   field="Probability"     label="Probability"      precision="4"/>
+			<column type="text"    field="Peptide"         label="Peptide"          width="18"/>
+			<column type="text"    field="Protein"         label="Protein"          width="18"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+			<column type="text"    field="PeptidePosition" label="Peptide Position" width="9"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[ScanNo]"/>
+                      		<parameter name="index"    value="[ScanNo]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[ScanNo]"/>
+                      		<parameter name="index"    value="[ScanNo]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="peptide_list_moda" type="table">
+		<data>
+			<source type="file" name="modaResult/"/>
+			<parsers>
+				<parser type="groupedTabular" groupBy="Peptide"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+				<processor type="peptideCount" field="Peptide"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="Peptide"     label="Peptide"       width="18"/>
+			<column type="integer" field="Hits"     label="Hits"   width="2"/>
+			<column type="integer" field="Peptides" label="Unique Unmodified Peptides" width="2"/>
+			<column type="integer" field="Modified" label="Unique Modified Peptides"   width="2"/>
+
+		</row>
+
+		<row expander="down:up">
+			<column type="block" block="spectra_per_peptide_moda" colspan="12">
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_peptide_moda" type="table">
+		<data>
+			<source type="file" name="modaResult/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="Score"    operator="descending"/>
+				<parser type="slicedTabular" groupBy="Peptide" sliceBy="{peptide}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="SpectrumFile"    label="Filename"         width="12"/>
+			<column type="view" view="scan_details_overall" field="ScanNo" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[ScanNo]"/>
+			</column>
+			<column type="integer" field="ScanNo"          label="Cluster Index"             width="3"/>
+			<column type="text" field="Peptide"           label="Peptide"            width="3"/>
+			<column type="integer" field="Charge"          label="Charge"           width="1"/>
+			<column type="float"   field="ObservedMW"      label="Observed MW"      precision="4"/>
+			<column type="float"   field="CalculatedMW"    label="Calculated MW"    precision="4"/>
+			<column type="float"   field="DeltaMass"       label="Delta Mass"       precision="4"/>
+			<column type="integer" field="Score"           label="Score"            width="3"/>
+			<column type="float"   field="Probability"     label="Probability"      precision="4"/>
+			<column type="text"    field="Protein"         label="Protein"          width="18"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+			<column type="text"    field="PeptidePosition" label="Peptide Position" width="9"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[ScanNo]"/>
+                      		<parameter name="index"    value="[ScanNo]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[ScanNo]"/>
+                      		<parameter name="index"    value="[ScanNo]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="protein_list_moda" type="table">
+		<data>
+			<source type="file" name="modaResult/"/>
+			<parsers>
+				<parser type="sortedTabular"  sortBy="Score"    operator="descending"/>
+				<parser type="groupedTabular" groupBy="Protein"/>
+			</parsers>
+			<processors>
+				<processor type="protein"      field="Protein"/>
+				<processor type="peptideCount" field="Peptide"/>
+			</processors>
+		</data>
+		<row>
+			<column type="view" view="protein_details_moda" field="ProteinID" label="Protein" width="18">
+				<parameter name="protein"   value="[Protein]"/>
+				<parameter name="proteinID" value="[ProteinID]"/>
+			</column>
+			<column type="text"     field="Comment"   label="Description"                width="18"/>
+			<column type="integer"  field="Hits"      label="Hits"                       width="2"/>
+			<column type="integer"  field="Peptides"  label="Unique Unmodified Peptides" width="2"/>
+			<column type="integer"  field="Modified"  label="Unique Modified Peptides"   width="2"/>
+		</row>
+		<row expander="down:up">
+			<column type="block" block="spectra_per_protein_moda" colspan="5">
+				<parameter name="protein" value="[Protein]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_protein_moda" type="table">
+		<data>
+			<source type="file" name="modaResult/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="Score"    operator="descending"/>
+				<parser type="slicedTabular" groupBy="Protein" sliceBy="{protein}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="SpectrumFile"    label="Filename"         width="12"/>
+			<column type="view" view="scan_details_overall" field="ScanNo" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[ScanNo]"/>
+			</column>
+			<column type="integer" field="ScanNo"          label="Cluster Index"             width="3"/>
+			<column type="integer" field="Charge"          label="Charge"           width="1"/>
+			<column type="float"   field="ObservedMW"      label="Observed MW"      precision="4"/>
+			<column type="float"   field="CalculatedMW"    label="Calculated MW"    precision="4"/>
+			<column type="float"   field="DeltaMass"       label="Delta Mass"       precision="4"/>
+			<column type="integer" field="Score"           label="Score"            width="3"/>
+			<column type="float"   field="Probability"     label="Probability"      precision="4"/>
+			<column type="text"    field="Peptide"         label="Peptide"          width="18"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+			<column type="text"    field="PeptidePosition" label="Peptide Position" width="9"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[ScanNo]"/>
+                      		<parameter name="index"    value="[ScanNo]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[ScanNo]"/>
+                      		<parameter name="index"    value="[ScanNo]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+	</block>
+	
+	<!--
+	<block id="protein_summary" type="stream">
+		<data>
+			<source type="invoke" name="proteinSummaryExtractor">
+				<parameter name="input"     file="summary/"/>
+				<parameter name="protein"   value="{protein}"/>
+				<parameter name="proteinID" value="{proteinID}"/>
+				<parameter name="output"    file="temp/summary/{protein}.html"/>
+			</source>
+			<parsers>
+				<parser type="stream" contentType="text/html"/>
+			</parsers>
+		</data>
+	</block>
+	-->
+	
+	<block id="ptm_counts" type="table">
+		<data>
+			<source type="file" name="ptmResult/"/>
+			<parsers>
+				<parser type="tabular"/>
+			</parsers>
+		</data>
+		<row>
+			<column type="integer" field="Mass Offset" label="Mass Offset" width="2"/>
+			<column type="integer" field="A"     label="A"     width="1"/>
+			<column type="integer" field="C"     label="C"     width="1"/>
+			<column type="integer" field="D"     label="D"     width="1"/>
+			<column type="integer" field="E"     label="E"     width="1"/>
+			<column type="integer" field="F"     label="F"     width="1"/>
+			<column type="integer" field="G"     label="G"     width="1"/>
+			<column type="integer" field="H"     label="H"     width="1"/>
+			<column type="integer" field="I"     label="I"     width="1"/>
+			<column type="integer" field="K"     label="K"     width="1"/>
+			<column type="integer" field="L"     label="L"     width="1"/>
+			<column type="integer" field="M"     label="M"     width="1"/>
+			<column type="integer" field="N"     label="N"     width="1"/>
+			<column type="integer" field="P"     label="P"     width="1"/>
+			<column type="integer" field="Q"     label="Q"     width="1"/>
+			<column type="integer" field="R"     label="R"     width="1"/>
+			<column type="integer" field="S"     label="S"     width="1"/>
+			<column type="integer" field="T"     label="T"     width="1"/>
+			<column type="integer" field="V"     label="V"     width="1"/>
+			<column type="integer" field="W"     label="W"     width="1"/>
+			<column type="integer" field="Y"     label="Y"     width="1"/>
+			<column type="integer" field="Nterm" label="Nterm" width="2"/>
+			<column type="integer" field="Cterm" label="Cterm" width="2"/>
+			<column type="integer" field="Sum"   label="Sum"   width="2"/>
+		</row>
+	</block>
+
+<!--*****************************AGGREGATE RESULTS***********************************-->
+
+	<!-- Overall group by spectrum -->
+        <view id="overall_group_by_spectrum" label="Overall Group by Cluster">
+                <blockRef id="main" type="overall_group_by_spectrum_table"/>
+        </view>
+        <block id="overall_group_by_spectrum_table" type="table">
+                <data>
+                        <source type="file" name="spectrumCounts/"/>
+                  	<parsers>
+                                <parser type="representativeTabular" groupBy="Cluster_index"/>
+                        </parsers>
+		        <processors>
+                                <processor type="protein"        field="Protein"/>
+                        </processors>
+                </data>
+
+                <row> 
+			<column type="view" view="scan_details_overall" field="Cluster_index" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[Cluster_index]"/>
+			</column>
+			<column type="integer" field="Cluster_index"     label="Cluster Index"     width="7"/>
+			<column type="text" field="Workflow"     label="Workflow"     width="15"/>
+                        <column type="integer" field="Num_neighbors"     label="# Neighbors"     width="7"/>
+                        <column type="text" field="Filename"     label="Filename"     width="15"/>
+			<column type="text" field="Peptide"     label="Peptide"     width="15"/>
+                        <column type="text" field="Protein"     label="Protein"     width="15"/>
+                        <column type="integer" field="Cluster_spectrum_count"     label="Cluster Spectrum Count"     width="7"/>
+                        <column type="integer" field="Peptide_spectrum_count"     label="Peptide Spectrum Count"     width="7"/>
+                        <column type="integer" field="Protein_spectrum_count"     label="Protein Spectrum Count"     width="7"/>
+                        <column type="integer" field="Charge"     label="Charge"     width="7"/>
+			<column type="text" field="Processed_peptide"     label="Unmodified Peptide"     width="15"/>
+			<column type="text" field="Default_groups"     label="Default Groups"     width="15"/>
+			<column type="text" field="All_groups"     label="User-Defined Groups"     width="15"/>
+                </row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Cluster_index]"/>
+                      		<parameter name="index"    value="[Cluster_index]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Cluster_index]"/>
+                      		<parameter name="index"    value="[Cluster_index]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+<!--
+                <row expander="down:up">
+                        <column type="block" block="spectra_overall" colspan="13">
+                                <parameter name="scan" value="[Cluster_index]"/>
+                        </column>
+                </row>
+-->
+                <row expander="down:up">
+                        <column type="block" block="related_network_list_specnets" colspan="7">
+                                <parameter name="spectraid" value="[Cluster_index]"/>
+                        </column>
+                </row>
+
+        </block>
+
+        <block id="spectra_overall" type="table">
+                <data>
+                        <source type="file" name="spectrumCounts/"/>
+                        <parsers>
+                                <parser type="slicedTabular" groupBy="Cluster_index" sliceBy="{scan}"/>
+                        </parsers>
+                        <processors>
+                                <processor type="protein" field="Protein"/>
+                        </processors>
+                </data>
+                <row> 
+			<column type="view" view="scan_details_overall" field="Cluster_index" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[Cluster_index]"/>
+			</column>
+			<column type="integer" field="Cluster_index"     label="Cluster Index"     width="7"/>
+			<column type="text" field="Workflow"     label="Workflow"     width="15"/>
+                        <column type="text" field="Filename"     label="Filename"     width="15"/>
+			<column type="text" field="Peptide"     label="Peptide"     width="15"/>
+                        <column type="text" field="Protein"     label="Protein"     width="15"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+                        <column type="integer" field="Cluster_spectrum_count"     label="Cluster Spectrum Count"     width="7"/>
+                        <column type="integer" field="Peptide_spectrum_count"     label="Peptide Spectrum Count"     width="7"/>
+                        <column type="integer" field="Protein_spectrum_count"     label="Protein Spectrum Count"     width="7"/>
+                        <column type="integer" field="Charge"     label="Charge"     width="7"/>
+			<column type="text" field="Processed_peptide"     label="Unmodified Peptide"     width="15"/>
+                </row>
+        </block>
+
+	<!--Overall group by peptide-->
+ 	<view id="group_by_peptide_overall" label="Overall Group by Peptide">
+                <blockRef id="main" type="peptide_list_overall"/>
+        </view>
+	
+	<block id="peptide_list_overall" type="table">
+		<data>
+                        <source type="file" name="spectrumCounts/"/>
+                        <parsers>
+                                <parser type="representativeTabular" groupBy="Processed_peptide"/>
+                        </parsers>
+			<processors>
+				<processor type="protein" field="Protein"/>
+			</processors>
+                </data>
+
+                <row> 
+			<column type="text" field="Processed_peptide"     label="Unmodified Peptide"     width="15"/>
+                        <column type="integer" field="Peptide_spectrum_count"     label="Peptide Spectrum Count"     width="7"/>
+                        <column type="integer" field="G1_peptide_count"     label="Default Group 1 PSC"     width="2"/>
+                        <column type="integer" field="G2_peptide_count"     label="Def G2 PSC"     width="2"/>
+                        <column type="integer" field="G3_peptide_count"     label="Def G3 PSC"     width="2"/>
+                        <column type="integer" field="G4_peptide_count"     label="Def G4 PSC"     width="2"/>
+                        <column type="integer" field="G5_peptide_count"     label="Def G5 PSC"     width="2"/>
+                        <column type="integer" field="G6_peptide_count"     label="Def G6 PSC"     width="2"/>
+			<column type="integer" field="User_G1_peptide_count"     label="User-Defined Group 1 PSC"     width="2"/>
+                        <column type="integer" field="User_G2_peptide_count"     label="User G2 PSC"     width="2"/>
+                        <column type="integer" field="User_G3_peptide_count"     label="User G3 PSC"     width="2"/>
+                        <column type="integer" field="User_G4_peptide_count"     label="User G4 PSC"     width="2"/>
+                        <column type="integer" field="User_G5_peptide_count"     label="User G5 PSC"     width="2"/>
+                        <column type="integer" field="User_G6_peptide_count"     label="User G6 PSC"     width="2"/>
+                        <column type="integer" field="User_G7_peptide_count"     label="User G7 PSC"     width="2"/>
+                        <column type="integer" field="User_G8_peptide_count"     label="User G8 PSC"     width="2"/>
+                        <column type="integer" field="User_G9_peptide_count"     label="User G9 PSC"     width="2"/>
+                        <column type="integer" field="User_G10_peptide_count"     label="User G10 PSC"     width="2"/>
+                        <column type="integer" field="User_G11_peptide_count"     label="User G11 PSC"     width="2"/>
+                        <column type="integer" field="User_G12_peptide_count"     label="User G12 PSC"     width="2"/>
+                        <column type="integer" field="User_G13_peptide_count"     label="User G13 PSC"     width="2"/>
+                        <column type="integer" field="User_G14_peptide_count"     label="User G14 PSC"     width="2"/>
+                        <column type="integer" field="User_G15_peptide_count"     label="User G15 PSC"     width="2"/>
+                        <column type="integer" field="User_G16_peptide_count"     label="User G16 PSC"     width="2"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+		
+                </row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Cluster_index]"/>
+                      		<parameter name="index"    value="[Cluster_index]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Cluster_index]"/>
+                      		<parameter name="index"    value="[Cluster_index]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+                <row expander="down:up">
+                        <column type="block" block="spectra_per_peptide_overall" colspan="13">
+                                <parameter name="peptide" value="[Processed_peptide]"/>
+                        </column>
+                </row>
+        </block>
+
+        <block id="spectra_per_peptide_overall" type="table">
+                <data>
+                        <source type="file" name="spectrumCounts/"/>
+                        <parsers>
+                                <parser type="slicedTabular" groupBy="Processed_peptide" sliceBy="{peptide}"/>
+                        </parsers>
+                        <processors>
+                                <processor type="protein" field="Protein"/>
+                        </processors>
+                </data>
+                <row> 
+			<column type="text" field="Peptide"     label="Peptide"     width="15"/>
+			<column type="view" view="scan_details_overall" field="Cluster_index" label="Cluster Index" width="18">
+				<parameter name="cluster index"   value="[Cluster_index]"/>
+				<parameter name="Peptide" value="[Peptide]"/>
+			</column>
+			<column type="integer" field="Cluster_index"     label="Cluster Index"     width="7"/>
+			<column type="text" field="Workflow"     label="Workflow"     width="15"/>
+                        <column type="text" field="Filename"     label="Filename"     width="15"/>
+                        <column type="text" field="Protein"     label="Protein"     width="15"/>
+                        <column type="integer" field="Cluster_spectrum_count"     label="Cluster Spectrum Count"     width="7"/>
+                        <column type="integer" field="Protein_spectrum_count"     label="Protein Spectrum Count"     width="7"/>
+                        <column type="integer" field="Charge"     label="Charge"     width="7"/>
+                        <column type="text" field="Default_groups"     label="Default Groups"     width="15"/>
+                        <column type="text" field="All_groups"     label="User-Defined Groups"     width="15"/>
+
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Cluster_index]"/>
+                      		<parameter name="index"    value="[Cluster_index]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Cluster_index]"/>
+                      		<parameter name="index"    value="[Cluster_index]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+        </block>
+	
+
+	<!--Overall group by protein-->
+ 	<view id="group_by_protein_overall" label="Overall Group by Protein">
+                <blockRef id="main" type="protein_list_overall"/>
+        </view>
+	<view id="protein_details_overall" display="hidden">
+		<blockRef id="main" type="spectra_per_protein_overall"/>
+	</view>
+	<view id="scan_details_overall" display="hidden">
+		<blockRef id="main" type="spectra_per_scan_overall"/>
+	</view>
+	
+	<block id="protein_list_overall" type="table">
+		<data>
+                        <source type="file" name="spectrumCounts/"/>
+                        <parsers>
+                                <parser type="representativeTabular" groupBy="Protein"/>
+                        </parsers>
+			<processors>
+				<processor type="protein" field="Protein"/>
+			</processors>
+                </data>
+
+	        <row>
+                        <column type="view" view="protein_details_overall" field="ProteinID" label="Protein" width="18">
+                                <parameter name="protein"   value="[Protein]"/>
+                                <parameter name="proteinID" value="[ProteinID]"/>
+                        </column>
+                        <column type="text" field="Protein"     label="Protein"     width="15"/>
+                        <column type="integer" field="Protein_spectrum_count"     label="Protein Spectrum Count"     width="7"/>
+                        <column type="integer" field="Unique_protein_spectrum_count"     label="Unique Protein Spectrum Count"     width="7"/>
+                        <column type="integer" field="G1_protein_count"     label="Default Group 1 PSC"     width="2"/>
+                        <column type="integer" field="G1_unique_protein_count"     label="Def G1 Unique PSC"     width="2"/>
+                        <column type="integer" field="G2_protein_count"     label="Def G2 PSC"     width="2"/>
+                        <column type="integer" field="G2_unique_protein_count"     label="Def G2 Unique PSC"     width="2"/>
+                        <column type="integer" field="G3_protein_count"     label="Def G3 PSC"     width="2"/>
+                        <column type="integer" field="G3_unique_protein_count"     label="Def G3 Unique PSC"     width="2"/>
+                        <column type="integer" field="G4_protein_count"     label="Def G4 PSC"     width="2"/>
+                        <column type="integer" field="G4_unique_protein_count"     label="Def G4 Unique PSC"     width="2"/>
+                        <column type="integer" field="G5_protein_count"     label="Def G5 PSC"     width="2"/>
+                        <column type="integer" field="G5_unique_protein_count"     label="Def G5 Unique PSC"     width="2"/>
+                        <column type="integer" field="G6_protein_count"     label="Def G6 PSC"     width="2"/>
+                        <column type="integer" field="G6_unique_protein_count"     label="Def G6 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G1_protein_count"     label="User-Defined Group 1 PSC"     width="2"/>
+                        <column type="integer" field="User_G1_unique_protein_count"     label="User G1 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G2_protein_count"     label="User G2 PSC"     width="2"/>
+                        <column type="integer" field="User_G2_unique_protein_count"     label="User G2 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G3_protein_count"     label="User G3 PSC"     width="2"/>
+                        <column type="integer" field="User_G3_unique_protein_count"     label="User G3 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G4_protein_count"     label="User G4 PSC"     width="2"/>
+                        <column type="integer" field="User_G4_unique_protein_count"     label="User G4 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G5_protein_count"     label="User G5 PSC"     width="2"/>
+                        <column type="integer" field="User_G5_unique_protein_count"     label="User G5 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G6_protein_count"     label="User G6 PSC"     width="2"/>
+                        <column type="integer" field="User_G6_unique_protein_count"     label="User G6 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G7_protein_count"     label="User G7 PSC"     width="2"/>
+                        <column type="integer" field="User_G7_unique_protein_count"     label="User G7 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G8_protein_count"     label="User G8 PSC"     width="2"/>
+                        <column type="integer" field="User_G8_unique_protein_count"     label="User G8 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G9_protein_count"     label="User G9 PSC"     width="2"/>
+                        <column type="integer" field="User_G9_unique_protein_count"     label="User G9 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G10_protein_count"     label="User G10 PSC"     width="2"/>
+                        <column type="integer" field="User_G10_unique_protein_count"     label="User G10 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G11_protein_count"     label="User G11 PSC"     width="2"/>
+                        <column type="integer" field="User_G11_unique_protein_count"     label="User G11 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G12_protein_count"     label="User G12 PSC"     width="2"/>
+                        <column type="integer" field="User_G12_unique_protein_count"     label="User G12 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G13_protein_count"     label="User G13 PSC"     width="2"/>
+                        <column type="integer" field="User_G13_unique_protein_count"     label="User G13 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G14_protein_count"     label="User G14 PSC"     width="2"/>
+                        <column type="integer" field="User_G14_unique_protein_count"     label="User G14 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G15_protein_count"     label="User G15 PSC"     width="2"/>
+                        <column type="integer" field="User_G15_unique_protein_count"     label="User G15 Unique PSC"     width="2"/>
+                        <column type="integer" field="User_G16_protein_count"     label="User G16 PSC"     width="2"/>
+                        <column type="integer" field="User_G16_unique_protein_count"     label="User G16 Unique PSC"     width="2"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Cluster_index]"/>
+                      		<parameter name="index"    value="[Cluster_index]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Cluster_index]"/>
+                      		<parameter name="index"    value="[Cluster_index]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+                <row expander="down:up">
+                        <column type="block" block="spectra_per_protein_overall" colspan="13">
+                                <parameter name="protein" value="[Protein]"/>
+                        </column>
+                </row>
+        </block>
+
+        <block id="spectra_per_protein_overall" type="table">
+                <data>
+                        <source type="file" name="spectrumCounts/"/>
+                        <parsers>
+                                <parser type="slicedTabular" groupBy="Protein" sliceBy="{protein}"/>
+                        </parsers>
+                        <processors>
+                                <processor type="protein" field="Protein"/>
+                        </processors>
+                </data>
+	        <row>
+                        <column type="text" field="Workflow"     label="Workflow"     width="15"/>
+                        <column type="text" field="Filename"     label="Filename"     width="15"/>
+                        <column type="view" view="scan_details_overall" field="Cluster_index" label="Cluster Index" width="18">
+                                <parameter name="cluster index"   value="[Cluster_index]"/>
+                        </column>
+                        <column type="integer" field="Cluster_index"     label="Cluster Index"     width="7"/>
+                        <column type="text" field="Peptide"     label="Peptide"     width="15"/>
+			<column type="text" field="Proteins"     label="All Proteins"     width="15"/>
+                        <column type="integer" field="Cluster_spectrum_count"     label="Cluster Spectrum Count"     width="7"/>
+                        <column type="integer" field="Peptide_spectrum_count"     label="Peptide Spectrum Count"     width="7"/>
+                        <column type="integer" field="Charge"     label="Charge"     width="7"/>
+                        <column type="text" field="Processed_peptide"     label="Unmodified Peptide"     width="15"/>
+		        <column type="text" field="Default_groups"     label="Default Groups"     width="15"/>
+                        <column type="text" field="All_groups"     label="User-Defined Groups"     width="15"/>
+
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Cluster_index]"/>
+                      		<parameter name="index"    value="[Cluster_index]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Cluster_index]"/>
+                      		<parameter name="index"    value="[Cluster_index]"/>
+				<parameter name="peptide" value="[Peptide]"/>
+			</column>
+		</row>
+        </block>	
+
+	<block id="spectra_per_scan_overall" type="table">
+	        <data>
+                        <source type="file" name="clusterinfosummarygroup_attributes/"/>
+                        <parsers>
+				<parser type="slicedTabular" groupBy="cluster index"   sliceBy="{cluster index}"/>
+                        </parsers>
+                </data>
+                <row>
+                        <column type="view" view="cluster_details" field="cluster index" label="Cluster Index" width="18">
+                                <parameter name="protein"   value="[cluster index]"/>
+                                <parameter name="proteinID" value="[cluster index]"/>
+                        </column>
+                        
+                        <column type="integer"     field="cluster index"         label="Cluster Index"            width="3"/>
+                        <column type="integer"     field="number of spectra"        label="NumSpectra"          width="3"/>
+                        <column type="float"       field="precursor mass"       label="PrecursorMZ"           precision="5"/>
+                        <column type="float"        field="sum(precursor intensity)"    label="PrecursorInt"         precision="5"/>
+                        <column type="float"        field="RTMean"    label="RTMean"         width="5"/>
+                        <column type="text"        field="AllGroups"    label="AllGroups"         width="5"/>
+                        <column type="text"        field="DefaultGroups"    label="DefaultGroups"         width="5"/>
+                </row>	
+		
+		<row expander="image">
+                  <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                      <parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      <parameter name="scan"    value="[cluster index]"/>
+                      <parameter name="peptide" value="*..*"/>
+                  </column>
+                </row>
+
+	</block>
+        
+        
+        <block id="view_qc_false_results" type="table">
+                <data>
+                        <source type="file" name="networkqc_falsepositive/"/>
+                        <parsers>
+                                <parser type="sortedTabular" sortBy="msgfscore1" operator="ascending"/>
+                        </parsers>
+                </data>
+                <row>
+                        <column type="integer"     field="spec1"         label="Spec1"            width="3"/>
+                        <column type="text"        field="pept1"    label="Peptide1"    width="18" />
+                        <column type="integer"     field="cs1"         label="Charge1"            width="3"/>
+                        
+                        <column type="integer"     field="spec2"         label="Spec2"            width="3"/>
+                        <column type="text"        field="pept2"    label="Peptide2"    width="18" />
+                        <column type="integer"     field="cs2"         label="Charge2"            width="3"/>
+                        
+                        <column type="float"       field="cosine"       label="cosine"           precision="4"/>
+                        <column type="float"       field="mzdiff"       label="mzdiff"           precision="4"/>
+                        
+                        <column type="integer"     field="correct"         label="correct"            width="1"/>
+                        <column type="integer"     field="spspair"         label="spspair"            width="1"/>
+                </row>  
+                
+                <row expander="image">
+                  <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                      <parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      <parameter name="scan"    value="[spec1]"/>
+                      <parameter name="index"    value="[spec1]"/>
+                      <parameter name="peptide" value="[pept1]"/>
+                  </column>
+                  <column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="5">
+                      <parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      <parameter name="scan"    value="[spec2]"/>
+                      <parameter name="index"    value="[spec2]"/>
+                      <parameter name="peptide" value="[pept2]"/>
+                  </column>
+                </row>
+
+        </block>
+        
+        <block id="view_qc_curve_results" type="stream">
+                <data>
+                        <source type="file" name="networkqc_curve/"/>     
+                        <parsers>
+                                <parser type="stream" contentType="text/plain"/>
+                        </parsers>
+                </data>
+        </block>
+	
+	<!--Number of clusters identified by each search method-->	
+	<download>
+		<source type="folder" name="msplitMsgfdbModaUnident/"/>		
+	</download>
+	<!--	
+	<view id="spec_per_tool" label="Number of Clusters Identified per Tool">
+		<blockRef id="main" type="num_spec_plaintext"/>
+	</view>
+	-->
+	<block id="num_spec_plaintext" type="stream">
+		<data>
+			<source type="file" name="msplitMsgfdbModaUnident/numIdentEachMethod.txt"/>	
+			<parsers>
+				<parser type="stream" contentType="text/plain"/>
+			</parsers>	
+		</data>
+	</block>
+
+
+	<!--Peptide categorization-->
+	<download>
+		<source type="folder" name="categorization/"/>		
+	</download>
+	<view id="peptide_categ" label="Peptide Pair Categorization">
+		<blockRef id="main" type="categ_table"/>
+	</view>
+	
+	<block id="categ_plaintext" type="stream">
+		<data>
+			<source type="file" name="categorization/"/>	
+			<parsers>
+				<parser type="stream" contentType="text/plain"/>
+			</parsers>	
+		</data>
+	</block>
+
+	<block id="categ_table" type="table">
+		<data>
+			<source type="file" name="categorization/"/>
+			<parsers>
+				<parser type="tabular"/>
+			</parsers>
+		</data>
+		<row>
+                        <column type="integer" field="Category"     label="Category"     width="3"/>
+                        <column type="text" field="Workflow1"     label="Workflow 1"     width="10"/>
+                        <column type="text" field="Filename1"     label="Filename 1"     width="7"/>    
+			<column type="view" view="scan_details_overall" field="Scan1" label="Cluster Index 1" width="18">
+				<parameter name="cluster index"   value="[Scan1]"/>
+			</column>
+                        <column type="integer" field="Scan1"     label="Cluster Index 1"     width="3"/>
+                        <column type="text" field="Peptide1"     label="Peptide 1"     width="15"/>    
+                        <column type="text" field="Workflow2"     label="Workflow 2"     width="7"/>
+                        <column type="text" field="Filename2"     label="Filename 2"     width="7"/>            
+			<column type="view" view="scan_details_overall" field="Scan2" label="Cluster Index 2" width="18">
+				<parameter name="cluster index"   value="[Scan2]"/>
+			</column>
+                        <column type="integer" field="Scan2"     label="Cluster Index 2"     width="3"/>
+                        <column type="text" field="Peptide2"     label="Peptide 2"     width="15"/>
+                </row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan1]"/>
+                      		<parameter name="index"    value="[Scan1]"/>
+				<parameter name="peptide" value="[Peptide1]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan1]"/>
+                      		<parameter name="index"    value="[Scan1]"/>
+				<parameter name="peptide" value="[Peptide1]"/>
+			</column>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan2]"/>
+                      		<parameter name="index"    value="[Scan2]"/>
+				<parameter name="peptide" value="[Peptide2]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+                      		<parameter name="file"    file="spectra/specs_ms.mgf"/>
+                      		<parameter name="scan"    value="[Scan2]"/>
+                      		<parameter name="index"    value="[Scan2]"/>
+				<parameter name="peptide" value="[Peptide2]"/>
+			</column>
+		</row>
+	</block>	
+
+	<view id="summary_report" label="Summary Report">
+		<blockRef id="main" type="summary_report_plaintext"/>
+	</view>
+	<block id="summary_report_plaintext" type="stream">
+		<data>
+			<source type="file" name="summaryReport/"/>	
+			<parsers>
+				<parser type="stream" contentType="text/html"/>
+			</parsers>	
+		</data>
+	</block>
+    
+</interface>
+

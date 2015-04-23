@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<binding>
+	<bind action="begin" type="download">
+	 	<url value="{livesearch.download}"/>
+	 	<query name="task" valueRef="@task" />
+	 	<query name="user" valueRef="@user"/>
+	 	<compression type="zip" />
+		<download port="spec" type="folder">
+			<query name="resource" value="spec"/>
+		</download>
+		<download port="fasta" type="folder">
+			<query name="resource" value="fasta"/>
+		</download>
+		<download port="params" type="file">
+			<query name="resource" value="params"/>
+		</download>		
+		<downloadParams>
+			<query name="resource" value="params"/>
+		</downloadParams>
+	</bind>
+	
+	<bind action="mergeSequences" tool="mergeFasta">
+		<inputAsRequirement port="fasta" requirement="input"/>
+		<productionToOutput port="merged"   production="output"/>
+	</bind>
+
+	<bind action="DecoySeqGenerate" tool="DecoySeqGenerate">
+		<inputAsRequirement port="merged" requirement="fasta"/>
+		<productionToOutput port="appendedSeq"   production="result"/>
+	</bind>
+
+	<bind action="createMXDBParam" tool="createMXDBParam">
+		<inputAsRequirement port="spec" requirement="spectrum"/>
+		<inputAsRequirement port="params" requirement="flowParams"/>
+		<inputAsRequirement port="appendedSeq" requirement="fasta"/>
+		<productionToOutput port="cfg"   production="paramOut"/>
+	</bind>
+	
+	<bind action="MXDB" tool="MXDB">
+		<inputAsRequirement port="cfg" requirement="config"/>
+		<inputAsRequirement port="spec" requirement="spectrum"/>
+		<inputAsRequirement port="appendedSeq" requirement="fasta"/>
+		<productionToOutput port="MXDBOut" production="MXDBOut"/>
+	</bind>
+
+	<bind action="merge" tool="mergeNFormat">
+		<inputAsRequirement port="MXDBOut"       requirement="searchResults"/>
+		<productionToOutput port="mergedResult" production="mergedResult"/>
+	</bind>
+	
+	<bind action="MXDBFilter" tool="MXDBFilter">
+		<inputAsRequirement port="params"       requirement="flowParams"/>
+		<inputAsRequirement port="mergedResult"       requirement="mergedResult"/>
+		<productionToOutput port="filteredResult" production="filteredResult"/>
+	</bind>
+	
+	<bind action="end" type="upload">
+	 	<url value="{livesearch.upload}"/>
+	 	<query name="task" valueRef="@task"/>
+	 	<contentQuery name="content"/>
+	 	<compression type="zip"/>
+		<upload port="filteredResult" type="file">
+			<query name="resource" value="result"/>
+		</upload>
+	</bind>
+</binding>

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<interface id="MixGF" version="1.2.5">
+	<workflow-id>MixGF</workflow-id>
+	<workflow-label>MixGF</workflow-label>
+	
+	<!-- Parameter declarations -->
+	<parameters>
+
+		<!-- Universal parameters -->
+		<parameter name="desc" label="Description">
+			<validator type="length" maximum="100"/>
+		</parameter>
+		<parameter name="email" label="Email">
+			<validator type="email"/>
+		</parameter>
+		<!-- Search file parameters -->
+		<parameter name="spec_on_server" label="Spectrum Files">
+			<validator type="required"/>
+			<fileGenerator type="upload" purpose="spectrum" target="spec"/>
+		</parameter>
+		<parameter name="seq_on_server" label="Additional Sequences">
+			<fileGenerator type="upload" purpose="sequence" target="fasta"/>
+		</parameter>
+		<parameter name="db.DB" label="Sequence Database">
+			<options resource="sequence"/>
+			<fileGenerator type="resource" resource="sequence" target="fasta"/>
+		</parameter>
+		<!-- Basic MS parameters -->
+		<parameter name="tolerance.PM_tolerance" label="Parent Mass Tolerance (Da)">
+			<default value="2"/>
+			<!--
+			<validator type="float" minimum="0" maximum="2.5"/>
+			<processor type="concatenate" suffix="tolerance_unit.PM_unit"/>
+			-->
+		</parameter>
+		<parameter name="tolerance.FM_tolerance" label="Fragment Mass Tolerance (Da)">
+			<default value="0.5"/>
+		</parameter>
+		<parameter name="tolerance.FDR" label="False Discovery Rate (FDR)">
+			<default value="0.01"/>
+		</parameter>
+		<!-- PTM parameters -->
+		<!-- Quality control parameters -->
+	</parameters>
+	
+	<!-- Parameter processors not associated with any single parameter -->
+	<processors>
+		<processor type="sequence"/>
+		<processor type="ptm"/>
+	</processors>
+	
+	<!-- Input form layout -->
+	<block label="Options">
+		<row>
+			<cell colspan="4" align="center">
+				<label prefix="false">
+					<content><![CDATA[<span style="background-color:#D1EEEE;
+					padding:1px; border:2px inset blue">See
+					<a style="color:blue; font-weight:bold; font-size:105%;
+						background-color:#D1EEEE" target="_blank"
+						href="http://proteomics.ucsd.edu/Software/MixDB.html">
+						here
+					</a> to learn more about MixDB.</span>]]></content>
+				</label>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="spec_on_server"/>
+					<tooltip id="hSpectrumFile"/>
+				</label>
+			</cell>
+			<cell colspan="3">
+				<module id="spec_on_server" type="fileSelector">
+					<property name="label">Spectrum Files</property>
+				</module>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="tolerance.PM_tolerance"/>
+					<tooltip id="hParentMass"/>
+				</label>
+			</cell>
+			<cell colspan="3">
+				<input type="text" parameter="tolerance.PM_tolerance">
+					<attribute name="size" value="3"/>
+				</input>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="tolerance.FM_tolerance"/>
+					<tooltip id="hFragmentMass"/>
+				</label>
+			</cell>
+			<cell colspan="3">
+				<input type="text" parameter="tolerance.FM_tolerance">
+					<attribute name="size" value="3"/>
+				</input>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="tolerance.FDR"/>
+					<tooltip id="hFragmentMass"/>
+				</label>
+			</cell>
+			<cell colspan="3">
+				<input type="text" parameter="tolerance.FDR">
+					<attribute name="size" value="3"/>
+				</input>
+			</cell>
+		</row>
+	</block>
+	<block label="More Options">
+		<row>
+			<cell>
+				<label>
+					<content parameter="db.DB"/>
+					<tooltip id="hDatabase"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="db.DB"/>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="seq_on_server"/>
+					<tooltip id="hAdditionalSeq"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<module id="seq_on_server" type="fileSelector">
+					<property name="label">Sequence Files</property>
+				</module>
+			</cell>
+		</row>
+
+	</block>
+</interface>

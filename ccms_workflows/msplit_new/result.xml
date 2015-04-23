@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<interface id="msplit_new" version="1.2.3">
+	<!-- View definitions -->
+	<view id="group_by_spectrum" label="Group by Spectrum">
+		<blockRef id="main" type="spectrum_list"/>
+	</view>
+	<view id="group_by_peptide" label="Group by Peptide">
+		<blockRef id="main" type="peptide_list"/>
+	</view>
+	<view id="group_by_protein" label="Group by Protein">
+		<blockRef id="main" type="protein_list"/>
+	</view>
+	<view id="protein_details" display="hidden">
+		<!--
+		<blockRef id="summary" type="protein_summary"/>
+		-->
+		<blockRef id="main" type="spectra_per_protein"/>
+	</view>
+	
+	<!-- Block definitions -->
+	<block id="spectrum_list" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="svm1-score" operator="descending"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="#SpectrumFile"  label="Filename"      width="12"/>
+			<column type="integer" field="spectrumIndex"  label="Index"         width="3"/>
+			<column type="integer" field="Scan#"          label="Scan"          width="3"/>
+			<column type="text"    field="Annotation"     label="Peptide"       width="18"/>
+			<column type="text"    field="Protein"        label="Protein"       width="18"/>
+			<column type="integer" field="Charge"         label="Charge"        width="1"/>
+			<column type="float"   field="cosine(M, A+B)" label="Cosine(M,A+B)" precision="3"/>
+			<column type="float"   field="cosine(M,A)"    label="Cosine(M,A)"   precision="3"/>
+			<column type="float"   field="cosine(A,B)"    label="Cosine(A,B)"   precision="3"/>
+			<column type="float"   field="alpha"          label="Alpha"         precision="3"/>
+			<column type="float"   field="res-alpha"      label="Res-Alpha"     precision="3"/>
+			<column type="float"   field="svm1-score"     label="SVM1-Score"    precision="3"/>
+			<column type="float"   field="svm2-score"     label="SVM2-Score"    precision="3"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+				<parameter name="file"    file="spec/[internalFilename]"/>
+				<parameter name="scan"    value="[Scan#]"/>
+				<parameter name="index"   value="[spectrumIndex]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"    file="spec/[internalFilename]"/>
+				<parameter name="scan"    value="[Scan#]"/>
+				<parameter name="index"   value="[spectrumIndex]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="peptide_list" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="representativeTabular" groupBy="Annotation" selectBy="svm1-score" operator="max"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="#SpectrumFile"  label="Filename"      width="12"/>
+			<column type="integer" field="spectrumIndex"  label="Index"         width="3"/>
+			<column type="integer" field="Scan#"          label="Scan"          width="3"/>
+			<column type="text"    field="Annotation"     label="Peptide"       width="18"/>
+			<column type="text"    field="Protein"        label="Protein"       width="18"/>
+			<column type="integer" field="Charge"         label="Charge"        width="1"/>
+			<column type="float"   field="cosine(M, A+B)" label="Cosine(M,A+B)" precision="3"/>
+			<column type="float"   field="cosine(M,A)"    label="Cosine(M,A)"   precision="3"/>
+			<column type="float"   field="cosine(A,B)"    label="Cosine(A,B)"   precision="3"/>
+			<column type="float"   field="alpha"          label="Alpha"         precision="3"/>
+			<column type="float"   field="res-alpha"      label="Res-Alpha"     precision="3"/>
+			<column type="float"   field="svm1-score"     label="SVM1-Score"    precision="3"/>
+			<column type="float"   field="svm2-score"     label="SVM2-Score"    precision="3"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="7">
+				<parameter name="file"    file="spec/[internalFilename]"/>
+				<parameter name="scan"    value="[Scan#]"/>
+				<parameter name="index"   value="[spectrumIndex]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"    file="spec/[internalFilename]"/>
+				<parameter name="scan"    value="[Scan#]"/>
+				<parameter name="index"   value="[spectrumIndex]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+		</row>
+		<row expander="down:up">
+			<column type="block" block="spectra_per_peptide" colspan="13">
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_peptide" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="svm1-score"  operator="descending"/>
+				<parser type="slicedTabular" groupBy="Annotation" sliceBy="{peptide}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="#SpectrumFile"  label="Filename"      width="12"/>
+			<column type="integer" field="spectrumIndex"  label="Index"         width="3"/>
+			<column type="integer" field="Scan#"          label="Scan"          width="1"/>
+			<column type="text"    field="Protein"        label="Protein"       width="18"/>
+			<column type="integer" field="Charge"         label="Charge"        width="1"/>
+			<column type="float"   field="cosine(M, A+B)" label="Cosine(M,A+B)" precision="3"/>
+			<column type="float"   field="cosine(M,A)"    label="Cosine(M,A)"   precision="3"/>
+			<column type="float"   field="cosine(A,B)"    label="Cosine(A,B)"   precision="3"/>
+			<column type="float"   field="alpha"          label="Alpha"         precision="3"/>
+			<column type="float"   field="res-alpha"      label="Res-Alpha"     precision="3"/>
+			<column type="float"   field="svm1-score"     label="SVM1-Score"    precision="3"/>
+			<column type="float"   field="svm2-score"     label="SVM2-Score"    precision="3"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"    file="spec/[internalFilename]"/>
+				<parameter name="scan"    value="[Scan#]"/>
+				<parameter name="index"   value="[spectrumIndex]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"    file="spec/[internalFilename]"/>
+				<parameter name="scan"    value="[Scan#]"/>
+				<parameter name="index"   value="[spectrumIndex]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="protein_list" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular"  sortBy="svm1-score" operator="descending"/>
+				<parser type="groupedTabular" groupBy="Protein"/>
+			</parsers>
+			<processors>
+				<processor type="protein"      field="Protein"/>
+				<processor type="peptideCount" field="Annotation"/>
+			</processors>
+		</data>
+		<row>
+			<column type="view" view="protein_details" field="ProteinID" label="Protein" width="18">
+				<parameter name="protein"   value="[Protein]"/>
+				<parameter name="proteinID" value="[ProteinID]"/>
+			</column>
+			<column type="text"    field="Comment"  label="Description"                width="18"/>
+			<column type="integer" field="Hits"     label="Hits"                       width="2"/>
+			<column type="integer" field="Peptides" label="Unique Unmodified Peptides" width="2"/>
+			<column type="integer" field="Modified" label="Unique Modified Peptides"   width="2"/>
+		</row>
+		<row expander="down:up">
+			<column type="block" block="spectra_per_protein" colspan="5">
+				<parameter name="protein" value="[Protein]"/>
+			</column>
+		</row>
+	</block>
+	
+	<block id="spectra_per_protein" type="table">
+		<data>
+			<source type="file" name="result/"/>
+			<parsers>
+				<parser type="sortedTabular" sortBy="svm1-score" operator="descending"/>
+				<parser type="slicedTabular" groupBy="Protein"   sliceBy="{protein}"/>
+			</parsers>
+			<processors>
+				<processor type="uploadFilename" field="#SpectrumFile"/>
+				<processor type="protein"        field="Protein"/>
+			</processors>
+		</data>
+		<row>
+			<column type="text"    field="#SpectrumFile"  label="Filename"      width="12"/>
+			<column type="integer" field="spectrumIndex"  label="Index"         width="3"/>
+			<column type="integer" field="Scan#"          label="Scan"          width="1"/>
+			<column type="text"    field="Annotation"     label="Peptide"       width="18"/>
+			<column type="integer" field="Charge"         label="Charge"        width="1"/>
+			<column type="float"   field="cosine(M, A+B)" label="Cosine(M,A+B)" precision="3"/>
+			<column type="float"   field="cosine(M,A)"    label="Cosine(M,A)"   precision="3"/>
+			<column type="float"   field="cosine(A,B)"    label="Cosine(A,B)"   precision="3"/>
+			<column type="float"   field="alpha"          label="Alpha"         precision="3"/>
+			<column type="float"   field="res-alpha"      label="Res-Alpha"     precision="3"/>
+			<column type="float"   field="svm1-score"     label="SVM1-Score"    precision="3"/>
+			<column type="float"   field="svm2-score"     label="SVM2-Score"    precision="3"/>
+		</row>
+		<row expander="image">
+			<column type="stream" invoke="annotatedSpectrumImageThumbnail" contentType="image/png" colspan="6">
+				<parameter name="file"    file="spec/[internalFilename]"/>
+				<parameter name="scan"    value="[Scan#]"/>
+				<parameter name="index"   value="[spectrumIndex]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+			<column type="stream" invoke="annotatedSpectrumImageText" contentType="text/plain" colspan="6">
+				<parameter name="file"    file="spec/[internalFilename]"/>
+				<parameter name="scan"    value="[Scan#]"/>
+				<parameter name="index"   value="[spectrumIndex]"/>
+				<parameter name="peptide" value="[Annotation]"/>
+			</column>
+		</row>
+	</block>
+	
+	<!--
+	<block id="protein_summary" type="stream">
+		<data>
+			<source type="invoke" name="proteinSummaryExtractor">
+				<parameter name="input"     file="summary/"/>
+				<parameter name="protein"   value="{protein}"/>
+				<parameter name="proteinID" value="{proteinID}"/>
+				<parameter name="output"    file="temp/summary/{protein}.html"/>
+			</source>
+			<parsers>
+				<parser type="stream" contentType="text/html"/>
+			</parsers>
+		</data>
+	</block>
+	-->
+</interface>

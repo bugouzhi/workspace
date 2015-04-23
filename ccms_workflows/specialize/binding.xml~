@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<binding>
+	<bind action="begin" type="download">
+	 	<url value="{livesearch.download}"/>
+	 	<query name="task" valueRef="@task" />
+	 	<compression type="zip" />
+		<download port="spec" type="folder">
+			<query name="resource" value="spec"/>
+		</download>
+		<download port="fasta" type="folder">
+			<query name="resource" value="fasta"/>
+		</download>
+		<download port="flowParams" type="file">
+			<query name="resource" value="params"/>
+		</download>
+	</bind>
+	
+	<bind action="mergeSequences" tool="mergeFasta">
+		<inputAsRequirement port="fasta" requirement="input"/>
+		<productionToOutput port="merged"   production="output"/>
+	</bind>
+
+	<bind action="DecoySeqGenerate" tool="DecoySeqGenerate">
+		<inputAsRequirement port="merged" requirement="fasta"/>
+		<productionToOutput port="appendedSeq"   production="result"/>
+	</bind>
+
+	<bind action="createParam" tool="createParam">
+		<inputAsRequirement port="spec" requirement="spectrum"/>
+		<inputAsRequirement port="flowParams" requirement="flowParams"/>
+		<inputAsRequirement port="appendedSeq" requirement="fasta"/>
+		<productionToOutput port="cfg"   production="paramOut"/>
+	</bind>
+
+	<bind action="Specialize" tool="Specialize">
+		<inputAsRequirement port="cfg" requirement="config"/>
+		<inputAsRequirement port="spec" requirement="spectrum"/>
+		<inputAsRequirement port="appendedSeq" requirement="fasta"/>
+		<productionToOutput port="specializeOut" production="specializeOut"/>
+	</bind>
+
+	<bind action="end" type="upload">
+	 	<url value="{livesearch.upload}"/>
+	 	<query name="task" valueRef="@task"/>
+	 	<contentQuery name="content"/>
+	 	<compression type="zip"/>
+		<upload port="cfg" type="file">
+			<query name="resource" value="result"/>
+		</upload>
+	</bind>
+</binding>

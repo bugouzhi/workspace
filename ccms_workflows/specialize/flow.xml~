@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<flow name="specialize">
+	<collection name="spectra"/>
+	<collection name="sequence"/>
+	<collection name="config"/>	
+	<collection name="specializeOut"/>		
+	<object     name="workflowParameters"/>
+	<object     name="Seq"/>
+        <object	    name="mergedSequence"/>
+	<object	    name="appendedSeq"/>
+	
+	<action name="begin">
+	        <output port="spec"       collection="spectra"/>
+		<output port="fasta"  collection="sequence"/>
+		<output port="flowParams" object="workflowParameters"/>
+	</action>
+
+        <action name = "mergeSequences">
+		<input port="fasta" collection="sequence"/>
+		<output port="merged"  object="mergedSequence"/>
+	</action>		
+
+	<action name="DecoySeqGenerate">
+		<input port="merged" object="mergedSequence"/>
+		<output port="appendedSeq" object="appendedSeq"/>	
+	</action>
+	
+	<action name="createParam" multiplicity="multiple" type="parallel">
+		<input port="spec" collection="spectra" transformation="unfolding"/>
+		<input port="appendedSeq" object="appendedSeq"	/>
+		<input port="flowParams" object="workflowParameters"/>
+		<output port="cfg" collection="config"/>
+	</action>
+
+	<action name="Specialize" multiplicity="multiple" type="parallel">
+		<input port="cfg" collection="config" transformation="unfolding"/>
+		<input port="spec" collection="spectra"/>		
+		<input port="appendedSeq" object="appendedSeq"	/>
+		<output port="specializeOut" collection="specializeOut"/>		
+		
+	</action>
+
+	<action name="end">
+		<input port="cfg"   object="config"/>
+	</action>
+</flow>

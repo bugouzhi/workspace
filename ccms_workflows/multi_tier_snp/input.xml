@@ -1,0 +1,955 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<interface id="multi_tier_snp" version="1">
+	<workflow-id>multi_tier_snp</workflow-id>
+	<workflow-label>SNP_Identification</workflow-label>
+	
+	<!-- Parameter declarations -->
+	<parameters>
+
+		<!-- Universal parameters -->
+		<parameter name="desc" label="Description">
+			<validator type="length" maximum="100"/>
+		</parameter>
+		<parameter name="email" label="Email">
+			<validator type="email"/>
+		</parameter>
+		
+
+		<!-- Search file parameters -->
+ 		<parameter name="spec_on_server" label="Spectrum Files (Required)">
+            		<validator type="required"/>
+            		<fileGenerator type="upload" purpose="spectrum" target="spec"/>
+        	</parameter>
+
+		<parameter name="spec_on_server_group2" label="Spectrum Files G2">
+            		<fileGenerator type="upload" purpose="parameters" target="spectwo"/>
+       		</parameter>
+        
+        	<parameter name="spec_on_server_group3" label="Spectrum Files G3">
+            		<fileGenerator type="upload" purpose="parameters" target="specthree"/>
+       		</parameter>
+        
+		<parameter name="spec_on_server_group4" label="Spectrum Files G4">
+		    <fileGenerator type="upload" purpose="parameters" target="specfour"/>
+		</parameter>
+		
+		<parameter name="spec_on_server_group5" label="Spectrum Files G5">
+		    <fileGenerator type="upload" purpose="parameters" target="specfive"/>
+		</parameter>
+		
+		<parameter name="spec_on_server_group6" label="Spectrum Files G6">
+		    <fileGenerator type="upload" purpose="parameters" target="specsix"/>
+		</parameter>
+
+		<parameter name="groupmapping" label="Group Mapping">
+           		<fileGenerator type="upload" purpose="parameters" target="groupmapping"/>
+        	</parameter>	
+
+		<parameter name="attributemapping" label="Attribute Mapping">
+            		<fileGenerator type="upload" purpose="parameters" target="attributemapping"/>
+        	</parameter>
+
+		 <parameter name="library_on_server" label="Spectral Library (metabolomics-snets)">
+           		 <fileGenerator type="upload" purpose="library" target="lib"/>
+       		 </parameter>
+
+<!--		<parameter name="db_lib.DB" label="Spectral Library">
+			<options resource="spectral_library"/>
+			<fileGenerator type="resource" resource="spectral_library" target="lib"/>
+		</parameter>
+-->
+                <parameter name="lib_on_server" label="Spectral Library">
+                        <fileGenerator type="upload" purpose="spectral library" target="spectrallibrary"/>
+                </parameter>
+
+		<parameter name="seq_on_server" label="Additional Sequences">
+			<fileGenerator type="upload" purpose="sequence" target="fasta"/>
+		</parameter>
+		<parameter name="db.DB" label="Sequence Database">
+			<options resource="sequence"/>
+			<fileGenerator type="resource" resource="sequence" target="fasta"/>
+		</parameter>
+		<parameter name="db.contaminants" label="Include Common Contaminants"/>
+
+		<!-- Basic MS parameters -->
+
+		<parameter name="instrument.instrument" label="Instrument">
+			<options>
+				<option value="ESI-ION-TRAP"/>
+				<option value="QTOF"/>
+			</options>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="fragmentation.fragmentation" label="Fragmentation Method">
+			<options>
+				<option value="None" label="Specified in spectrum file"/>
+				<option value="CID"/>
+				<option value="ETD"/>
+				<option value="HCD"/>
+				<option value="Merge" label="Merge spectra from the same precursor"/>
+			</options>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="cysteine_protease.cysteine" label="Cysteine Protecting Group">
+			<options>
+				<option value="c57" label="Carbamidomethylation (+57)"/>
+				<option value="c58" label="Carboxymethylation (+58)"/>
+				<option value="c99" label="NIPIA/NIPCAM (+99)"/>
+				<option value="None"/>
+			</options>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="cysteine_protease.protease" label="Protease">
+			<options>
+				<option value="Trypsin"/>
+				<option value="Chymotrypsin"/>
+				<option value="Lys-C"/>
+				<option value="Lys-N"/>
+				<option value="Arg-C"/>
+				<option value="Glu-C"/>
+				<option value="Asp-N"/>
+				<option value="None"/>
+			</options>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="c13_nnet.c13" label="Number of Allowed 13C">
+			<options>
+				<option value="0"/>
+				<option value="1"/>
+				<option value="2"/>
+			</options>
+			<default value="1"/>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="c13_nnet.nnet" label="Number of Allowed Non-Enzymatic Termini">
+			<options>
+				<option value="0"/>
+				<option value="1"/>
+				<option value="2"/>
+			</options>
+			<default value="1"/>
+			<validator type="set"/>
+		</parameter>
+
+		<parameter name="tolerance_msplit.PM_tolerance" label="MSPLIT Parent Mass Tolerance">
+			<default value="2"/>
+			<validator type="float" minimum="0" maximum="2.5"/>
+		</parameter>
+
+		<parameter name="tolerance_msgfdb.PM_tolerance" label="MSGFDB Parent Mass Tolerance">
+			<default value="30"/>
+			<!--
+			<validator type="float" minimum="0" maximum="2.5"/>
+			-->
+			<processor type="concatenate" suffix="tolerance_unit_msgfdb.PM_unit"/>
+		</parameter>
+		<parameter name="tolerance_unit_msgfdb.PM_unit" label="MSGFDB Parent Mass Tolerance Units">
+			<options>
+				<option value="Da"/>
+				<option value="ppm"/>
+			</options>
+			<default value="ppm"/>
+			<validator type="set"/>
+		</parameter>
+		
+		<parameter name="tolerance.PM_tolerance" label="MODA Parent Mass Tolerance">
+			<default value="2"/>
+			<validator type="float" minimum="0" maximum="2.5"/>
+			<processor type="concatenate" suffix="tolerance_unit.PM_unit"/>
+		</parameter>
+		<parameter name="tolerance_unit.PM_unit" label="MODA Parent Mass Tolerance Units">
+			<options>
+				<option value="Da"/>
+			</options>
+			<default value="Da"/>
+			<validator type="set"/>
+		</parameter>
+
+
+		<parameter name="tolerance.Ion_tolerance" label="Ion tolerance">
+			<default value="0.4"/>
+			<validator type="float" minimumExclusive="0" maximum="1"/>
+		</parameter>
+
+		<parameter name="PAIRS_MIN_COSINE" label="Min Pairs Cos">
+            		<default value="0.5"/>
+           		<validator type="float" minimumExclusive="0" maximum="1"/>
+        	</parameter>
+
+		<parameter name="MIN_MATCHED_PEAKS" label="Min Matched Peaks">
+		    	<default value="6"/>
+		    	<validator type="integer" minimumExclusive="0" maximum="500"/>
+		</parameter>
+
+		<parameter name="TOPK" label="Network TopK">
+            		<default value="10"/>
+        	</parameter>
+
+		<parameter name="CLUSTER_MIN_SIZE" label="Minimum Cluster Size">
+		    	<default value="1"/>
+		</parameter>
+		
+		<parameter name="MAXIMUM_COMPONENT_SIZE" label="Maximum Connected Component Size (Beta)">
+		    	<default value="0"/>
+		    	<validator type="integer" minimumExclusive="-1" maximum="100000"/>
+		</parameter>
+	
+		<parameter name="MIN_PEAK_INT" label="Minimum Peak Intensity">
+		    	<default value="50.0"/>
+		</parameter>
+	
+		<parameter name="FILTER_STDDEV_PEAK_INT" label="Filter below Std Dev">
+		    	<default value="2.0"/>
+		</parameter>
+	
+		<parameter name="RUN_MSCLUSTER" label="Run MSCluster">
+		  	<default value="on"/>
+		</parameter>
+		
+		<parameter name="FILTER_PRECURSOR_WINDOW" label="Filter Precursor Window">
+		    	<options>
+		            	<option value="1" label="Filter"/>
+		            	<option value="0" label="Don't Filter"/>
+		    	</options>
+		    	<validator type="set"/>
+		</parameter>
+		
+		<parameter name="FILTER_LIBRARY" label="Filter Library">
+		    	<options>
+		            	<option value="0" label="Don't Filter Library"/>
+		            	<option value="1" label="Filter Library"/>
+		    	</options>
+		    	<validator type="set"/>
+		</parameter>
+		
+		<parameter name="WINDOW_FILTER" label="Filter peaks in 50Da Window">
+		    	<options>
+		            	<option value="0" label="Don't Filter"/>
+		            	<option value="1" label="Filter"/>
+		    	</options>
+		    	<validator type="set"/>
+		</parameter>
+		
+		<parameter name="SCORE_THRESHOLD" label="Score Threshold">
+		    	<default value="0.5"/>
+		    	<validator type="float" minimumExclusive="0" maximum="1"/>
+		</parameter>
+		
+		<parameter name="MIN_MATCHED_PEAKS_SEARCH" label="Library Search Min Matched Peaks">
+		    	<default value="6"/>
+		    	<validator type="integer" minimumExclusive="0" maximum="500"/>
+		</parameter>
+	
+		<!-- PTM parameters -->
+		<parameter name="ptm.mods" label="Maximum Number of PTMs Permitted in a Single Peptide">
+			<default value="1"/>
+			<validator type="integer" minimum="0"/>
+		</parameter>
+		
+		<!-- Blind search parameters -->
+		<parameter name="moda.blindmode" label="Blind Mode">
+			<options>
+				<option value="1"/>
+				<option value="2"/>
+			</options>
+			<default value="2"/>
+			<validator type="set"/>
+		</parameter>
+		<parameter name="msalign.minmodmass" label="Minimum Modification Mass">
+			<default value="-200"/>
+		</parameter>
+		<parameter name="msalign.maxmodmass" label="Maximum Modification Mass">
+			<default value="200"/>
+		</parameter>
+
+		<!-- Quality control parameters--> 
+		<parameter name="filter_msplit.filter" label="MSPLIT Filter">
+			<options>
+				<option value="FDR_msplit"/>
+			</options>
+			<default value="FDR_msplit"/>
+			<validator type="set"/>
+			<processor type="filter"/>
+		</parameter>
+
+		<parameter name="FDR_msplit.FDR" label="MSPLIT Spectrum-Level FDR">
+			<default value="0.01"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+		
+		<parameter name="filter_msgfdb.filter" label="MSGFDB Filter">
+			<options>
+				<option value="FDR_msgfdb"/>
+				<!-- Temporarily removed, as per email discussion 2/23/12
+				<option value="PepFDR"/>
+				-->
+				<option value="FPR"/>
+			</options>
+			<default value="FDR_msgfdb"/>
+			<validator type="set"/>
+			<processor type="filter"/>
+		</parameter>
+
+		<parameter name="FDR_msgfdb.FDR" label="MSGFDB Spectrum-Level FDR">
+			<default value="0.01"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+
+		<!-- Temporarily removed, as per email discussion 2/23/12
+		<parameter name="PepFDR.PepFDR" label="Peptide-Level FDR">
+			<default value="0.01"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+		-->
+		<parameter name="FPR.FPR" label="MSGFDB FPR">
+			<default value="10e-9"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+
+		<parameter name="filter_moda.filter" label="MODA Filter">
+			<options>
+				<option value="FDR_moda"/>
+			</options>
+			<default value="FDR_moda"/>
+			<validator type="set"/>
+			<processor type="filter"/>
+		</parameter>
+		<parameter name="FDR_moda.FDR" label="MODA Spectrum-Level FDR">
+			<default value="0.01"/>
+			<validator type="float" minimum="0" maximum="1"/>
+		</parameter>
+	</parameters>
+
+	<!-- Parameter processors not associated with any single parameter-->
+	<processors>
+		<processor type="sequence"/>
+		<processor type="msAlign"/>
+		<processor type="ptm"/>
+	</processors>
+ 
+
+	<!-- Input form layout -->
+	<block label="Basic Options">
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="library_on_server"/>
+		            <tooltip id="library_gnps"/>
+		        </label>
+		    </cell>
+		    <cell colspan="3">
+		        <module id="library_on_server" type="fileSelector">
+		            <property name="label">Library Files</property>
+		        </module>
+		    </cell>
+         	</row>
+                <row>
+                        <cell>
+                                <label>
+                                        <content parameter="lib_on_server"/>
+                                </label>
+                        </cell>
+                        <cell colspan="2">
+                                <module id="lib_on_server" type="fileSelector">
+                                        <property name="label">Spectral Library</property>
+                                </module>
+                        </cell>
+                 </row>
+
+		 <row>
+		    <cell>
+		        <label>
+		            <content parameter="spec_on_server"/>
+		            <tooltip id="spectrum_gnps"/>
+		        </label>
+		    </cell>
+		    <cell colspan="3">
+		        <module id="spec_on_server" type="fileSelector">
+		            <property name="label">Spectrum Files G1</property>
+		        </module>
+		    </cell>
+		</row>
+		
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="spec_on_server_group2"/>
+		            <tooltip id="spectrum_gnps"/>
+		        </label>
+		    </cell>
+		    <cell colspan="3">
+		        <module id="spec_on_server_group2" type="fileSelector">
+		            <property name="label">Spectrum Files G2</property>
+		        </module>
+		    </cell>
+		</row>
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="spec_on_server_group3"/>
+		            <tooltip id="spectrum_gnps"/>
+		        </label>
+		    </cell>
+		    <cell colspan="3">
+		        <module id="spec_on_server_group3" type="fileSelector">
+		            <property name="label">Spectrum Files G3</property>
+		        </module>
+		    </cell>
+		</row>
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="spec_on_server_group4"/>
+		            <tooltip id="spectrum_gnps"/>
+		        </label>
+		    </cell>
+		    <cell colspan="3">
+		        <module id="spec_on_server_group4" type="fileSelector">
+		            <property name="label">Spectrum Files G4</property>
+		        </module>
+		    </cell>
+		</row>
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="spec_on_server_group5"/>
+		            <tooltip id="spectrum_gnps"/>
+		        </label>
+		    </cell>
+		    <cell colspan="3">
+		        <module id="spec_on_server_group5" type="fileSelector">
+		            <property name="label">Spectrum Files G5</property>
+		        </module>
+		    </cell>
+		</row>
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="spec_on_server_group6"/>
+		            <tooltip id="spectrum_gnps"/>
+		        </label>
+		    </cell>
+		    <cell colspan="3">
+		        <module id="spec_on_server_group6" type="fileSelector">
+		            <property name="label">Spectrum Files G6</property>
+		        </module>
+		    </cell>
+		</row>
+
+		<row>
+			<cell>
+				<label>
+					<content parameter="instrument.instrument"/>
+					<tooltip id="hInstrument"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="instrument.instrument"/>
+			</cell>
+			<cell>
+				<label>
+					<content parameter="fragmentation.fragmentation"/>
+					<tooltip id="hFragmentation"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="fragmentation.fragmentation"/>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="cysteine_protease.cysteine"/>
+					<tooltip id="hCysteine"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="cysteine_protease.cysteine"/>
+			</cell>
+			<cell>
+				<label>
+					<content parameter="cysteine_protease.protease"/>
+					<tooltip id="hProtease"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="cysteine_protease.protease"/>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content>
+						<![CDATA[Number of Allowed <sup>13</sup>C]]>
+					</content>
+					<tooltip id="hC13"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="c13_nnet.c13"/>
+			</cell>
+			<cell>
+				<label>
+					<content parameter="c13_nnet.nnet"/>
+					<tooltip id="hNnet"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="c13_nnet.nnet"/>
+			</cell>
+		</row>
+
+		<row>
+			<cell colspan="1">
+				<label>
+					<content parameter="tolerance_msplit.PM_tolerance"/>
+					<tooltip id="hParentMass"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="tolerance_msplit.PM_tolerance"/>
+				<label><content>Da</content></label>
+			</cell>
+		</row>
+
+		<row>
+			<cell>
+				<label>
+					<content parameter="tolerance_msgfdb.PM_tolerance"/>
+					<tooltip id="hParentMass"/>
+				</label>
+			</cell>
+			<cell colspan="3">
+				<input type="text" parameter="tolerance_msgfdb.PM_tolerance">
+					<attribute name="size" value="3"/>
+				</input>
+				<input type="select" parameter="tolerance_unit_msgfdb.PM_unit"/>
+			</cell>
+		</row>
+
+		<row>
+			<!-- MODA-->
+			<cell>
+				<label>
+					<content parameter="tolerance.PM_tolerance"/>
+					<tooltip id="hParentMass"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="text" parameter="tolerance.PM_tolerance">
+					<attribute name="size" value="3"/>
+				</input>
+				<input type="select" parameter="tolerance_unit.PM_unit"/>
+			</cell>
+			
+
+
+			<cell>
+				<label>
+					<content parameter="tolerance.Ion_tolerance"/>
+					<tooltip id="hIonTolerance"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="text" parameter="tolerance.Ion_tolerance">
+					<attribute name="size" value="3"/>
+				</input>
+				<label><content>Da</content></label>
+			</cell>
+		</row>
+	</block>
+
+	<block label="Advanced Network Options">
+		<row>
+		  <cell>
+		        <label>
+		            <content parameter="PAIRS_MIN_COSINE"/>
+		            <tooltip id="min_pair_cosine_gnps"/>
+		        </label>
+		    </cell>
+		    <cell>
+		        <input type="text" parameter="PAIRS_MIN_COSINE">
+		            <attribute name="size" value="3"/>
+		        </input>
+		    </cell>
+		    
+		    <cell>
+		        <label>
+		            <content parameter="MIN_MATCHED_PEAKS"/>
+		            <tooltip id="min_matched_peaks_gnps"/>
+		        </label>
+		    </cell>
+		    <cell>
+		        <input type="text" parameter="MIN_MATCHED_PEAKS">
+		            <attribute name="size" value="3"/>
+		        </input>
+		    </cell>
+		</row>
+	
+		<row>
+		  <cell>
+		        <label>
+		            <content parameter="TOPK"/>
+		            <tooltip id="network_topk_gnps"/>
+		        </label>
+		    </cell>
+		    <cell>
+			<input type="text" parameter="TOPK">
+		            <attribute name="size" value="3"/>
+		        </input>
+		    </cell>
+		    
+		    
+		    <cell>
+		        <label>
+		            <content parameter="CLUSTER_MIN_SIZE"/>
+		            <tooltip id="min_cluster_size_gnps"/>
+		        </label>
+		    </cell>
+		    <cell>
+			<input type="text" parameter="CLUSTER_MIN_SIZE">
+		            <attribute name="size" value="3"/>
+		        </input>
+		    </cell>
+		    
+		    <cell>
+			    <input type="checkbox" parameter="RUN_MSCLUSTER"/>
+			    <label>
+				    <content parameter="RUN_MSCLUSTER"/>
+				    <tooltip id="RUN_MSCLUSTER"/>
+			    </label>
+		    </cell>
+		    
+		</row>
+		
+		<row>
+
+		    <cell>
+		        <label>
+		            <content parameter="MAXIMUM_COMPONENT_SIZE"/>
+		            <tooltip id="max_component_size_gnps"/>
+		        </label>
+		    </cell>
+		    <cell>
+		        <input type="text" parameter="MAXIMUM_COMPONENT_SIZE">
+		            <attribute name="size" value="3"/>
+		        </input>
+		    </cell>
+		    
+		</row>
+		
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="groupmapping"/>
+		            <tooltip id="group_mapping_gnps"/>
+		        </label>
+		    </cell>
+		    <cell colspan="3">
+		        <module id="groupmapping" type="fileSelector">
+		            <property name="label">Group Mapping</property>
+		        </module>
+		    </cell>
+		</row>
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="attributemapping"/>
+		            <tooltip id="attribute_mapping_gnps"/>
+		        </label>
+		    </cell>
+		    <cell colspan="3">
+		        <module id="attributemapping" type="fileSelector">
+		            <property name="label">Attribute Mapping</property>
+		        </module>
+		    </cell>
+		</row>
+        </block>
+
+	<block label="Advanced Library Search Options">
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="MIN_MATCHED_PEAKS_SEARCH"/>
+		            <tooltip id="min_matched_peaks_library_gnps"/>
+		        </label>
+		    </cell>
+		    <cell>
+		        <input type="text" parameter="MIN_MATCHED_PEAKS_SEARCH">
+		            <attribute name="size" value="3"/>
+		        </input>
+		    </cell>
+		    <cell>
+		        <label>
+		            <content parameter="SCORE_THRESHOLD"/>
+		            <tooltip id="min_cosine_library_gnps"/>
+		        </label>
+		    </cell>
+		    
+		    <cell>
+		        <input type="text" parameter="SCORE_THRESHOLD">
+		            <attribute name="size" value="3"/>
+		        </input>
+		    </cell>
+		    
+		</row>
+        </block>
+
+	<block label="Advanced Filtering Options">
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="FILTER_STDDEV_PEAK_INT"/>
+		            <tooltip id="filterstd_gnps"/>
+		        </label>
+		    </cell>
+		    
+		    <cell>
+			<input type="text" parameter="FILTER_STDDEV_PEAK_INT">
+		            <attribute name="size" value="3"/>
+		        </input>
+		    </cell>
+		    
+		    <cell>
+		        <label>
+		            <content parameter="MIN_PEAK_INT"/>
+		            <tooltip id="filterint_gnps"/>
+		        </label>
+		    </cell>
+		    
+		    <cell>
+			<input type="text" parameter="MIN_PEAK_INT">
+		            <attribute name="size" value="3"/>
+		        </input>
+		    </cell>
+		</row>
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="FILTER_PRECURSOR_WINDOW"/>
+		            <tooltip id="filterprecursor_gnps"/>
+		        </label>
+		    </cell>
+		    
+		    <cell>
+		        <input type="select" parameter="FILTER_PRECURSOR_WINDOW">
+		        </input>
+		    </cell>
+		  
+		    <cell>
+		        <label>
+		            <content parameter="FILTER_LIBRARY"/>
+		            <tooltip id="filterlibrary_gnps"/>
+		        </label>
+		    </cell>
+		    
+		    <cell>
+		        <input type="select" parameter="FILTER_LIBRARY">
+		        </input>
+		    </cell>
+		</row>
+		
+		<row>
+		    <cell>
+		        <label>
+		            <content parameter="WINDOW_FILTER"/>
+		            <tooltip id="filterpeakwindow_gnps"/>
+		        </label>
+		    </cell>
+		    
+		    <cell>
+		        <input type="select" parameter="WINDOW_FILTER">
+		        </input>
+		    </cell>
+		</row>
+	</block>
+
+	<block label="Allowed Post-Translational Modifications">
+		<row>
+			<cell>
+				<label>
+					<content>
+						Blind Mode (number of modifications per peptide)
+					</content>
+					<tooltip id="hMODaBlindMode"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="radio" parameter="moda.blindmode" value="1"/>
+				<label><content>1 (blind search)</content></label>
+				<input type="radio" parameter="moda.blindmode" value="2"/>
+				<label><content>2 or more (multi-blind search)</content></label>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="msalign.minmodmass"/>
+					<tooltip id="hMinModMass"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="text" parameter="msalign.minmodmass">
+					<attribute name="size" value="4"/>
+				</input>
+				<label><content>Da</content></label>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="msalign.maxmodmass"/>
+					<tooltip id="hMaxModMass"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="text" parameter="msalign.maxmodmass">
+					<attribute name="size" value="4"/>
+				</input>
+				<label><content>Da</content></label>
+			</cell>
+		</row>
+		<row>
+			<cell align="center">
+				<label>
+					<content parameter="ptm.mods"/>
+					<tooltip id="hMods"/>
+				</label>
+				<input type="text" parameter="ptm.mods">
+					<attribute name="size" value="3"/>
+				</input>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<module id="ptm" type="ptmTable">
+					<property name="types">fix,opt,fix_nterm,opt_nterm</property>
+					<property name="defaultType">opt</property>
+				</module>
+			</cell>
+		</row>
+	</block>
+
+
+	<block label="More Options">
+	<!--	<row>
+			<cell>
+				<label>
+					<content parameter="db_lib.DB"/>
+					<tooltip id="hSpectralLibrary"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="db_lib.DB"/>
+			</cell>
+		</row>
+                <row>
+                        <cell>
+                                <label>
+                                        <content parameter="lib_on_server"/>
+                                </label>
+                        </cell>
+                        <cell colspan="2">
+                                <module id="lib_on_server" type="fileSelector">
+                                        <property name="label">Spectral library</property>
+                                </module>
+                        </cell>
+                </row> -->
+		<row>
+			<cell>
+				<input type="radio" parameter="filter_msplit.filter" value="FDR_msplit"/>
+				<label>
+					<content parameter="FDR_msplit.FDR"/>
+					<tooltip id="hFDR"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="FDR_msplit.FDR"/>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="db.DB"/>
+					<tooltip id="hDatabase"/>
+				</label>
+			</cell>
+			<cell>
+				<input type="select" parameter="db.DB"/>
+			</cell>
+			<cell>
+				<input type="checkbox" parameter="db.contaminants"/>
+				<label>
+					<content parameter="db.contaminants"/>
+					<tooltip id="hContaminant"/>
+				</label>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<label>
+					<content parameter="seq_on_server"/>
+					<tooltip id="hAdditionalSeq"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<module id="seq_on_server" type="fileSelector">
+					<property name="label">Sequence Files</property>
+				</module>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<input type="radio" parameter="filter_msgfdb.filter" value="FDR_msgfdb"/>
+				<label>
+					<content parameter="FDR_msgfdb.FDR"/>
+					<tooltip id="hFDR"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="FDR_msgfdb.FDR"/>
+			</cell>
+		</row>
+		<!-- Temporarily removed, as per email discussion 2/23/12
+		<row>
+			<cell>
+				<input type="radio" parameter="filter.filter" value="PepFDR"/>
+				<label>
+					<content parameter="PepFDR.PepFDR"/>
+					<tooltip id="hPepFDR"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="PepFDR.PepFDR"/>
+			</cell>
+		</row>
+		-->
+
+		<row>
+			<cell>
+				<input type="radio" parameter="filter_msgfdb.filter" value="FPR"/>
+				<label>
+					<content parameter="FPR.FPR"/>
+					<tooltip id="hFPR"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="FPR.FPR"/>
+			</cell>
+		</row>
+		<row>
+			<cell>
+				<input type="radio" parameter="filter_moda.filter" value="FDR_moda"/>
+				<label>
+					<content parameter="FDR_moda.FDR"/>
+					<tooltip id="hFDR"/>
+				</label>
+			</cell>
+			<cell colspan="2">
+				<input type="text" parameter="FDR_moda.FDR"/>
+			</cell>
+		</row>
+		
+	</block>
+</interface>
+

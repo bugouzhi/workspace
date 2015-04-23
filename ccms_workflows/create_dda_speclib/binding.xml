@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<binding>
+	<bind action="begin" type="download">
+	 	<url value="{livesearch.download}"/>
+	 	<query name="task" valueRef="@task"/>
+	 	<query name="user" valueRef="@user"/>
+	 	<compression type="zip"/>
+		<download port="spec" type="folder">
+			<query name="resource" value="spec"/>
+		</download>
+		<download port="fasta" type="folder">
+			<query name="resource" value="fasta"/>
+		</download>
+		<download port="params" type="file">
+			<query name="resource" value="params"/>
+		</download>
+		<downloadParams>
+			<query name="resource" value="params"/>
+		</downloadParams>
+	</bind>
+	
+	<bind action="mergeSequences" tool="mergeFasta">
+		<inputAsRequirement port="fasta" requirement="input"/>
+		<productionToOutput port="out"   production="output"/>
+	</bind>
+	
+	<bind action="buildSA" tool="buildSA">
+		<inputAsRequirement port="fasta" requirement="sequence"/>
+		<productionToOutput port="out"   production="output"/>
+	</bind>
+	
+	<bind action="msgfDB" tool="msgfDB">
+		<inputAsRequirement port="spec"   requirement="spectrum"/>
+		<inputAsRequirement port="fasta"  requirement="sequence"/>
+		<inputAsRequirement port="seq"    requirement="preparedSequence"/>
+		<inputAsRequirement port="params" requirement="parameters"/>
+		<productionToOutput port="out"    production="output"/>
+	</bind>
+	
+	<bind action="merge" tool="mergeWithHeader">
+		<inputAsRequirement port="result"       requirement="input"/>
+		<productionToOutput port="mergedResult" production="output"/>
+	</bind>
+
+	<bind action="fdr" tool="ComputeFDR_msgfDB">
+		<inputAsRequirement port="in"  requirement="input"/>
+		<productionToOutput port="out" production="output"/>
+	</bind>
+	
+	<bind action="getPepResult" tool="getPepResult">
+		<inputAsRequirement port="out"  requirement="finalResult"/>
+		<productionToOutput port="pepResult" production="pepResult"/>
+	</bind>
+	
+	<bind action="createLib" tool="createLib">
+		<inputAsRequirement port="pepResult"  requirement="pepResult"/>
+		<inputAsRequirement port="spec"  requirement="spec"/>
+		<productionToOutput port="speclib" production="speclib"/>
+		<productionToOutput port="log" production="log"/>
+	</bind>
+	
+	<bind action="getLibStats" tool="getLibStats">
+		<inputAsRequirement port="log"  requirement="log"/>
+		<productionToOutput port="stats" production="stats"/>
+	</bind>
+	
+	<bind action="createDecoyLib" tool="createDecoyLib">
+		<inputAsRequirement port="speclib"  requirement="speclib"/>
+		<productionToOutput port="concatlib" production="concatlib"/>
+	</bind>
+	
+	<bind action="renameLib" tool="renameLib">
+		<inputAsRequirement port="concatlib"  requirement="concatlib"/>
+		<productionToOutput port="userlib" production="userlib"/>
+	</bind>
+	
+	<bind action="end" type="upload">
+	 	<url value="{livesearch.upload}"/>
+	 	<query name="task" valueRef="@task"/>
+	 	<contentQuery name="content"/>
+	 	<compression type="zip"/>
+		<upload port="out" type="file">
+			<query name="resource" value="result"/>
+		</upload>
+		<upload port="log" type="file">
+			<query name="resource" value="log"/>
+		</upload>
+		<upload port="stats" type="file">
+			<query name="resource" value="stats"/>
+		</upload>
+		<upload port="userlib" type="folder">
+			<query name="resource" value="userlib"/>
+		</upload>
+	</bind>
+</binding>

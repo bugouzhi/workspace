@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<flow name="MixGF">
+	<collection	name="spectrum"/>
+	<collection	name="sequence"/>
+	<object		name="parameters"/>
+	<object		name="mergedSequence"/>
+	<object		name="mergedDecoySequence"/>
+	<object	    name="preparedSequence"/>
+	<collection	name="mixDBResult"/>
+	<collection name="mixgfResult"/>
+	<object		name="mergedResult"/>
+	<object		name="finalResult"/>
+	
+	<action name="begin">
+		<output port="spec"   collection="spectrum"/>
+		<output port="fasta"  collection="sequence"/>
+		<output port="params" object="parameters"/>
+	</action>
+	
+	<action name="mergeSequences">
+		<input port="fasta" collection="sequence"/>
+		<output port="out"  collection="mergedSequence"/>
+	</action>
+	
+<!--	<action name="buildSA">
+		<input port="fasta" object="mergedSequence"/>
+		<output port="out"  object="preparedSequence"/>
+	</action> -->
+	
+	<action name="MixDBDecoy2">
+		<input port="in"     object="mergedSequence"/>
+		<output port="out"   object="mergedDecoySequence"/>
+	</action>
+
+	<action name="MixDB" multiplicity="multiple" type="parallel">
+		<input port="spec"   collection="spectrum" transformation="unfolding"/>
+		<input port="in"  object="mergedDecoySequence"/>
+		<input port="params" object="parameters"/>
+		<output port="mixDBResult"   collection="mixDBResult"/>
+	</action>
+	
+	<action name="MixGF" multiplicity="multiple" type="parallel">
+		<input port="mixDBResult"   collection="mixDBResult" transformation="unfolding"/>
+		<input port="spec"   collection="spectrum"/>		
+		<input port="params" object="parameters"/>
+		<output port="mixgfResult"   collection="mixgfResult"/>		
+	</action>
+	
+	<action name="merge">
+		<input port="mixgfResult"        collection="mixgfResult"/>
+		<output port="mergedResult" object="mergedResult"/>
+	</action>
+	
+	<action name="MixGFfilter">
+		<input port="mergedResult"     object="mergedResult"/>
+		<output port="finalResult"   object="finalResult"/>
+		<input port="params" object="parameters"/>
+	</action>
+	
+	<action name="end">
+		<input port="result" object="finalResult"/>
+	</action>
+
+</flow>
