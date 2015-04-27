@@ -17,6 +17,11 @@ import Utils.StringUtils;
 public class MXGFe extends MXGF{
 	private AccurateMassPRM accuratePRM;
 	
+	/**
+	 * Create a mxgfe object to calculate spectral probability
+	 * @param maxMass
+	 * @param maxScore
+	 */
 	public MXGFe(double maxMass, double maxScore){
 		super(maxMass,maxMass, maxScore);
 	//	System.out.println(Arrays.toString(this.validAAMass));
@@ -32,7 +37,13 @@ public class MXGFe extends MXGF{
 		this.accuratePRM = accuratePRM;
 	}
 
-	
+	/**
+	 * Compute the maximum score can be obtained using the current scoring
+	 * model
+	 * @param scores
+	 * @param adjAAScore
+	 * @return
+	 */
 	public double computeMaxScore(double[] scores, double[][][] adjAAScore){
 		double[] maxScore = new double[scores.length];
 		//System.out.println("offset: " + scoreOffSet);
@@ -62,6 +73,12 @@ public class MXGFe extends MXGF{
 		return max;
 	}
 	
+	/**
+	 * Compute the minumum score that can be obtained using the current scoring models
+	 * @param scores
+	 * @param adjAAScore
+	 * @return
+	 */
 	public double computeMinScore(double[] scores, double[][][] adjAAScore){
 		double[] minScore = new double[scores.length];
 		//System.out.println("offset: " + scoreOffSet);
@@ -88,7 +105,9 @@ public class MXGFe extends MXGF{
 		return min;
 	}
 	
-	
+	/**
+	 * Compute spectral probability using only the edge scores
+	 */
 	public void computeEdgeProb(){
 		double[][][] adjAAScores = accuratePRM.getAdjAAScores();
 		double max = maxMass > maxMass2 ? maxMass : maxMass2;
@@ -128,7 +147,9 @@ public class MXGFe extends MXGF{
 		this.table = DP;
 	}
 	
-	
+	/**
+	 * Compute spectral probability using both the node and edge scores
+	 */
 	public void computeNodeAndEdgeProb(){
 		double[][][] adjAAScores = accuratePRM.getAdjAAScores();
 		double max = maxMass > maxMass2 ? maxMass : maxMass2;
@@ -207,6 +228,12 @@ public class MXGFe extends MXGF{
 		return new double[]{score, totalScore, adjAAScore, prob, adjprob, combinedprob};
 	}
 	
+	/**
+	 * Main entry point to the method, compute spectral probability using the edge scores
+	 * @param spectrumFile
+	 * @param annotationFile
+	 * @param scorerFile
+	 */
 	public static void testComputeMSGFe(String spectrumFile, String annotationFile, String scorerFile){
 		List<String> resultLines = Utils.FileIOUtils.createListFromFile(annotationFile);
 		Map<Integer, String[]> table = new HashMap<Integer, String[]>();

@@ -71,7 +71,13 @@ public class AccurateMassPRM extends PRMSpectrum{
 	}
 	
 	/**
-	 * This method build the scoring model for the "edges"
+	 * This method build the scoring model for the "edge-scores"
+	 * There are scores for basically three cases:
+	 * 1) adjacent fragment-ions are presented and mass differential is within expected mass error
+	 * 2) adjacent fragment ions are presented and mass differential is larger than expected error
+	 * 3) adjacent fragment ions are not presented
+	 * For now we just used treated all ions equally, for there can be more specific models
+	 * for different ion type as in the "node" scores
 	 */
 	protected void computeAdjAATable(){
 		double pm = scaleFactor*(spectrum.parentMass*spectrum.charge-Mass.PROTON_MASS*spectrum.charge-Mass.WATER);
@@ -132,7 +138,12 @@ public class AccurateMassPRM extends PRMSpectrum{
 		System.out.println("Done creating table");
 	}
 	
-	//get adj AA mass accuracy info
+	/**
+	 * This compute the statistics for observing adjecent aa fragment ions  
+	 * @param p
+	 * @param stat
+	 * @return
+	 */
 	public int[] getAdjAAStat(Peptide p, int[][] stat){
 		double pm = scaleFactor*(p.getParentmass()*p.getCharge()-Mass.PROTON_MASS*spectrum.charge-Mass.WATER);
 		int[] massInds = this.getMassIndex(p);
@@ -214,7 +225,9 @@ public class AccurateMassPRM extends PRMSpectrum{
 	}
 	
 	/**
-	 * 
+	 * This is same as above method, but separting the score into the 
+	 * individual three components (see computeAdjAATable()) for the different cases of 
+	 * edge scores
 	 * @param p
 	 * @return
 	 */
