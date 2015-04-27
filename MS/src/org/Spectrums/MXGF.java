@@ -17,7 +17,12 @@ import IO.MZXMLReader;
 import Utils.ArrayUtils;
 import Utils.StringUtils;
 
-//compute spectral probability for mixture and linked spectrum
+/**
+ * Compute spectral probability for mixture spectrum using
+ * the generating function approach
+ * @author Jian
+ *
+ */
 
 public class MXGF {
 	public static double MAXMASS = 3000;
@@ -171,6 +176,10 @@ public class MXGF {
 	}
 	
 	
+	/**
+	 * Compute the conditional probabilities
+	 * @param masses
+	 */
 	public void computeCondPair(int[] masses){
 		this.initTable();
 		int offSet = (int)(Math.round(-minScore));
@@ -221,6 +230,13 @@ public class MXGF {
 		}
 	}
 	
+	/**
+	 * Compute joint probability using a dynammic programming approach. Note
+	 * since it is too big to fit the full 3D DP matrix in memory we use
+	 * a "sliding-window" approach, so for computing the DP at a particular location
+	 * we only keep the DP matrix before that is require to compute the current location
+	 * (i.e. the largest amino acid mass)
+	 */
 	public void computePair(){
 		this.table = new double[this.maxAAMass+1][this.maxAAMass+1][(int)Math.ceil(maxScore-minScore+1)];
 		//System.out.println("max Score is: " + this.maxScore);
@@ -365,6 +381,12 @@ public class MXGF {
 		}
 	}
 	
+	
+	/**
+	 * Compute the maximum score that can be achieved using the current scoring model
+	 * @param scores
+	 * @return
+	 */
 	public double computeMaxScore(double[] scores){
 		double[] maxScore = new double[scores.length];
 		//System.out.println("offset: " + scoreOffSet);
@@ -390,6 +412,11 @@ public class MXGF {
 		return max;
 	}
 	
+	/**
+	 * Compute the minimum score that can be achieved using the current scoring model
+	 * @param scores
+	 * @return
+	 */
 	public double computeMinScore(double scores[]){
 		double[] minScore = new double[scores.length];
 		//System.out.println("offset: " + scoreOffSet);
@@ -421,7 +448,15 @@ public class MXGF {
 		return getSpecProb(score, mass, 0);
 	}
 	
-	//for pair peptide
+	/**
+	 * Get the spectral probability at a particular mass and score position
+	 * 
+	 * @param score1
+	 * @param score2
+	 * @param mass1
+	 * @param mass2
+	 * @return
+	 */
 	public double[] getSpecProb(double score1, double score2, double mass1, double mass2){
 		return new double[]{getSpecProb(score1, mass1, 0), 
 				getSpecProb(score2, mass2, 1)};
@@ -535,7 +570,7 @@ public class MXGF {
 		this.table = table;
 	}
 	
-	public static void testComputeMSGF(){
+	protected static void testComputeMSGF(){
 		String spectrumFile = "../mixture_linked/yeast_data/klc_010908p_yeast-digest.mzXML";
 		String scorerFile = "../mixture_linked/yeast_single_peptide_model.o";
 		String proteinsFile = "../mixture_linked/database/yeast_proteins.fasta";
@@ -600,7 +635,7 @@ public class MXGF {
 		
 	}
 	
-	public static void testComputeSingleMXGF(){
+	protected static void testComputeSingleMXGF(){
 		String spectrumFile = "../mixture_linked/yeast_data/klc_010908p_yeast-digest.mzXML";
 		String scorerFile = "../mixture_linked/yeast_NIST_single_peptide_model.o";
 		//String scorerFile = "../mixture_linked/mixtures_alpha_generic.o";
@@ -695,7 +730,16 @@ public class MXGF {
 	public static double[] computeMXGF(Spectrum s, String peptide, String peptide2, SpectrumComparator scorer){
 		return computeMXGF(s, peptide, peptide2, scorer, 0.5);
 	}
-
+	
+	/**
+	 * Compute spectral probability for a peptide/peptide spectrum match
+	 * @param s
+	 * @param peptide
+	 * @param peptide2
+	 * @param scorer
+	 * @param tolerance
+	 * @return
+	 */
 	public static double[] computeMXGF(Spectrum s, String peptide, String peptide2, SpectrumComparator scorer, double tolerance){
 		s = new Spectrum(s);
 		double resolution = 1.0;
@@ -812,7 +856,7 @@ public class MXGF {
 		return new double[]{score, score2, totalScore[0], totalScore[1], totalScore[2], prob[0], prob[1], jProb, prob2[0], prob2[1], end-start};
 	}
 	
-	public static double[] computeMMXGF(Spectrum s, String[] peptides, SpectrumComparator scorer, double tolerance){
+	protected static double[] computeMMXGF(Spectrum s, String[] peptides, SpectrumComparator scorer, double tolerance){
 		s = new Spectrum(s);
 		double resolution = 1.0;
 		((SimpleProbabilisticScorer)scorer).setMinMatchedPeak(0);
@@ -873,7 +917,7 @@ public class MXGF {
 		
 	}
 	
-	public static Object[] computeConditionalMXGF(MXGF mxgf, Spectrum s, Peptide p1, PRMSpectrum prmSpect, Peptide p2, SpectrumComparator scorer, double tolerance){
+	protected static Object[] computeConditionalMXGF(MXGF mxgf, Spectrum s, Peptide p1, PRMSpectrum prmSpect, Peptide p2, SpectrumComparator scorer, double tolerance){
 		System.out.println("Number of peaks start with: " + s.getPeak().size());
 		double resolution = 1.0;
 		((SimpleProbabilisticScorer)scorer).matchTolerance  = resolution/2;
@@ -918,6 +962,13 @@ public class MXGF {
 		return new Object[]{score2, prob, prmSpect2};
 	}
 	
+	/**
+	 * Compute single-peptide spectral probability for PSM match
+	 * @param s
+	 * @param peptide
+	 * @param scorer
+	 * @return
+	 */
 	public static double[] computeMSGF(Spectrum s, String peptide, SpectrumComparator scorer){
 		((SimpleProbabilisticScorer)scorer).setMinMatchedPeak(0);
 		s.windowFilterPeaks(15, 25);
@@ -951,7 +1002,7 @@ public class MXGF {
 		return new double[]{score, totalScore, prob};
 	}
 	
-	public static double[] computeMSGF(Spectrum s, String peptide, SpectrumComparator scorer, Spectrum scoredSpectrum ){
+	protected static double[] computeMSGF(Spectrum s, String peptide, SpectrumComparator scorer, Spectrum scoredSpectrum ){
 		if(peptide.startsWith("r")){
 			peptide = peptide.substring(1);
 		}
@@ -990,6 +1041,13 @@ public class MXGF {
 		return new double[]{};
 	}
 	
+	/**
+	 * Test computing spectral probability for the single-peptide case
+	 * This is essentially equivalent to msgf
+	 * @param spectrumFile
+	 * @param prmFile
+	 * @param scorerFile
+	 */
 	public static void testComputeMSGF(String spectrumFile, String scorerFile){
 		LargeSpectrumLibIterator<Spectrum> it = new LargeSpectrumLibIterator(spectrumFile);
 		PeakComparator comp = RankBaseScoreLearner.loadComparator(scorerFile);
@@ -1000,7 +1058,7 @@ public class MXGF {
 		}
 	}
 	
-	public static void testComputeMSGF2(String spectrumFile, String annotationFile, String scorerFile, int minScan, int maxScan){
+	protected static void testComputeMSGF2(String spectrumFile, String annotationFile, String scorerFile, int minScan, int maxScan){
 		List<String> resultLines = Utils.FileIOUtils.createListFromFile(annotationFile);
 		Map<Integer, String[]> table = new HashMap<Integer, String[]>();
 		MZXMLReader reader = new MZXMLReader(spectrumFile);
@@ -1047,6 +1105,14 @@ public class MXGF {
 
 	}
 	
+	/**
+	 * Test computing spectral probability for the single-peptide case
+	 * Given the prm spectra in a file. This will produce the same probability
+	 * as msgf given the prm spectrum output from it.
+	 * @param spectrumFile
+	 * @param prmFile
+	 * @param scorerFile
+	 */
 	public static void testComputeMSGF(String spectrumFile, String prmFile, String scorerFile){
 		LargeSpectrumLibIterator<Spectrum> it = new LargeSpectrumLibIterator(spectrumFile);
 		LargeSpectrumLibIterator<Spectrum> it2 = new LargeSpectrumLibIterator(prmFile);
@@ -1059,7 +1125,7 @@ public class MXGF {
 		}
 	}
 	
-	public static void testSimulatedMXGF(String spectrumFile, String scorerFile, double alpha, int minCount, int maxCount){
+	protected static void testSimulatedMXGF(String spectrumFile, String scorerFile, double alpha, int minCount, int maxCount){
 		SpectrumLib lib = new SpectrumLib(spectrumFile, "MGF");
 		PeakComparator comp = MixturePeakScoreLearner.loadComparator(scorerFile);
 		//PeakComparator comp = RankBaseScoreLearner.loadComparator(scorerFile);
@@ -1089,7 +1155,7 @@ public class MXGF {
 	}
 	
 	
-	public static void testRandomSimulatedMXGF(String spectrumFile, String scorerFile, double alpha, int minCount, int maxCount){
+	protected static void testRandomSimulatedMXGF(String spectrumFile, String scorerFile, double alpha, int minCount, int maxCount){
 		SpectrumLib lib = new SpectrumLib(spectrumFile, "MGF");
 		PeakComparator comp = MixturePeakScoreLearner.loadComparator(scorerFile);
 		//PeakComparator comp = RankBaseScoreLearner.loadComparator(scorerFile);
@@ -1122,6 +1188,15 @@ public class MXGF {
 			}
 	}
 	
+	/**
+	 * Compute mixgf spectral probabilitiest for a set of simulated spectrum
+	 * @param annotationFile
+	 * @param spectrumFile
+	 * @param scorerFile
+	 * @param alpha
+	 * @param minCount
+	 * @param maxCount
+	 */
 	public static void testSimulatedMXGF(String annotationFile, String spectrumFile, String scorerFile, double alpha, int minCount, int maxCount){
 		List<String> resultLines = Utils.FileIOUtils.createListFromFile(annotationFile);
 		SpectrumLib lib = new SpectrumLib(spectrumFile, "MGF");
@@ -1169,7 +1244,16 @@ public class MXGF {
 		String spectFile = Utils.FileIOUtils.getFileName(tokens[0]);
 		return spectPath+File.separator+spectFile;
 	}
-
+	/**
+	 * This is the main entry point to mixgf to calculate spectral probability for mixture spectrum
+	 * @param resultFile
+	 * @param spectrumFile
+	 * @param scorerFile
+	 * @param minScan
+	 * @param maxScan
+	 * @param tolerance
+	 * @param outfile
+	 */
 	public static void testComputeMXGF(String resultFile, String spectrumFile, String scorerFile, int minScan, int maxScan, double tolerance, String outfile){
 		int scanIndex = 1;
 		int pepIndex1 = 8;

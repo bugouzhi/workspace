@@ -11,7 +11,11 @@ import IO.MZXMLReader;
 import Utils.FileIOUtils;
 
 /**
- * Compute PRM Spectrum
+ * This class transform a "real" MS/MS spectrum into a PRM spectrum
+ * based on a particular scoring model specifiy by the user.  Note that in this particular framework, ascoring model
+ * is based on comparing a observed spectrum and a theoretical spectrum.  To create a PRM spectrum
+ * we created a "artificial" theoretical spectrum for a particular PRM position and matched it to the
+ * observed MS/MS spectrum and then used the user-specificed scoring mdoel to compuate a score for each PRM position
  * @author Jian Wang
  *
  */
@@ -26,7 +30,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 	//dummy variable to enable spectrum scoring
 	private static int[] ptmPos = new int[0];
 	private static double[] ptmMass = new double[0];
-	private static Peptide shortPeptide = new Peptide("KKKKKKKKKKK", 1);
+	private static Peptide shortPeptide = new Peptide("KKKKKKKKKKK", 1);  //this are dummy peptide use to differetiating peptide length since our scoring model is dependent on peptide length and charge 
 	private static Peptide longPeptide = new Peptide("KKKKKKKKKKKKKKKKKKKKKKK", 1);
 	public static int LINKEDPREFIXMODE=0;
 	public static int LINKEDSUFFIXMODE=1;
@@ -38,6 +42,11 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 	double resolution = 1.0;
 	double scaleFactor = 0.9995;
 	
+	/**
+	 * Create a PRM spectrum object from a MS/MS spectrum and a particular scoring models
+	 * @param s
+	 * @param comp
+	 */
 	public PRMSpectrum(Spectrum s, SpectrumComparator comp){
 		this(s, s.charge, comp, 1.0);
 	}
@@ -58,6 +67,9 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		computePRMSpectrum();
 	}
 	
+	/**
+	 * Compute the PRM spectrum
+	 */
 	protected void computePRMSpectrum(){
 		double mass = MinMass;
 		double parentMass = (this.spectrum.parentMass*this.charge - this.charge*Mass.PROTON_MASS - Mass.WATER)*scaleFactor;
@@ -84,7 +96,12 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		
 	}
 	
-	
+	/**
+	 * Compute a PRM spectrum for linked peptide
+	 * For each PRM position half of the fragment ions will be linked and half will be
+	 * unlinked. This method call on appropriate methods to compute the PRM spectrum
+	 * @param mode
+	 */
 	protected void computeLinkedPRMSpectrum(int mode){
 		double mass = MinMass;
 		double parentMass = (this.spectrum.parentMass*this.charge - this.charge*Mass.PROTON_MASS - Mass.WATER)*0.9995;
@@ -111,8 +128,17 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		
 	}
 	
-	//remove from first peptide if we cannot find a potentially better
-	//explanation in the space of second peptides
+	/**
+	 * For mixture spectrum, when computing conditional probability we don't want to consider
+	 * peaks from "first" peptide.  This method remove a peak if it cannot find any annotation in the
+	 * PRM model for p2 that explain the peak better than the current annotation for the first peptide (e.g p1).
+	 * @param s
+	 * @param p1
+	 * @param p2
+	 * @param prm1
+	 * @param prms2
+	 * @param tolerance
+	 */
 	public void removeSharePeaks(Spectrum s, Peptide p1, Peptide p2, double[] prm1, double[] prms2, double tolerance){
 		boolean DEBUG = false;
 //		System.out.println("pep1 " + pep1);
@@ -175,7 +201,12 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		}
 	}
 	
-	//get the corresponding PRM mass value for an observed peaks
+	/**
+	 * Get the corresponding PRM mass bin ind for an observed peaks
+	 * @param p
+	 * @param lp
+	 * @return
+	 */
 	public double getPRMInd(Peak p, LabelledPeak lp){
 		if(lp.isPrefixPeak()){
 			return getPRMInd(p, lp.getType(), lp.getCharge());
@@ -183,10 +214,12 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 			return getPRMInd(p, lp.getPep().getParentmass(), lp.getPep().getCharge(), lp.getType(), lp.getCharge());
 		}
 	}
+	
 	public double getPRMInd(Peak p, String ionType, int charge){
 		//System.out.println(p.getMass()*charge - Mass.getIonMod(ionType) - (charge-1)*Mass.PROTON_MASS);
 		return (p.getMass()*charge - Mass.getIonMod(ionType) - (charge-1)*Mass.PROTON_MASS);
 	}
+	
 	//get PRM mass Ind for a suffix ions
 	public double getPRMInd(Peak p, double parentMass, int parentCharge, String ionType, int charge){
 		//System.out.println(parentMass + "\t" + parentCharge + "\t");
@@ -194,7 +227,11 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 				- (p.getMass()*charge - Mass.getIonMod(ionType) - (charge-1)*Mass.PROTON_MASS));
 	}
 	
-	//compute massInd for a peptide in the PRM spectrum
+	/**
+	 * Compute the PRM positions for a peptide
+	 * @param p
+	 * @return
+	 */
 	public int[] getMassIndex(Peptide p){
 		double[][] base = this.computeBaseMass(p.getPeptide(), p.getPos(), p.getPtmmasses());
 		int[] massInds = new int[base[0].length];
@@ -218,7 +255,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		this.resolution = resolution;
 	}
 
-	public TheoreticalSpectrum getSpectrum(double[][] basemass, Spectrum s, int charge){
+	protected TheoreticalSpectrum getSpectrum(double[][] basemass, Spectrum s, int charge){
 		TheoreticalSpectrum t = new TheoreticalSpectrum();
 		List<Peak> theoPeaks = this.generatePeaks(basemass, this.prefixIons, this.suffixIons, ptmPos, ptmMass, 1, this.spectrum.charge);
 		//System.out.println("computed peaks: " + theoPeaks);
@@ -233,7 +270,7 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 	}
 	
 	
-	public TheoreticalSpectrum getLinkedSpectrum(double[][] basemass, Spectrum s, int charge, int mode){
+	protected TheoreticalSpectrum getLinkedSpectrum(double[][] basemass, Spectrum s, int charge, int mode){
 		TheoreticalSpectrum t = new TheoreticalSpectrum();
 		List<Peak> theoPeaks = this.generatePeaks(basemass, this.prefixIons, this.suffixIons, ptmPos, ptmMass, 1, this.spectrum.charge);
 		//System.out.println("computed peaks: " + theoPeaks);
@@ -260,6 +297,13 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		}
 	}
 	
+	/**
+	 * Create a PRM spectrum based on a particular parentmass
+	 * Note: this is needed since for mixture spectrum, base on different parentmass
+	 * we need to construct a different PRM model for it
+	 * @param parentmass
+	 * @return
+	 */
 	public double[] getScoredSpectrum(double parentmass){
 		int diff = (int)Math.round(parentmass - this.spectrum.parentMass*this.spectrum.charge);
 		if(diff < 0){
@@ -271,6 +315,11 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		return this.scoredSpectrum[1];
 	}
 	
+	/**
+	 * Score a particular peptide base on the current PRM spectrum model
+	 * @param p
+	 * @return
+	 */
 	public double getScore(Peptide p){
 		double[][] base = this.computeBaseMass(p.getPeptide(), p.getPos(), p.getPtmmasses());
 		for(int i = 0; i < this.scoredSpectrum.length; i++){
@@ -287,6 +336,9 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		return totalScore;
 	}
 	
+	/**
+	 * Test constructing a PRM model and scoring some peptides 
+	 */
 	public static void testPRMSpectrum(){
 		//SpectrumLib lib = new SpectrumLib(".\\MSPLib\\Lib\\ecoli.msp", "MSP");
 		SpectrumLib lib = new SpectrumLib("../mixture_linked//FedorMix_CIDHiacc_msgfdb_0_1FDR.mgf", "MGF");
@@ -324,6 +376,9 @@ public class PRMSpectrum extends TheoreticalSpectrum{
 		return 0.0;
 	}
 	
+	/**
+	 * Test constructing PRM model for linked peptide and try scoring some peptides with it
+	 */
 	public static void testLinkedPRMSpectrum(){
 		String spectrumFile = "../mixture_linked/linked_peptide_library/sumo_lib/20101008_Sumo_Library_4349_Bo.mzXML";
 		String annotationFile = "../mixture_linked/lib_sumo1_sumo_search_with_pyroQ_0.05pm_tolerance_svm.txt";
