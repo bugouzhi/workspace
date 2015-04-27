@@ -10,7 +10,15 @@ import IO.MZXMLReader;
 import Utils.ArrayUtils;
 
 /**
- * PRM spectrum supporting accurate mass tolerance
+ * PRM spectrum supporting accurate mass tolerance by adding "edge scores"
+ * in the model.  The scoring framework model PRm positons as node and
+ * add an edge between the node when they are amino acid apart and use
+ * the differential mass different between two consecutive amino acid mass
+ * to handle mass accuracy in the scoring model.  The edge score score two things:
+ * 1) the consecutive occurrence of a pair of fragment ions matching to the candidate peptide.
+ * It turn out the chance of this happening in ranodm peptide is very small; 2) the mass
+ * accuracy of the isntrument as measured by the expected difference in mass between these
+ * consecutive ions.
  * @author Jian
  *
  */
@@ -62,7 +70,10 @@ public class AccurateMassPRM extends PRMSpectrum{
 		//}
 	}
 	
-	public void computeAdjAATable(){
+	/**
+	 * This method build the scoring model for the "edges"
+	 */
+	protected void computeAdjAATable(){
 		double pm = scaleFactor*(spectrum.parentMass*spectrum.charge-Mass.PROTON_MASS*spectrum.charge-Mass.WATER);
 		//System.out.println("pm : " + pm);
 		for(int m = 0; m < this.adjAAScores.length; m++){
@@ -191,13 +202,23 @@ public class AccurateMassPRM extends PRMSpectrum{
 	}
 
 
-	//scores for each pair of adj aa on the peptide
+	/**
+	 * This compute the "edge-score" for a peptide
+	 * it scores for each pair of adjacent/consecutive aa on the peptide
+	 * @param p
+	 * @return
+	 */
 	public double getAdjAAScore(Peptide p){
 		double[] scores = this.getAdjAAScores(p);
 		return scores[0] + scores[1] + scores[2];
 	}
 	
-	public double[] getAdjAAScores(Peptide p){
+	/**
+	 * 
+	 * @param p
+	 * @return
+	 */
+	protected double[] getAdjAAScores(Peptide p){
 		int[] massInd = getMassIndex(p);
 		double adjScore=0, adjScore2 = 0, adjScore3 = 0;
 		System.out.println("peptide : " + p);
