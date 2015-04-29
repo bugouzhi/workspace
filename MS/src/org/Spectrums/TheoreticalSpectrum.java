@@ -46,7 +46,7 @@ public class TheoreticalSpectrum extends Spectrum{
 	public  Peptide p;
 	
 	
-	protected TheoreticalSpectrum(){
+	public TheoreticalSpectrum(){
 		
 	}
 	
@@ -454,7 +454,7 @@ public class TheoreticalSpectrum extends Spectrum{
 		return new TheoreticalSpectrum(p1, p2, charge, true);
 	}
 	
-	protected void setPeptide(List peaks, Peptide p){
+	public void setPeptide(List peaks, Peptide p){
 		for(int i = 0; i < peaks.size(); i++){
 			((LabelledPeak)peaks.get(i)).setPep(p);
 		}

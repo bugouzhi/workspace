@@ -17,6 +17,22 @@ public class SpectrumMap extends Spectrum{
 	TreeMap<Double, Peak> intensityMap = new TreeMap<Double, Peak>();
 	TreeMap<Double, Peak> massMap = new TreeMap<Double, Peak>();
 	
+	public TreeMap<Double, Peak> getIntensityMap() {
+		return intensityMap;
+	}
+
+	public void setIntensityMap(TreeMap<Double, Peak> intensityMap) {
+		this.intensityMap = intensityMap;
+	}
+
+	public TreeMap<Double, Peak> getMassMap() {
+		return massMap;
+	}
+
+	public void setMassMap(TreeMap<Double, Peak> massMap) {
+		this.massMap = massMap;
+	}
+
 	public SpectrumMap(Spectrum s){
 		List<Peak> newPeakList = new ArrayList<Peak>();
 		for(int i = 0; i < s.getPeaks().size(); i++){

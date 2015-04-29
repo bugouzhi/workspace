@@ -5,7 +5,7 @@ import java.util.List;
 public class LinkedPeptide extends Peptide{
 	//private String crossLinker = null;
 	//private double crossLinkerMass = 0;
-	Peptide[] peptides; //treated linked peptide as two peptide with PTM
+	public Peptide[] peptides; //treated linked peptide as two peptide with PTM
 
 	public LinkedPeptide(){
 		

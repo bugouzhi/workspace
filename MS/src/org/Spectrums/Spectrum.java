@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import IO.MZXMLReader;
 
 
+
 public class Spectrum implements Comparable<Spectrum>, Serializable{
 	//default value for vector representation
 	public static final long serialVersionUID = 1L;
@@ -1365,7 +1366,7 @@ public class Spectrum implements Comparable<Spectrum>, Serializable{
 				double currMass = this.peaks.get(p).getMass();
 				double currInt = this.peaks.get(p).getIntensity();
 				//if(currMass - mz2 > tolerance){
-				if(!SWATHUtils.checkMass(currMass, mz2, 46, SWATHUtils.PPM)){
+				if(!Mass.checkMass(currMass, mz2, tolerance, Mass.DIFF_DA)){
 					break;
 				}
 				//System.out.println("matched " + currMass + "\t" + this.peaks.get(p).getIntensity() + "\t" + mz2 + "\t" + s1.peaks.get(j).getIntensity());

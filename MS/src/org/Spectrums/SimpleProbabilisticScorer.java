@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
 public class SimpleProbabilisticScorer implements SpectrumComparator{
-	protected PeakComparator comp;
+	public PeakComparator comp;
 	protected boolean includeNoise = true;
-	protected double matchTolerance = 0.5;
+	public double matchTolerance = 0.5;
 	protected int minMatchedPeak = 1;
 	public int matchToleranceMode = 0;
 	/**

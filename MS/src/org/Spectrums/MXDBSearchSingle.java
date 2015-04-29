@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import mixgf.PRMSpectrum;
+import mixgf.PRMSpectrumComparator;
+
 public class MXDBSearchSingle {
 	public double windowWidth = 25;
 	public int topPeaksKept = 8;
