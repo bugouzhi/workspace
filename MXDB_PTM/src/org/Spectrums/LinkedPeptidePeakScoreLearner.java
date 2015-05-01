@@ -14,7 +14,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-//fully featured score learner for linked peptides
+/**
+ * Fully featured score learner for linked peptides.  Note there are other implementation
+ * of linkedpeptide scorinig model in the package, but they are for development purpose
+ * this class should be the latest implementation with more feature
+ * 
+ * @author Jian
+ *
+ */
 
 public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializable{
 	private static final long serialVersionUID = 234823048028349320L;
@@ -63,12 +70,17 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		this.initializeErrorModel();
 	}
 	
-	
+	/**
+	 * Initialize the fragment mass tolerance error models
+	 */
 	private void initializeErrorModel(){
 		this.errorModel = new LookUpTable(
 			new int[] {	this.rankInterval.length, this.massErrorInterval.length});    // assumed error model indenpendent of ranks
 	}
 	
+	/**
+	 * Initialize the fragment ion type models
+	 */
 	private void initializeIonIndexTable(){
 		this.ionIndex = new HashMap<String, Integer>();
 	//	this.ionsType = new String[Mass.standardIonsType.length+1];
@@ -86,6 +98,9 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 	}
 	
 	@Override
+	/**
+	 * Score when comparing a theoretical peak to an observed peak
+	 */
 	public double compare(Peak p1, Peak p2) {
 		if(p1 instanceof LabelledPeak && !(p1 instanceof MixturePeak)){
 			return compareSingle(p1,p2);
@@ -147,6 +162,15 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		}
 	}
 	
+	/**
+	 * This handle the case when we have only "half" of the linked peptide at hand.  This will
+	 * score the peak base on the "first-peptide" model (i.e. in the mixture framework it is
+	 * the higher abundance peptide and in the SUMO framework this is the model for the peptide
+	 * i.e. not the SUMO tag model)
+	 * @param p1
+	 * @param p2
+	 * @return
+	 */
 	public double compareSingle(Peak p1, Peak p2) {
 		LabelledPeak lp = (LabelledPeak)p1;
 		//System.out.println("comparing score: " + p1 + "\t" + p2);
@@ -194,19 +218,33 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 	}
 	
 	
-	
-	public int getIonIndex(LabelledPeak lp){
+	/**
+	 * Given a theoretical fragment ions, get the index for the ion type
+	 * @param lp
+	 * @return
+	 */
+	protected int getIonIndex(LabelledPeak lp){
 		if(!this.ionIndex.containsKey(lp.getType())){
 			throw new IllegalArgumentException("Invalide ion type " + lp.getType());
 		}
 		return ionIndex.get(lp.getType()).intValue();
 	}
 	
-	public int getPeptideLength(Peptide p){
+	/**
+	 * Peptide separated into different type based on length of the peptide
+	 * @param p
+	 * @return
+	 */
+	protected int getPeptideLength(Peptide p){
 			return ArrayUtils.getIntervalIndex(p.getPeptide().length(), this.lengthInterval);
 	}
 	
-	public double getValue(int[] index){
+	/**
+	 * return the value in the high-dimensional table given a index
+	 * @param index
+	 * @return
+	 */
+	protected double getValue(int[] index){
 		return this.table.get(index);
 	}
 	//scoring table dimesnion
@@ -218,6 +256,12 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 	//ion type
 	//mass error
 	
+	/**
+	 * Given a theoretical peak and a real peak pair, return its corresponding index in the score table
+	 * @param lp
+	 * @param realPeak
+	 * @return
+	 */
 	private int[] getIndex(MixturePeak lp, Peak realPeak){
 		int rankIndex;
 		int errorIndex;
@@ -259,6 +303,12 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		return new int[]{lp.getPeptideIndex(), isLinked, peptideCharge, peptideLength, peakCharge, ionIndex, rankIndex, errorIndex};
 	}
 	
+	/**
+	 * Same as above but do for the case when there is only half of the linked peptide (so LabelledPeak is input instead of MixturePeak)
+	 * @param lp
+	 * @param realPeak
+	 * @return
+	 */
 	private int[] getIndex(LabelledPeak lp, Peak realPeak){
 		int rankIndex;
 		int errorIndex;
@@ -299,6 +349,12 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		return new int[]{this.peptideMode, isLinked, peptideCharge, peptideLength, peakCharge, ionIndex, rankIndex, errorIndex};
 	}
 	
+	/**
+	 * Get the index in the scoring table given the error between matched theoretical and real peak
+	 * @param lp
+	 * @param realPeak
+	 * @return
+	 */
 	private int[] getErrorIndex(LabelledPeak lp, Peak realPeak){
 		int rankIndex;
 		int errorIndex;
@@ -313,7 +369,16 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		}
 		return new int[]{rankIndex, errorIndex};
 	}
-
+	
+	/**
+	 * Given a  observed peak, return the noise score, which is the null
+	 * model that the observed peak is generated from noise
+	 * @param p
+	 * @param realPeak
+	 * @param combineCharge
+	 * @param peptideIndex
+	 * @return
+	 */
 	private int[] getNoiseIndex(Peptide p, Peak realPeak, int combineCharge, int peptideIndex){
 		int rankIndex;
 		int errorIndex;
@@ -333,6 +398,14 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		return new int[]{peptideIndex, 0, peptideCharge, peptideLength, peakCharge, ionIndex, rankIndex, 0};
 	}
 	
+	/**
+	 * Noise model for mixture model
+	 * @param lp
+	 * @param realPeak
+	 * @param combineCharge
+	 * @param peptideIndex
+	 * @return
+	 */
 	private int[] getNoiseIndex(MixturePeak lp, Peak realPeak, int combineCharge, int peptideIndex){
 		int rankIndex;
 		int errorIndex;
@@ -365,6 +438,8 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		}
 	}
 	
+	//This is the entry method to the learner, it learn the statistics from
+	//the set of annotated spectra used to initialize the model
 	public void getLinkedIonCount(){
 		LookUpTable totalCount = initializeTable();
 		int count = 0;
@@ -377,7 +452,7 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 			Mass.DSSLINKER_MASS = -1*Mass.WATER;
 			s.removePrecursors(0.5);
 			s.windowFilterPeaks(10, 25);
-			s = new DeconvolutedSpectrum(s);
+			//s = new DeconvolutedSpectrum(s);
 			//TheoreticalSpectrum.deconvolutedMode=true;
 			s.computePeakRank();
 			//s.peptide = s.peptide+"--GG";        //ubiq
@@ -507,6 +582,9 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		s.computePeakRank();
 	}
 	
+	/**
+	 * Normalized the frequency count so each entry in the score table is a proper probability
+	 */
 	private void normalizeCount(){
 		for(int peptide = 0; peptide < this.PEPCOUNT; peptide++){
 			for(int linkedType = 0; linkedType < this.LINKEDTYPE; linkedType++){
@@ -561,6 +639,12 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		}
 	}
 	
+	/**
+	 * Get the ion statistics for a mixture spectrum match
+	 * @param g
+	 * @param pep1
+	 * @param pep2
+	 */
 	private void getIonsCount(SimpleMatchingGraph g, String pep1, String pep2){
 		Set vertices = g.vertexSet(2);
 		Iterator it = vertices.iterator();
@@ -644,6 +728,9 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		//building noise model		
 	}
 	
+	/**
+	 * Normalize the statistics in the errror model
+	 */
 	private void normalizeErrorModel(){
 			for(int rankIndex = 0; rankIndex < this.rankInterval.length; rankIndex++){
 				double sum = 0.0;
@@ -727,7 +814,12 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 			
 		}
 	}
-		
+	
+	/**
+	 * Load the scoring model from a file (that is previous created)
+	 * @param file
+	 * @return
+	 */
 	public static LinkedPeptidePeakScoreLearner loadComparator(String file){
 		try{
 			BufferedInputStream bi = new BufferedInputStream(new FileInputStream(file));
@@ -747,7 +839,14 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 	public int[] getRankInterval() {
 		return this.rankInterval;
 	}
-
+	
+	/**
+	 * Get the score for a pair of matched theoretical and observed peak
+	 * same as the compare method but not using the PeakComparator interface
+	 * @param p1
+	 * @param p2
+	 * @return
+	 */
 	public double getScore(Peak p1, Peak p2) {
 		if(p1 instanceof LabelledPeak && !(p1 instanceof MixturePeak)){
 			return compareSingle(p1,p2);
@@ -808,10 +907,20 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 		}
 	}
 
+	/**
+	 * Get the bins for the mass error model
+	 * @return
+	 */
 	public double[] getMassErrorInterval() {
 		return this.massErrorInterval;
 	}
 
+	/**
+	 * Get score from the for fragment mass error model
+	 * @param p1
+	 * @param p2
+	 * @return
+	 */
 	public double getErrorScore(Peak p1, Peak p2) {
 		if(p1 instanceof LabelledPeak && !(p1 instanceof MixturePeak)){
 			return compareSingle(p1,p2);
@@ -831,6 +940,17 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 			}
 		}
 		return 0.0;
+	}
+	
+	/**
+	 * This method create a linked-peptide scoring model from annotated MGF and 
+	 * print the scoring model in a file
+	 */
+	public static void getLinkedModel(){
+		TheoreticalSpectrum.prefixIons = Mass.standardPrefixes;
+		TheoreticalSpectrum.suffixIons = Mass.standardSuffixes;
+		MixtureSpectrumScorer scorer2 = (MixtureSpectrumScorer)SpectrumUtil.getLinkedPeptideScorer("..\\mixture_linked\\lib_sumo_spectra_training_part1.mgf");
+		((LinkedPeptidePeakScoreLearner)scorer2.comp).writeLibToFile("..\\mixture_linked\\test_model.o");
 	}
 	
 }

@@ -99,12 +99,7 @@ public class LinkedPeptideAnalysis {
 		((LMixturePeakScoreLearner)scorer2.comp).writeLibToFile("..\\mixture_linked\\mixtures_alpha0.3_models.o");
 	}
 	
-	public static void getMixtureModel(){
-		//TheoreticalSpectrum.prefixIons = Mass.standardPrefixes;
-		//TheoreticalSpectrum.suffixIons = Mass.standardSuffixes;
-		MixtureSpectrumScorer scorer2 = (MixtureSpectrumScorer)SpectrumUtil.getMixtureScorer("..\\mixture_linked\\mixtures100000_generic.mgf");
-		((MixturePeakScoreLearner)scorer2.comp).writeLibToFile("..\\mixture_linked\\yeast_simmix_alpha_generic_12_25.o");
-	}
+
 	public static void main(String[] args){
 		//String spectrumFile = "..\\mixture_linked\\Linked_peptide_library\\sumo_lib\\20101008_Sumo_Library_4349_Bo.mzXML";
 		//String annotationFile = "..\\mixture_linked\\test0.txt";

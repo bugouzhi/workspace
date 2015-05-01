@@ -3,27 +3,51 @@ package org.Spectrums;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
+/**
+ * This class represent a linked peptides
+ * @author Jian
+ *
+ */
 public class LinkedPeptide extends Peptide{
 	//private String crossLinker = null;
 	//private double crossLinkerMass = 0;
 	Peptide[] peptides; //treated linked peptide as two peptide with PTM
-	private CrossLinker linker;
+	private CrossLinker linker=CrossLinker.DSS;
 	
 	public LinkedPeptide(){
 		
 	}
 	
+	/**
+	 * Create a linked peptide from its string representations. Note 
+	 * a linked peptides is represented as a pair of peptides with PTM
+	 * The two peptides are either denote as PEPTIDE1--PEPTIDE2 or PEPTIDE1 & PEPTIDE2
+	 * This method also assumes the only modification on the peptides are due to the linkage
+	 * so the linked position is assumed to be the first PTM position of the peptide
+	 * @param pep
+	 * @param charge
+	 */
 	public LinkedPeptide(String pep, int charge){
-		String[] peps = pep.split("--");
-		int pos1 = peps[0].indexOf('K')+1;
-		int pos2 = peps[1].indexOf('K')+1;
+		String[] peps=getPepsStr(pep);
+		//int pos1 = peps[0].indexOf('K')+1;
+		//int pos2 = peps[1].indexOf('K')+1;
+		int pos1 = peps[0].indexOf('+');
+		int pos2 = peps[1].indexOf('+');
 		createLinkedPeptide(pep, charge, pos1, pos2, Mass.DSSLINKER_MASS);
 	}
 	
+	/**
+	 * Create the link peptide from its string representation, and also the 
+	 * specified linked positions
+	 * @param pep
+	 * @param charge
+	 * @param position1
+	 * @param position2
+	 */
 	public LinkedPeptide(String pep, int charge, int position1, int position2){
 		createLinkedPeptide(pep, charge, position1, position2, Mass.DSSLINKER_MASS);
 	}
+	
 	
 	public Peptide[] getPeptides(){
 		return this.peptides;
@@ -38,9 +62,27 @@ public class LinkedPeptide extends Peptide{
 		this.linker = linker;
 	}
 	
+	private static String[] getPepsStr(String pep){
+		String[] peps=null;
+		if(pep.contains("--")){
+			peps=pep.split("--");
+		}else if(pep.contains(" & ")){
+			peps=pep.split(" & ");
+		}
+		return peps;
+	}
+	/**
+	 * Created linked peptide from string representation, note this will ignore any PTM on the peptides
+	 * and calcuate the linkermassoffset based on the input linkerOffset and position
+	 * @param pep
+	 * @param charge
+	 * @param position1
+	 * @param position2
+	 * @param linkerOffset
+	 */
 	private void createLinkedPeptide(String pep, int charge, int position1, int position2, double linkerOffset){
 		//System.out.println("peptides : " + pep);
-		String[] peps = pep.split("--");
+		String[] peps = getPepsStr(pep);
 		Peptide p1 = new Peptide(peps[0], 1);
 		Peptide p2 = new Peptide(peps[1], 1);
 		
@@ -48,7 +90,7 @@ public class LinkedPeptide extends Peptide{
 		this.peptides[0] = p1;
 		this.peptides[1] = p2;
 		double mass = (p1.getParentmass() + p2.getParentmass()
-				+ Mass.DSSLINKER_MASS 
+				+ linkerOffset 
 				+ Mass.PROTON_MASS*(charge-2))/charge;	
 		double massShift1 = p1.getParentmass();
 		double massShift2 = p2.getParentmass();
@@ -91,7 +133,8 @@ public class LinkedPeptide extends Peptide{
 	}
 	
 	/**
-	 * 
+	 * Create linked peptide from string representation of two peptides, note this
+	 * will try infer the linked position from the PTMs specification in the peptide string
 	 * @param p1
 	 * @param p2
 	 * @param charge
@@ -145,15 +188,23 @@ public class LinkedPeptide extends Peptide{
 		//System.out.println("parent: " + mass + p1 + "\t" + p2);
 		this.setParentmass(mass);
 	}
-
+	
+	/**
+	 * A static method to create linked peptide from its string represntation
+	 * @param pep
+	 * @param charge
+	 * @return
+	 */
 	public static LinkedPeptide createLinkedPeptide(String pep, int charge){
-		String[] peps = pep.split("--");
+		String[] peps = getPepsStr(pep);
 		int position1 = peps[0].indexOf('+');
 		int position2 = peps[1].indexOf('+');
 		peps[0] = peps[0].replaceAll("[0-9\\.\\+]", "");
 		peps[1] = peps[1].replaceAll("[0-9\\.\\+]", "");
 		return new LinkedPeptide(peps[0] + "--" + peps[1], charge, position1, position2);
 	}
+	
+	
 	
 	public LinkedPeptide(LinkedPeptide lp){
 		Peptide p1 = new Peptide(lp.peptides[0]);
@@ -205,6 +256,7 @@ public class LinkedPeptide extends Peptide{
 	public static List<Peptide> generateLinkedPeptides(List<Peptide> pepList, Spectrum linkedquery){
 		return generateLinkedPeptides(pepList, linkedquery, 'K');
 	}
+	
 	/**
 	 * Generate "half-linked" peptides base on a candidate peptides
 	 * the peptide is half-linked because the identity of the other peptide is unknown yet

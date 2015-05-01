@@ -302,6 +302,8 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 			rankIndex = 0;
 			errorIndex = 0;
 		}else{
+			//if(realPeak.getRank() < 1)
+			//	System.out.println(realPeak);
 			rankIndex = ArrayUtils.getIntervalIndex(realPeak.getRank(), this.rankInterval)+1;
 		}
 		int peptideLength = getPeptideLength(p);//ArrayUtils.getIntervalIndex(p.getPeptide().length(), this.lengthInterval);
@@ -587,6 +589,12 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 		return null;
 	}
 	
+	public static void getMixtureModel(){
+		TheoreticalSpectrum.prefixIons = Mass.standardPrefixes;
+		TheoreticalSpectrum.suffixIons = Mass.standardSuffixes;
+		MixtureSpectrumScorer scorer2 = (MixtureSpectrumScorer)SpectrumUtil.getMixtureScorer("..\\mixture_linked\\mixture.mgf_part1");
+		((MixturePeakScoreLearner)scorer2.comp).writeLibToFile("..\\mixture_linked\\test.o");
+	}
 	
 	public static MixturePeakScoreLearner loadComparatorLocal(String file){
 		try{
@@ -963,13 +971,14 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 		//testMixtureModel();
 		//testMixtureModelSubset();
 		//testMixtureModelExperimental();
-		args[0] = "..//mixture_linked//linked_peptide_library/disulfide_lib/20111221_ananiav_DTT_IAA_lib1_90min_CID35.mzXML";
-		args[1] = "10";
-		args[2] = "25";
-		args[3] = "..\\mixture_linked\\database\\lib_disulfide_plusYeastDecoy.txt";
+		//args[0] = "..//mixture_linked//linked_peptide_library/disulfide_lib/20111221_ananiav_DTT_IAA_lib1_90min_CID35.mzXML";
+		//args[1] = "10";
+		//args[2] = "25";
+		//args[3] = "..\\mixture_linked\\database\\lib_disulfide_plusYeastDecoy.txt";
 		//args[3] = "..\\mixture_linked\\testpeptides.txt";
 		//runSearch(args[0], Double.parseDouble(args[1]),  args[2]);
-		runSearch(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), args[3]);
+		//runSearch(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), args[3]);
+		getMixtureModel();
 	}
 
 
@@ -1031,5 +1040,15 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 		}
 		return 0;
 	}
+	
+	public static SpectrumComparator getMixtureScorer(String trainingFile){
+		System.out.println("Starting mixture-training");
+		MixturePeakScoreLearner peakscorer3 = new MixturePeakScoreLearner(trainingFile);
+		peakscorer3.getMixtureIonCount();
+		MixtureSpectrumScorer scorer = new MixtureSpectrumScorer(peakscorer3);
+		return scorer;
+	}
+	
+	
 
 }

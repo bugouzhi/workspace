@@ -21,6 +21,7 @@ public class Peak implements Serializable{
 		this.intensity = intensity;
 	}
 	
+	
 	//copy constructor
 	public Peak(Peak p){
 		this(p.getMass(), p.getIntensity());

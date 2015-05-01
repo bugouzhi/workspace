@@ -16,9 +16,9 @@ import org.jgrapht.graph.SimpleGraph;
 public class LinkedPeakScoreLearner implements PeakComparator{
 	private String[] ionsType = Mass.standardIonsType;
 	private HashMap<String, Integer> ionIndex;
-	private int commonMinCharge = 1;
+	private int commonMinCharge = 1;  //charge range for common (unlinked fragments)
 	private int commonMaxCharge = 4;
-	private int linkedMinCharge = 2;
+	private int linkedMinCharge = 2;  //charge range for linked fragments
 	private int linkedMaxCharge = 6;
 	private LookUpTable table;
 	private SpectrumLib annotatedSet;
@@ -107,7 +107,12 @@ public class LinkedPeakScoreLearner implements PeakComparator{
 		printIonTable();
 	}
 	
-	
+	/**
+	 * Get ion statitics from a particular matches as specifiy by the matching graph
+	 * increament the frequency table 
+	 * @param g
+	 * @param totalCount
+	 */
 	private void getIonsCount(SimpleGraph g, LookUpTable totalCount){
 		Set vertices = g.vertexSet();
 		Iterator it = vertices.iterator();

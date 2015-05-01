@@ -1207,13 +1207,14 @@ public class TheoreticalSpectrum extends Spectrum{
 		List<Peak> pList1 = theoretical.getPeak(); 
 		List<Peak> pList2 = actual.getPeak();
 		SimpleMatchingGraph matchingGraph = new SimpleMatchingGraph();
-		pList2.add(new Peak(100000, 0)); //we add a end-guard peak to end of the list
+		
 		for(int i = 0; i < pList1.size(); i++){
 			matchingGraph.addVertex(pList1.get(i), 2);
 		}
 		for(int i = 0; i < pList2.size(); i++){
 			matchingGraph.addVertex(pList2.get(i), 1);
 		}
+		pList2.add(new Peak(100000, 0)); //we add a end-guard peak to end of the list
         //makes subsquent iteration easier
 		//SimpleMatchingGraph matchingGraph = SimpleMatchGraphFactory.createSimpleMatchGraph();
 		int i = 0, j = 0, p = 0;
@@ -1268,21 +1269,23 @@ public class TheoreticalSpectrum extends Spectrum{
 				}	
 			}
 		}
+//		System.out.println("last element: "  + pList2.get(pList2.size()-1));
 		pList2.remove(pList2.size()-1);
+//		System.out.println("last element: "  + pList2.get(pList2.size()-1));
 		//System.out.println("matching graph size: " + matchingGraph.vertexSet(1).size() + "\t" + matchingGraph.vertexSet(2).size());
 		if(matchingGraph.vertexSet(SimpleMatchingGraph.Observed).size() < minMatchPeaks){
 			return SimpleMatchGraphFactory.getEmptyGraph();
 		}
 		//System.out.println("matching graph size: " + matchingGraph.vertexSet(SimpleMatchingGraph.Observed).size());
 
-		for(int c = 0; c < pList2.size();c++){
-			//matchingGraph.addVertex(actual.getPeak().get(c), 1);
-		}
-		
-		
-		for(int c = 0; c < pList1.size(); c++){
-			//matchingGraph.addVertex(pList1.get(c), 2);
-		}
+//		for(int c = 0; c < pList2.size();c++){
+//			//matchingGraph.addVertex(actual.getPeak().get(c), 1);
+//		}
+//		
+//		
+//		for(int c = 0; c < pList1.size(); c++){
+//			matchingGraph.addVertex(pList1.get(c), 2);
+//		}
 
 		//System.out.println("there are total of " + matchingGraph.edgeSet().size() + " mathcing within tolerance");
 		return matchingGraph;
