@@ -500,7 +500,7 @@ public class SWATHMSPLITSearch {
 	}
 	
 	/**
-	 * Use parrelel DDA run to help make ID
+	 * Use parallel DDA run to help make ID
 	 * RT information is used to restrict search, the best matching SWATH is considered match
 	 */
 	public static void targetedIdentification(){
@@ -1284,12 +1284,12 @@ public class SWATHMSPLITSearch {
 	
 	
 	public static void testSearch(String[] args){
-		String queryFile = "../mixture_linked//msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18482_REP3_500ng_Ecoli_NewStock2_SWATH_2.mzXML";
-		String outFile = "../mixture_linked/test_EmilyToni_withNISTLib.txt";
-		String libraryFile = "../mixture_linked/ACG_swathdevelopment_UPSEcoli_REP234_IDA_plusDecoy2.mgf";
+//		String queryFile = "../mixture_linked//msdata/UPS_Ecoli_Wiff/Duplicate_runs_201308/REP2/18482_REP3_500ng_Ecoli_NewStock2_SWATH_2.mzXML";
+//		String outFile = "../mixture_linked/test_EmilyToni_withNISTLib.txt";
+//		String libraryFile = "../mixture_linked/ACG_swathdevelopment_UPSEcoli_REP234_IDA_plusDecoy2.mgf";
 //		String modFile = "../mixture_linked/Mod_MSPLIT-DIA.txt";
 //		String swathWindowsFile = "../mixture_linked\\test_swath_windows.txt";
-		args = new String[]{"25", "50", "0", queryFile, libraryFile, outFile};
+//		args = new String[]{"25", "50", "0", queryFile, libraryFile, outFile};
 		CommandLineParser cmdParser = new CommandLineParser(args);
 		SWATHMSPLITSearch search = new SWATHMSPLITSearch();
 		search.parent = cmdParser.getDouble(0);

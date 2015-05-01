@@ -6,7 +6,7 @@ public class LinkedPeptide extends Peptide{
 	//private String crossLinker = null;
 	//private double crossLinkerMass = 0;
 	public Peptide[] peptides; //treated linked peptide as two peptide with PTM
-
+	
 	public LinkedPeptide(){
 		
 	}
@@ -35,7 +35,7 @@ public class LinkedPeptide extends Peptide{
 	}
 	
 	/**
-	 * Main internal method to create linked peptide
+	 * Main internal method to create linked peptides
 	 * @param pep
 	 * @param charge
 	 * @param position1
@@ -48,7 +48,10 @@ public class LinkedPeptide extends Peptide{
 		String[] peps = pep.split("--");
 		Peptide p1 = new Peptide(peps[0], 1);
 		Peptide p2 = new Peptide(peps[1], 1);
-		//System.out.println("peptide is : " + p1 + "\t" + p2);
+		createLinkedPeptide(p1, p2, charge, position1, position2, linkerMassOffSet);
+	}
+	
+	private void createLinkedPeptide(Peptide p1, Peptide p2, int charge, int position1, int position2, double linkerMassOffSet){
 		this.peptides = new Peptide[2];
 		this.peptides[0] = p1;
 		this.peptides[1] = p2;
@@ -82,11 +85,20 @@ public class LinkedPeptide extends Peptide{
 		//System.out.println(peptides[0] + "--" + peptides[1]);
 	}
 	
+	
 	public LinkedPeptide(Peptide pep1, Peptide pep2, int charge, int position1, int position2){
 		this(pep1, pep2, charge, position1, position2, Mass.DSSLINKER_MASS);
 	}
 	
-	//for two regular peptides
+	/**
+	 * This method created linked peptide from two normal peptides
+	 * @param pep1
+	 * @param pep2
+	 * @param charge
+	 * @param position1
+	 * @param position2
+	 * @param linkerMass
+	 */
 	public LinkedPeptide(Peptide pep1, Peptide pep2, int charge, int position1, int position2, double linkerMass){
 		Peptide p1 = new Peptide(pep1);
 		Peptide p2 = new Peptide(pep2);
@@ -109,7 +121,12 @@ public class LinkedPeptide extends Peptide{
 		this.setParentmass(mass);
 	}
 	
-	//for two half-linked peptide
+	/**
+	 * For two half-linked peptide, directly infer massoffset from string repreentation of linked peptides
+	 * @param p1
+	 * @param p2
+	 * @param charge
+	 */
 	public LinkedPeptide(Peptide p1, Peptide p2, int charge){
 		this.peptides = new Peptide[2];
 		this.peptides[0] = p1;
@@ -140,8 +157,8 @@ public class LinkedPeptide extends Peptide{
 				index2 = i;
 			}
 		}
-		ptmMasses1[index1]=pMass2+Mass.DSSLINKER_MASS;
-		ptmMasses2[index2]=pMass1+Mass.DSSLINKER_MASS;
+		//ptmMasses1[index1]=pMass2+Mass.DSSLINKER_MASS;
+		//ptmMasses2[index2]=pMass1+Mass.DSSLINKER_MASS;
 		p1.setPtmmasses(ptmMasses1);
 		p2.setPtmmasses(ptmMasses2);
 		double mass = (pMass1 + pMass2
@@ -270,6 +287,8 @@ public class LinkedPeptide extends Peptide{
 			}
 		}
 	}
+	
+	
 	public static void testLinkedPeptideMass(){
 		String filename = "..\\mixture_linked\\t";
 		List<String> lines = Utils.FileIOUtils.createListFromFile(filename);
@@ -293,7 +312,11 @@ public class LinkedPeptide extends Peptide{
 		}
 	}
 	
+
+	
+	
 	public static void main(String[] args){
 		testLinkedPeptideMass();
+		
 	}
 }

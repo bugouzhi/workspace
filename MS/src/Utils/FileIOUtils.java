@@ -44,7 +44,7 @@ public class FileIOUtils {
 			String[] token = null;
 			String line = bf.readLine();
 			while(line != null){
-				//System.out.println("line is: " + line);
+				System.out.println("line is: " + line);
 				token = line.split("\\t");
 				table.put(token[index1], token[index2]);
 				line = bf.readLine();

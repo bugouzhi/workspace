@@ -558,7 +558,7 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 	
 	}
 	
-	public void writeLibToFile(String outfile){
+	public void writeModelToFile(String outfile){
 		try{
 			BufferedOutputStream bo = new BufferedOutputStream(new FileOutputStream(outfile));
 			ObjectOutputStream oo = new ObjectOutputStream(bo);
@@ -569,6 +569,16 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 			System.out.println(ioe.getMessage());
 			
 		}
+	}
+	
+	/**
+	 * Generate the mixture scoring models and store them in a binary object file for later use
+	 */
+	public static void getScoreModel(){
+		TheoreticalSpectrum.prefixIons = Mass.standardPrefixes;
+		TheoreticalSpectrum.suffixIons = Mass.standardSuffixes;
+		MixtureSpectrumScorer scorer2 = (MixtureSpectrumScorer)SpectrumUtil.getMixtureScorer("..\\mixture_linked\\mixture.mgf_part1");
+		((MixturePeakScoreLearner)scorer2.comp).writeModelToFile("..\\mixture_linked\\test.o");
 	}
 	
 	public static MixturePeakScoreLearner loadComparator(String file){
@@ -593,7 +603,7 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 		String outfile = "..\\mixture_linked\\mixtures_TOF_alpha01-10_models.o";
 		MixturePeakScoreLearner peakscorer = new MixturePeakScoreLearner(trainFile); //scorer
 		peakscorer.getMixtureIonCount();
-		peakscorer.writeLibToFile(outfile);
+		peakscorer.writeModelToFile(outfile);
 		MixturePeakScoreLearner peakscorer2 = loadComparator(outfile);
 		System.out.println(peakscorer2);
 		
@@ -941,7 +951,7 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 	}
 	
 	public static void main(String[] args){
-		testLoadComparator();
+		//testLoadComparator();
 		//testMixtureScoring();
 		//testMixtureModel();
 		//testMixtureModelSubset();
@@ -953,6 +963,7 @@ public class MixturePeakScoreLearner implements PeakComparator, Serializable{
 		//args[3] = "..\\mixture_linked\\testpeptides.txt";
 		//runSearch(args[0], Double.parseDouble(args[1]),  args[2]);
 		//runSearch(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]), args[3]);
+		getScoreModel();
 	}
 
 }

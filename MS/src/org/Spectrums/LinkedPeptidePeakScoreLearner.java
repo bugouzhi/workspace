@@ -372,16 +372,13 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 //			if(s.modMass > 0){
 //				continue;
 //			}
-			Mass.DSSLINKER_MASS = -116.0430;
+//			Mass.DSSLINKER_MASS = -116.0430;
 			//Mass.DSSLINKER_MASS = -1*Mass.WATER;
 			s.removePrecursors(0.5);
 			s.windowFilterPeaks(10, 25);
-			//s = new DeconvolutedSpectrum(s);
-			//TheoreticalSpectrum.deconvolutedMode=true;
 			s.computePeakRank();
-			//s.peptide = s.peptide+"--GG";        //ubiq
 			
-			s.peptide = s.peptide.replace(" & ", "--");
+//			s.peptide = s.peptide.replace(" & ", "--");
 			String[] peps = s.peptide.split("--");
 			
 			//System.out.println("peptide is: " + s.peptide);
@@ -416,28 +413,28 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 //			position2=2;                       //ubiq
 //			
 //			
-			for(int i = 0; i < p.getPeptide().length(); i++){                    //disulfide
-				if(p.getPeptide().charAt(i) == 'C'){
-					position1=i+1;
-					System.out.println("peptide: " + peps[0] + " position: " + position1);
-					break;
-				}
-			}
-			
-			Peptide p2 = new Peptide(peps[1],1);                                 //disulfide2
-			for(int i = 0; i < p2.getPeptide().length(); i++){
-				if(p2.getPeptide().charAt(i) == 'C'){
-					position2=i+1;
-					System.out.println("peptide: " + peps[1] + " position: " + position2);
-					break;
-				}
-			}
-			
-			if(s.charge > 6 || position1 < 0){
-				continue;
-			}
+//			for(int i = 0; i < p.getPeptide().length(); i++){                    //disulfide
+//				if(p.getPeptide().charAt(i) == 'C'){
+//					position1=i+1;
+//					System.out.println("peptide: " + peps[0] + " position: " + position1);
+//					break;
+//				}
+//			}
+//			
+//			Peptide p2 = new Peptide(peps[1],1);                                 //disulfide2
+//			for(int i = 0; i < p2.getPeptide().length(); i++){
+//				if(p2.getPeptide().charAt(i) == 'C'){
+//					position2=i+1;
+//					System.out.println("peptide: " + peps[1] + " position: " + position2);
+//					break;
+//				}
+//			}
+//			
+//			if(s.charge > 6 || position1 < 0){
+//				continue;
+//			}
 			System.out.println("peptide is: " + s.peptide);
-			LinkedPeptide linked = new LinkedPeptide(s.peptide, s.charge, position1, position2);
+			LinkedPeptide linked = new LinkedPeptide(s.peptide, s.charge);
 			System.out.println("peptide is: " + linked + "\t" + s.peptide);
 			System.out.println("peptide1 is: " + linked.peptides[0]);
 			System.out.println("peptide2 is: " + linked.peptides[1]);
@@ -714,7 +711,7 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 	
 	}
 	
-	public void writeLibToFile(String outfile){
+	public void writeModelToFile(String outfile){
 		try{
 			BufferedOutputStream bo = new BufferedOutputStream(new FileOutputStream(outfile));
 			ObjectOutputStream oo = new ObjectOutputStream(bo);
@@ -741,6 +738,21 @@ public class LinkedPeptidePeakScoreLearner implements PeakComparator, Serializab
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	/**
+	 * This method create a linked-peptide scoring model from annotated MGF and 
+	 * print the scoring model in a file
+	 */
+	public static void getScoreModel(){
+		TheoreticalSpectrum.prefixIons = Mass.standardPrefixes;
+		TheoreticalSpectrum.suffixIons = Mass.standardSuffixes;
+		MixtureSpectrumScorer scorer2 = (MixtureSpectrumScorer)SpectrumUtil.getLinkedPeptideScorer("../mixture_linked/MXDB_SSMatch/linked_fixed.mgf");
+		((LinkedPeptidePeakScoreLearner)scorer2.comp).writeModelToFile("..\\mixture_linked\\test_model.o");
+	}
+	
+	public static void main(String[] args){
+		getScoreModel();
 	}
 	
 }
